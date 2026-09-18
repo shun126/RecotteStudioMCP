@@ -4,7 +4,17 @@ Recotte Studio のプロジェクトファイル（`.ccproj`）を、LLM から�
 
 `Recotte.McpServer` → `Recotte.Core` → `.ccproj` の構成で、Recotte Studio 本体を起動せずにプロジェクトを生成・編集・保存します。`SaveCopy` は元ファイルを変更しない安全な別名保存です。明示的な `Overwrite` は Core の `Save()` のみを使用し、必須バックアップ、外部変更検出、Validation、一時保存後の再読み込み検証を経て置換します。Recotte Studio は生成処理には使用せず、必要なら人間が生成後の `.ccproj` を開きます。
 
-> 本プロジェクトは非公式ツールです。
+> 本プロジェクトは非公式ツールです。株式会社AHS および Recotte Studio の開発元とは関係ありません。
+
+## Recotte Studio とは
+
+[Recotte Studio](https://www.recottestudio.com/) は、株式会社AHS の Windows 向け動画編集ソフトです。3D / 2D のキャラクターと音声合成を組み合わせて、解説動画などを手軽に作成できます。
+
+- VOICEPEAK や VOICEVOX などの音声合成ソフトと連携し、テキストから読み上げ音声付きの動画を作成
+- 3D モデルや 2D 立ち絵のキャラクターに対応し、口パク・まばたき・表情変更が可能
+- カット編集、テロップ、図形、エフェクトなどの一般的な動画編集機能
+
+無料で使える [Recotte Studio Basic](https://www.recottestudio.com/) と、機能を拡張した [製品版](https://www.ah-soft.com/rs/) があります。本ツールが扱う `.ccproj` は Recotte Studio のプロジェクトファイルです。生成したプロジェクトを開いて動画に書き出すには Recotte Studio が必要ですが、Basic の機能の範囲内であれば無料の Recotte Studio Basic でも利用できます。
 
 ## 構成
 
