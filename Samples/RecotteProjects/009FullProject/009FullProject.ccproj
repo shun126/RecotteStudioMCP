@@ -1,0 +1,2703 @@
+{
+	"app_version":"1.8.5.0",
+	"time":"2026/07/23 02:12:06.25",
+	"setting": {
+		"guid":"47E70424-741B-4F04-A223-479E4A6852BF",
+		"project-name":"掛け合い実況動画 2026-07-23",
+		"bg-color":[0.0,0.0,0.0,1.0],
+		"duration": 10.0,
+		"position": 1.6,
+		"fps": 60.0,
+		"size":[1920,1080],
+		"dpi": 72.0,
+		"auto-duration": true,
+		"pix-ser-sec": 250.0,
+		"auto-seek": false,
+		"editor-info":{"time-line-left":0.0,"object-move-mode":0,"object-snap":true,"pv-object-snap":true,"move-obj-key":true},
+		"voice-link":"VOICEROID2_Integration",
+		"export-video-size":[0,0],
+		"export-video-path":"",
+		"file-explorer-path":"file://C:/Users/shun1/Documents",
+		"frame-counter": 0,
+		"volume": 0.0,
+		"mute": false,
+		"textrender-compatibility-1515": false
+	},
+	"speakers": [
+		{
+			"key":"haruno_sora",
+			"name":"桜乃そら",
+			"file":"file://C:/Program Files/RecotteStudio/models/haruno_sora.rsp",
+			"r-path":"../../../../../../Program Files/RecotteStudio/models/haruno_sora.rsp"
+		},
+		{
+			"key":"yanderu_kiritan",
+			"name":"病ンデる東北きりたん",
+			"file":"file://E:/Users/shun1/OneDrive/動画素材/yanderu_kiritan.rsp",
+			"r-path":"../../../../../../../E:/Users/shun1/OneDrive/動画素材/yanderu_kiritan.rsp"
+		}
+	],
+	"ui-setting": {},
+	"file-items": [
+		{
+			"loc": 1,
+			"ik":"861b435901eeec4c6f2d9afc74ac66f986dd7d09708522a8b642c21bf4847f66",
+			"rpath":"emotion/emotion_0019.svg",
+			"apath":"file://C:/Program Files/RecotteStudio/figures/emotion/emotion_0019.svg"
+		},
+		{
+			"loc": 0,
+			"ik":"fbf9956ed05bae946ce05ef9f0d6c723c065ba7ffba2e09a08aacc9630dc5e27",
+			"rpath":"../005OneVideo/Sample.mp4",
+			"apath":"file://C:/VisualStudio Projects/RecotteHelper/Samples/RecotteProjects/005OneVideo/Sample.mp4"
+		}
+	],
+	"named-colors": [
+		{
+			"name":"default",
+			"d-name":"標準スタイル",
+			"color":[0.0,0.0,0.0,1.0]
+		},
+		{
+			"name":"emphasis1",
+			"d-name":"強調1",
+			"color":[1.0,0.0,0.0,1.0]
+		},
+		{
+			"name":"emphasis2",
+			"d-name":"強調2",
+			"color":[0.0,1.0,0.0,1.0]
+		},
+		{
+			"name":"emphasis3",
+			"d-name":"強調3",
+			"color":[0.0,0.0,1.0,1.0]
+		},
+		{
+			"name":"border",
+			"d-name":"枠",
+			"color":[1.0,1.0,1.0,1.0]
+		},
+		{
+			"name":"figure",
+			"d-name":"figure",
+			"color":[1.0,1.0,1.0,1.0]
+		},
+		{
+			"name":"figure-border",
+			"d-name":"figure-border",
+			"color":[0.0,0.0,0.0,1.0]
+		}
+	],
+	"named-fig-styles": [
+		{
+			"name":"default",
+			"d-name":"標準スタイル",
+			"fill": true,
+			"fill-color":[0.0,0.0,0.0,1.0],
+			"border": true,
+			"border-color":[1.0,1.0,1.0,1.0],
+			"border-width": 2.0
+		},
+		{
+			"name":"emphasis1",
+			"d-name":"強調1",
+			"fill": true,
+			"fill-color":[1.0,0.0,0.0,1.0],
+			"border": true,
+			"border-color":[1.0,1.0,1.0,1.0],
+			"border-width": 2.0
+		},
+		{
+			"name":"emphasis2",
+			"d-name":"強調2",
+			"fill": true,
+			"fill-color":[0.0,1.0,0.0,1.0],
+			"border": true,
+			"border-color":[1.0,1.0,1.0,1.0],
+			"border-width": 2.0
+		},
+		{
+			"name":"emphasis3",
+			"d-name":"強調3",
+			"fill": true,
+			"fill-color":[0.0,0.0,1.0,1.0],
+			"border": true,
+			"border-color":[1.0,1.0,1.0,1.0],
+			"border-width": 2.0
+		},
+		{
+			"name":"figure",
+			"d-name":"figure",
+			"fill": true,
+			"fill-color":[1.0,1.0,1.0,1.0],
+			"border": false,
+			"border-color":[1.0,1.0,1.0,1.0],
+			"border-width": 0.0
+		},
+		{
+			"name":"figure-with-border",
+			"d-name":"figure-with-border",
+			"fill": true,
+			"fill-color":[1.0,1.0,1.0,1.0],
+			"border": true,
+			"border-color":[0.0,0.0,0.0,1.0],
+			"border-width": 2.0
+		},
+		{
+			"name":"figure-unfilled",
+			"d-name":"figure-unfilled",
+			"fill": false,
+			"fill-color":[1.0,1.0,1.0,1.0],
+			"border": true,
+			"border-color":[1.0,1.0,1.0,1.0],
+			"border-width": 2.0
+		}
+	],
+	"text-styles": [
+		{
+			"StyleName":"標準スタイル",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"話者1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"話者2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 7.0,
+			"BorderColor":[0.08333444595336914,0.0,1.0,1.0],
+			"BorderWidth2": 11.0,
+			"BorderColor2":[0.0,0.0,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"話者3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.8127927780151367,0.0,1.0],
+			"BorderWidth": 9.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 9.0,
+			"BorderColor2":[0.0,0.0,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[1.0,0.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.0,1.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.0,0.0,1.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調4",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,0.6663836240768433,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調5",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[0.0,0.508960485458374,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調6",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.5654706954956055,0.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[1.0,0.8072438836097717,0.42222219705581667,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調7",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.529411792755127,0.5607843399047852,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,0.529411792755127,0.5607843399047852,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調8",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,1.0,0.6125569343566895,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.8537964820861816,1.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調9",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.0,0.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[1.0,0.731935977935791,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,0.0,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"強調10",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.9802358150482178,1.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.6078431606292725,1.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[0.0,0.6078431606292725,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"超強調1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 90.0,
+			"FontColor":[1.0,0.13333334028720857,0.0,1.0],
+			"BorderWidth": 4.0,
+			"BorderColor":[1.0,0.13333334028720857,0.0,1.0],
+			"BorderWidth2": 22.0,
+			"BorderColor2":[1.0,0.9450980424880981,0.8549019694328308,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"超強調2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 90.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 4.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 22.0,
+			"BorderColor2":[1.0,0.13333334028720857,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"超強調3",
+			"FontFamilyName":"ＭＳ 明朝",
+			"FontSize": 90.0,
+			"FontColor":[1.0,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[0.0,0.0,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"超強調4",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 90.0,
+			"FontColor":[0.0,0.0,1.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.0,0.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.13333334028720857,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"超強調5",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 90.0,
+			"FontColor":[0.24705882370471955,0.5764706134796143,0.4156862795352936,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.24705882370471955,0.5764706134796143,0.4156862795352936,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.0,0.0,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"怒り1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.0,0.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[0.0,0.0,0.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"怒り2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.0,0.0,1.0],
+			"BorderWidth": 5.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 10.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"喜び1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,0.5444444417953491,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.37777775526046755,0.5055379867553711,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"喜び2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.19999998807907105,0.19999998807907105,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"悲しみ1",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.6000000238418579,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.11999999731779099,0.6000000238418579,0.6000000238418579,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"悲しみ2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.30000001192092898,0.30000001192092898,0.30000001192092898,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ホワイト-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.64000004529953,0.64000004529953,0.800000011920929,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.7555555701255798,0.7555555701255798,0.7555555701255798,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"レッド-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.800000011920929,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.3795824646949768,0.31111109256744387,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ピンク-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.9777777791023254,0.0,0.7491957545280457,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.644444465637207,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"イエロー-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.855555534362793,0.5437069535255432,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.995231032371521,0.5,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"オレンジ-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.19999998807907105,0.19999998807907105,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.6000000238418579,0.6000000238418579,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ライム-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.29673662781715395,0.8999999761581421,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.9167266488075256,1.0,0.3999999761581421,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グリーン-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.48888885974884035,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.800000011920929,1.0,0.800000011920929,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"スカイ-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.6157118082046509,0.855555534362793,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.7111110687255859,0.9813802242279053,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブルー-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.19999998807907105,0.19999998807907105,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.6000000238418579,0.6000000238418579,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ネイビー-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.1102469190955162,0.19775457680225373,0.5222222208976746,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.29728394746780398,0.4659016728401184,0.6222221851348877,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"パープル-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.6000000238418579,0.0,0.6000000238418579,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.6000000238418579,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グレー-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.5,0.5,0.5,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.7666666507720947,0.7666666507720947,0.7666666507720947,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブラック-ゴシック1",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.6333333253860474,0.6333333253860474,0.6333333253860474,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ホワイト-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.46172839403152468,0.58761066198349,0.6111111044883728,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"レッド-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.800000011920929,0.0,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ピンク-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.9777777791023254,0.0,0.7491957545280457,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"イエロー-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.855555534362793,0.5437069535255432,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"オレンジ-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.19999998807907105,0.19999998807907105,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ライム-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.1599999964237213,0.800000011920929,0.1599999964237213,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グリーン-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.48888885974884035,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"スカイ-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.6157118082046509,0.855555534362793,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブルー-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.19999998807907105,0.19999998807907105,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ネイビー-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.1102469190955162,0.19775457680225373,0.5222222208976746,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"パープル-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.6000000238418579,0.0,0.6000000238418579,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グレー-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.3999999761581421,0.3999999761581421,0.3999999761581421,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブラック-ゴシック2",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ホワイト-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.64000004529953,0.64000004529953,0.800000011920929,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.9333333373069763,0.9333333373069763,0.9333333373069763,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"レッド-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.800000011920929,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.6000000238418579,0.6000000238418579,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ピンク-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.9777777791023254,0.0,0.7491957545280457,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.7222222089767456,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"イエロー-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.855555534362793,0.5437069535255432,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.995231032371521,0.5,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"オレンジ-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.19999998807907105,0.19999998807907105,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.7415363788604736,0.4333333373069763,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ライム-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.1599999964237213,0.800000011920929,0.1599999964237213,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.9167266488075256,1.0,0.3999999761581421,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グリーン-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.48888885974884035,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.6043209433555603,0.9888888597488403,0.6043209433555603,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"スカイ-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.6157118082046509,0.855555534362793,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.6000000238418579,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブルー-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.19999998807907105,0.19999998807907105,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.7666666507720947,0.7666666507720947,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ネイビー-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.1102469190955162,0.19775457680225373,0.5222222208976746,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.5629629492759705,0.7320932745933533,0.8888888955116272,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"パープル-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.6000000238418579,0.0,0.6000000238418579,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.7777777910232544,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グレー-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.5333333015441895,0.5333333015441895,0.5333333015441895,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.8999999761581421,0.8999999761581421,0.8999999761581421,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブラック-ゴシック3",
+			"FontFamilyName":"Meiryo UI",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"パープル-明朝1",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.6000000238418579,0.0,0.6000000238418579,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,0.6000000238418579,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グレー-明朝1",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.5,0.5,0.5,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.7666666507720947,0.7666666507720947,0.7666666507720947,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブラック-明朝1",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.6333333253860474,0.6333333253860474,0.6333333253860474,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ホワイト-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.46172839403152468,0.58761066198349,0.6111111044883728,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"レッド-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.800000011920929,0.0,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ピンク-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.9777777791023254,0.0,0.7491957545280457,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"イエロー-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.855555534362793,0.5437069535255432,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"オレンジ-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.19999998807907105,0.19999998807907105,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ライム-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.1599999964237213,0.800000011920929,0.1599999964237213,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グリーン-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.48888885974884035,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"スカイ-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.6157118082046509,0.855555534362793,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブルー-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.19999998807907105,0.19999998807907105,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ネイビー-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.1102469190955162,0.19775457680225373,0.5222222208976746,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"パープル-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.6000000238418579,0.0,0.6000000238418579,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グレー-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.3999999761581421,0.3999999761581421,0.3999999761581421,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブラック-明朝2",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,1.0,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ホワイト-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.64000004529953,0.64000004529953,0.800000011920929,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.9333333373069763,0.9333333373069763,0.9333333373069763,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"レッド-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.800000011920929,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.6000000238418579,0.6000000238418579,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ピンク-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.9777777791023254,0.0,0.7491957545280457,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.7222222089767456,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"イエロー-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.855555534362793,0.5437069535255432,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.995231032371521,0.5,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"オレンジ-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[1.0,0.19999998807907105,0.19999998807907105,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.7415363788604736,0.4333333373069763,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ライム-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.1599999964237213,0.800000011920929,0.1599999964237213,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.9167266488075256,1.0,0.3999999761581421,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グリーン-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.48888885974884035,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.6043209433555603,0.9888888597488403,0.6043209433555603,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"スカイ-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.6157118082046509,0.855555534362793,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.6000000238418579,1.0,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブルー-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.19999998807907105,0.19999998807907105,1.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.7666666507720947,0.7666666507720947,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ネイビー-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.1102469190955162,0.19775457680225373,0.5222222208976746,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.5629629492759705,0.7320932745933533,0.8888888955116272,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"パープル-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.6000000238418579,0.0,0.6000000238418579,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[1.0,0.7777777910232544,1.0,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"グレー-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.5333333015441895,0.5333333015441895,0.5333333015441895,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.8999999761581421,0.8999999761581421,0.8999999761581421,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		},
+		{
+			"StyleName":"ブラック-明朝3",
+			"FontFamilyName":"游明朝 Demibold",
+			"FontSize": 60.0,
+			"FontColor":[0.0,0.0,0.0,1.0],
+			"BorderWidth": 10.0,
+			"BorderColor":[0.699999988079071,0.699999988079071,0.699999988079071,1.0],
+			"BorderWidth2": 20.0,
+			"BorderColor2":[1.0,1.0,1.0,1.0],
+			"LineMargin": 10.0,
+			"CharacterMargin": 10.0,
+			"Margin":[0.0,0.0,0.0,0.0],
+			"rm-lock": true
+		}
+	],
+	"text-style-lib": ["標準スタイル","話者1","話者2","話者3","強調1","強調2","強調3","強調4","強調5","強調6","強調7","強調8","強調9","強調10","超強調1","超強調2","超強調3","超強調4","超強調5","怒り1","怒り2","喜び1","喜び2","悲しみ1","悲しみ2","ホワイト-ゴシック1","レッド-ゴシック1","ピンク-ゴシック1","イエロー-ゴシック1","オレンジ-ゴシック1","ライム-ゴシック1","グリーン-ゴシック1","スカイ-ゴシック1","ブルー-ゴシック1","ネイビー-ゴシック1","パープル-ゴシック1","グレー-ゴシック1","ブラック-ゴシック1","ホワイト-ゴシック2","レッド-ゴシック2","ピンク-ゴシック2","イエロー-ゴシック2","オレンジ-ゴシック2","ライム-ゴシック2","グリーン-ゴシック2","スカイ-ゴシック2","ブルー-ゴシック2","ネイビー-ゴシック2","パープル-ゴシック2","グレー-ゴシック2","ブラック-ゴシック2","ホワイト-ゴシック3","レッド-ゴシック3","ピンク-ゴシック3","イエロー-ゴシック3","オレンジ-ゴシック3","ライム-ゴシック3","グリーン-ゴシック3","スカイ-ゴシック3","ブルー-ゴシック3","ネイビー-ゴシック3","パープル-ゴシック3","グレー-ゴシック3","ブラック-ゴシック3","パープル-明朝1","グレー-明朝1","ブラック-明朝1","ホワイト-明朝2","レッド-明朝2","ピンク-明朝2","イエロー-明朝2","オレンジ-明朝2","ライム-明朝2","グリーン-明朝2","スカイ-明朝2","ブルー-明朝2","ネイビー-明朝2","パープル-明朝2","グレー-明朝2","ブラック-明朝2","ホワイト-明朝3","レッド-明朝3","ピンク-明朝3","イエロー-明朝3","オレンジ-明朝3","ライム-明朝3","グリーン-明朝3","スカイ-明朝3","ブルー-明朝3","ネイビー-明朝3","パープル-明朝3","グレー-明朝3","ブラック-明朝3"
+	],
+	"telop-frames": [
+		"properties",
+		{
+			"FrameName": {
+				"p-type": 10,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":"LowerFrame",
+				"keyframes": []
+			},
+			"DisplayName": {
+				"p-type": 10,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":"下枠",
+				"keyframes": []
+			},
+			"Bounds": {
+				"p-type": 2,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":[80.0,800.0,1760.0,200.0],
+				"keyframes": []
+			}
+		},
+		"properties",
+		{
+			"FrameName": {
+				"p-type": 10,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":"UpperFrame",
+				"keyframes": []
+			},
+			"DisplayName": {
+				"p-type": 10,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":"上枠",
+				"keyframes": []
+			},
+			"Bounds": {
+				"p-type": 2,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":[80.0,80.0,1760.0,200.0],
+				"keyframes": []
+			}
+		},
+		"properties",
+		{
+			"FrameName": {
+				"p-type": 10,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":"下枠",
+				"keyframes": []
+			},
+			"DisplayName": {
+				"p-type": 10,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":"",
+				"keyframes": []
+			},
+			"Bounds": {
+				"p-type": 2,
+				"p-subtype": 0,
+				"p-cig": false,
+				"p-value":[520.0,800.0,880.0,200.0],
+				"keyframes": []
+			}
+		}
+	],
+	"additional-actions": [],
+	"layers": [
+		{
+			"type":"Video",
+			"name":"映像・音声1",
+			"locked": false,
+			"selected": false,
+			"visible": true,
+			"volume": 0.0,
+			"mute": false,
+			"view-state": 0,
+			"properties": {
+				"LayerGuiColor": {
+					"p-type": 1,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":[0.250980406999588,0.250980406999588,0.250980406999588,1.0],
+					"keyframes": []
+				},
+				"InitialAudioVolume": {
+					"p-type": 8,
+					"p-subtype": 64,
+					"p-cig": false,
+					"p-value": 0.5,
+					"keyframes": []
+				}
+			},
+			"layer-objects": [
+				{
+					"objkey": 1000,
+					"type":"Video",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": true,
+					"pv-locked": true,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 5.551115123125783e-17,
+					"end-time": 0.76665,
+					"properties": {
+						"Bounds": {
+							"p-type": 2,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[0.0,0.0,1920.0,1080.0],
+							"keyframes": []
+						},
+						"Angle": {
+							"p-type": 9,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"Opacity": {
+							"p-type": 8,
+							"p-subtype": 72,
+							"p-cig": false,
+							"p-value": 1.0,
+							"keyframes": []
+						},
+						"Flip": {
+							"p-type": 16,
+							"p-subtype": 261,
+							"p-cig": false,
+							"p-value":"none",
+							"keyframes": []
+						},
+						"File": {
+							"p-type": 11,
+							"p-subtype": 1,
+							"p-cig": false,
+							"p-value":"fbf9956ed05bae946ce05ef9f0d6c723c065ba7ffba2e09a08aacc9630dc5e27",
+							"keyframes": []
+						},
+						"SpeedStretch": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": true,
+							"keyframes": []
+						},
+						"StartTime": {
+							"p-type": 8,
+							"p-subtype": 66,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"EndTime": {
+							"p-type": 8,
+							"p-subtype": 66,
+							"p-cig": false,
+							"p-value": 0.7666500210762024,
+							"keyframes": []
+						},
+						"LoopPlay": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"AudioVolume": {
+							"p-type": 8,
+							"p-subtype": 64,
+							"p-cig": false,
+							"p-value": 0.5,
+							"keyframes": []
+						},
+						"VideoOffset": {
+							"p-type": 8,
+							"p-subtype": 73,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"CropBounds": {
+							"p-type": 2,
+							"p-subtype": 100,
+							"p-cig": false,
+							"p-value":[0.0,0.0,1920.0,1080.0],
+							"keyframes": []
+						},
+						"SetSpeed": {
+							"p-type": 64,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"Brightness": {
+							"p-type": 7,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"Contrast": {
+							"p-type": 7,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"Gamma": {
+							"p-type": 8,
+							"p-subtype": 70,
+							"p-cig": false,
+							"p-value": 1.0,
+							"keyframes": []
+						}
+					},"sub-objects":[{"type":1,"type-name":"Alpha Fade","category":"InEffect","start-time":0.0,"duration":0.5,
+							"properties": {
+								"curve": {
+									"p-type": 20,
+									"p-subtype": 0,
+									"p-cig": false,
+									"p-value": [
+										0.25,
+										0.25,
+										0.75,
+										0.75
+									],
+									"keyframes": []
+								}
+							},"eff-obj-type":0}],
+					"audio":{"ctrl-points":[{"t":0.0,"l":1.0}]},
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				},
+				{
+					"objkey": 1001,
+					"type":"Video",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": true,
+					"pv-locked": true,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.4833333333333334,
+					"end-time": 1.2499833333333333,
+					"properties": {
+						"Bounds": {
+							"p-type": 2,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[0.0,0.0,1920.0,1080.0],
+							"keyframes": []
+						},
+						"Angle": {
+							"p-type": 9,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"Opacity": {
+							"p-type": 8,
+							"p-subtype": 72,
+							"p-cig": false,
+							"p-value": 1.0,
+							"keyframes": []
+						},
+						"Flip": {
+							"p-type": 16,
+							"p-subtype": 261,
+							"p-cig": false,
+							"p-value":"none",
+							"keyframes": []
+						},
+						"File": {
+							"p-type": 11,
+							"p-subtype": 1,
+							"p-cig": false,
+							"p-value":"fbf9956ed05bae946ce05ef9f0d6c723c065ba7ffba2e09a08aacc9630dc5e27",
+							"keyframes": []
+						},
+						"SpeedStretch": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": true,
+							"keyframes": []
+						},
+						"StartTime": {
+							"p-type": 8,
+							"p-subtype": 66,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"EndTime": {
+							"p-type": 8,
+							"p-subtype": 66,
+							"p-cig": false,
+							"p-value": 0.7666500210762024,
+							"keyframes": []
+						},
+						"LoopPlay": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"AudioVolume": {
+							"p-type": 8,
+							"p-subtype": 64,
+							"p-cig": false,
+							"p-value": 0.5,
+							"keyframes": []
+						},
+						"VideoOffset": {
+							"p-type": 8,
+							"p-subtype": 73,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"CropBounds": {
+							"p-type": 2,
+							"p-subtype": 100,
+							"p-cig": false,
+							"p-value":[0.0,0.0,1920.0,1080.0],
+							"keyframes": []
+						},
+						"SetSpeed": {
+							"p-type": 64,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"Brightness": {
+							"p-type": 7,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"Contrast": {
+							"p-type": 7,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"Gamma": {
+							"p-type": 8,
+							"p-subtype": 70,
+							"p-cig": false,
+							"p-value": 1.0,
+							"keyframes": []
+						}
+					},"sub-objects":[{"type":1,"type-name":"Alpha Fade Out","category":"OutEffect","start-time":0.26664999999999985,"duration":0.5,
+							"properties": {
+								"curve": {
+									"p-type": 20,
+									"p-subtype": 0,
+									"p-cig": false,
+									"p-value": [
+										0.25,
+										0.25,
+										0.75,
+										0.75
+									],
+									"keyframes": []
+								}
+							},"eff-obj-type":2}],
+					"audio":{"ctrl-points":[{"t":0.0,"l":1.0}]},
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				},
+				{
+					"objkey": 1002,
+					"type":"Transition",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.4833333333333334,
+					"end-time": 0.76665,
+					"properties": {
+						"PauseTransition": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"Transition": {
+							"p-type": 10,
+							"p-subtype": 130,
+							"p-cig": false,
+							"p-value":"Cross Fade",
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 1001
+				}
+			]
+		},
+		{
+			"type":"Speaker",
+			"name":"話者1",
+			"locked": false,
+			"selected": false,
+			"visible": true,
+			"volume": 0.0,
+			"mute": false,
+			"view-state": 0,
+			"properties": {
+				"LayerGuiColor": {
+					"p-type": 1,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":[0.250980406999588,0.250980406999588,0.250980406999588,1.0],
+					"keyframes": []
+				},
+				"CharBounds": {
+					"p-type": 2,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":[0.0,720.0,360.0,360.0],
+					"keyframes": []
+				},
+				"Speaker": {
+					"p-type": 10,
+					"p-subtype": 129,
+					"p-cig": false,
+					"p-value":"haruno_sora",
+					"keyframes": []
+				},
+				"Physics": {
+					"p-type": 6,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value": true,
+					"keyframes": []
+				},
+				"FixAspect": {
+					"p-type": 6,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value": true,
+					"keyframes": []
+				},
+				"VoiceLinker": {
+					"p-type": 16,
+					"p-subtype": 263,
+					"p-cig": false,
+					"p-value":"VOICEROID2",
+					"keyframes": []
+				},
+				"SpeakerName": {
+					"p-type": 10,
+					"p-subtype": 133,
+					"p-cig": false,
+					"p-value":"",
+					"keyframes": []
+				},
+				"VoiceArrangeOrder": {
+					"p-type": 16,
+					"p-subtype": 264,
+					"p-cig": false,
+					"p-value":"len-dic",
+					"keyframes": []
+				},
+				"Camera": {
+					"p-type": 12,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":{"pos":[0.904595136642456,19.055896759033204,-21.270376205444337],"tar":[0.904595136642456,17.964202880859376,-0.43960288166999819],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
+					"keyframes": []
+				},
+				"DefaultTextStyle": {
+					"p-type": 15,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":"話者1",
+					"keyframes": []
+				},
+				"TelopFrame": {
+					"p-type": 16,
+					"p-subtype": 256,
+					"p-cig": false,
+					"p-value":"下枠",
+					"keyframes": []
+				},
+				"TelopTargetLayer": {
+					"p-type": 16,
+					"p-subtype": 257,
+					"p-cig": false,
+					"p-value":"話者2",
+					"keyframes": []
+				},
+				"InitialAudioVolume": {
+					"p-type": 8,
+					"p-subtype": 64,
+					"p-cig": false,
+					"p-value": 1.7999999523162842,
+					"keyframes": []
+				},
+				"BaseLipMorphLevel": {
+					"p-type": 8,
+					"p-subtype": 71,
+					"p-cig": false,
+					"p-value": 1.0,
+					"keyframes": []
+				},
+				"ShowTelopDefault": {
+					"p-type": 6,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value": true,
+					"keyframes": []
+				},
+				"LinkFolder": {
+					"p-type": 14,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":"file://",
+					"keyframes": []
+				}
+			},
+			"layer-objects": [
+				{
+					"objkey": 1000,
+					"type":"Speaker Character",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.0,
+					"end-time": 10.0,
+					"properties": {
+						"CharBounds": {
+							"p-type": 2,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[0.0,720.0,360.0,360.0],
+							"keyframes": []
+						},
+						"Angle": {
+							"p-type": 9,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"Flip": {
+							"p-type": 16,
+							"p-subtype": 261,
+							"p-cig": false,
+							"p-value":"none",
+							"keyframes": []
+						},
+						"OutSideBounds": {
+							"p-type": 10,
+							"p-subtype": 131,
+							"p-cig": false,
+							"p-value":"lrtp",
+							"keyframes": []
+						},
+						"CropBoundsRate": {
+							"p-type": 2,
+							"p-subtype": 101,
+							"p-cig": false,
+							"p-value":[0.0,0.0,100.0,100.0],
+							"keyframes": []
+						},
+						"DefaultAction": {
+							"p-type": 10,
+							"p-subtype": 132,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"ViewMode": {
+							"p-type": 16,
+							"p-subtype": 259,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"TimeCurve": {
+							"p-type": 20,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": [
+								0.25,
+								0.25,
+								0.75,
+								0.75
+							],
+							"keyframes": []
+						},
+						"Camera": {
+							"p-type": 12,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":{"pos":[7.0,20.0,-25.0],"tar":[0.0,19.0,0.0],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				},
+				{
+					"objkey": 1001,
+					"type":"Speaker Action",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.43333333333333326,
+					"end-time": 4.183333333333334,
+					"properties": {
+						"Loop": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"Emotion": {
+							"p-type": 10,
+							"p-subtype": 128,
+							"p-cig": false,
+							"p-value":"haruno_sora:StandBy_2.vmd",
+							"keyframes": []
+						}
+					},"sub-objects":[{"type":2,"type-name":"","category":"InWeight","start-time":0.0,"duration":0.2,
+							"properties": {},"snap-type":0},{"type":2,"type-name":"","category":"OutWeight","start-time":3.5500000000000004,"duration":0.2,
+							"properties": {},"snap-type":1}],
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				},
+				{
+					"objkey": 1002,
+					"type":"Speaker Voice",
+					"name":"こんにちは",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.6000000000000001,
+					"end-time": 1.65,
+					"properties": {
+						"AutoUpdateLock": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"FixAudio": {
+							"p-type": 64,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"File": {
+							"p-type": 11,
+							"p-subtype": 2,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"ReloadAudio": {
+							"p-type": 64,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"AudioVolume": {
+							"p-type": 8,
+							"p-subtype": 64,
+							"p-cig": false,
+							"p-value": 1.7999999523162842,
+							"keyframes": []
+						},
+						"LipMorphLevel": {
+							"p-type": 8,
+							"p-subtype": 71,
+							"p-cig": false,
+							"p-value": 1.0,
+							"keyframes": []
+						},
+						"TelopOn": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": true,
+							"keyframes": []
+						},
+						"TelopFrame": {
+							"p-type": 16,
+							"p-subtype": 256,
+							"p-cig": false,
+							"p-value":"下枠",
+							"keyframes": []
+						},
+						"VoiceroidText": {
+							"p-type": 10,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"text":{"wordwarp":true,"margin":[10.0,10.0,10.0,10.0],"text":"こんにちは","stext":[{"c":"s","style":"話者1"},{"c":"t","text":"こんにちは"}],"lines":[{"align":1}]},
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0,"voice-props":{
+						"properties": {}},"voice-hash":0
+				}
+			],"actions":[{"name":"haruno_sora:StandBy_1.vmd","pack":"haruno_sora","l-uk":"StandBy_1.vmd"},{"name":"haruno_sora:StandBy_2.vmd","pack":"haruno_sora","l-uk":"StandBy_2.vmd"},{"name":"haruno_sora:Talk_I.vmd","pack":"haruno_sora","l-uk":"Talk_I.vmd"},{"name":"haruno_sora:Talk_U.vmd","pack":"haruno_sora","l-uk":"Talk_U.vmd"},{"name":"haruno_sora:ThumbsUp.vmd","pack":"haruno_sora","l-uk":"ThumbsUp.vmd"},{"name":"haruno_sora:Point_R_UP_1.vmd","pack":"haruno_sora","l-uk":"Point_R_UP_1.vmd"},{"name":"haruno_sora:Point_R_UP_2.vmd","pack":"haruno_sora","l-uk":"Point_R_UP_2.vmd"},{"name":"haruno_sora:Point_L_UP_1.vmd","pack":"haruno_sora","l-uk":"Point_L_UP_1.vmd"},{"name":"haruno_sora:Point_L_UP_2.vmd","pack":"haruno_sora","l-uk":"Point_L_UP_2.vmd"},{"name":"haruno_sora:Point_DWN_DBL.vmd","pack":"haruno_sora","l-uk":"Point_DWN_DBL.vmd"},{"name":"haruno_sora:Point_UP_DBL.vmd","pack":"haruno_sora","l-uk":"Point_UP_DBL.vmd"},{"name":"haruno_sora:Smile_1.vmd","pack":"haruno_sora","l-uk":"Smile_1.vmd"},{"name":"haruno_sora:Smile_2.vmd","pack":"haruno_sora","l-uk":"Smile_2.vmd"},{"name":"haruno_sora:AHAHA.vmd","pack":"haruno_sora","l-uk":"AHAHA.vmd"},{"name":"haruno_sora:JITO.vmd","pack":"haruno_sora","l-uk":"JITO.vmd"},{"name":"haruno_sora:PUNSUKA!.vmd","pack":"haruno_sora","l-uk":"PUNSUKA!.vmd"},{"name":"haruno_sora:ANGRY!.vmd","pack":"haruno_sora","l-uk":"ANGRY!.vmd"},{"name":"haruno_sora:Lonely.vmd","pack":"haruno_sora","l-uk":"Lonely.vmd"},{"name":"haruno_sora:Disappointed.vmd","pack":"haruno_sora","l-uk":"Disappointed.vmd"},{"name":"haruno_sora:POROPORO.vmd","pack":"haruno_sora","l-uk":"POROPORO.vmd"},{"name":"haruno_sora:Surprise.vmd","pack":"haruno_sora","l-uk":"Surprise.vmd"},{"name":"haruno_sora:ColdSweat.vmd","pack":"haruno_sora","l-uk":"ColdSweat.vmd"},{"name":"haruno_sora:Blush.vmd","pack":"haruno_sora","l-uk":"Blush.vmd"},{"name":"haruno_sora:TEHEPERO.vmd","pack":"haruno_sora","l-uk":"TEHEPERO.vmd"},{"name":"haruno_sora:Hi.vmd","pack":"haruno_sora","l-uk":"Hi.vmd"},{"name":"haruno_sora:Bye.vmd","pack":"haruno_sora","l-uk":"Bye.vmd"},{"name":"haruno_sora:OJIGI.vmd","pack":"haruno_sora","l-uk":"OJIGI.vmd"},{"name":"haruno_sora:Salute.vmd","pack":"haruno_sora","l-uk":"Salute.vmd"},{"name":"haruno_sora:Uh-huh(Japanese).vmd","pack":"haruno_sora","l-uk":"Uh-huh(Japanese).vmd"},{"name":"haruno_sora:Point_1.vmd","pack":"haruno_sora","l-uk":"Point_1.vmd"}],"voice-props":{
+				"properties": {
+					"ゆっくり霊夢_FileKey": {
+						"p-type": 10,
+						"p-subtype": 0,
+						"p-cig": true,
+						"p-value":"20260723_020806_94241_21909",
+						"keyframes": []
+					}
+				}}
+		},
+		{
+			"type":"Speaker",
+			"name":"話者2",
+			"locked": false,
+			"selected": true,
+			"visible": true,
+			"volume": 0.0,
+			"mute": false,
+			"view-state": 0,
+			"properties": {
+				"LayerGuiColor": {
+					"p-type": 1,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":[0.250980406999588,0.250980406999588,0.250980406999588,1.0],
+					"keyframes": []
+				},
+				"CharBounds": {
+					"p-type": 2,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":[1560.0,720.0,360.0,360.0],
+					"keyframes": []
+				},
+				"Speaker": {
+					"p-type": 10,
+					"p-subtype": 129,
+					"p-cig": false,
+					"p-value":"yanderu_kiritan",
+					"keyframes": []
+				},
+				"Physics": {
+					"p-type": 6,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value": true,
+					"keyframes": []
+				},
+				"FixAspect": {
+					"p-type": 6,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value": true,
+					"keyframes": []
+				},
+				"VoiceLinker": {
+					"p-type": 16,
+					"p-subtype": 263,
+					"p-cig": false,
+					"p-value":"VOICEROID2",
+					"keyframes": []
+				},
+				"SpeakerName": {
+					"p-type": 10,
+					"p-subtype": 133,
+					"p-cig": false,
+					"p-value":"",
+					"keyframes": []
+				},
+				"VoiceArrangeOrder": {
+					"p-type": 16,
+					"p-subtype": 264,
+					"p-cig": false,
+					"p-value":"len-dic",
+					"keyframes": []
+				},
+				"Camera": {
+					"p-type": 12,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":{"pos":[7.0,20.0,-25.0],"tar":[0.0,19.0,0.0],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
+					"keyframes": []
+				},
+				"DefaultTextStyle": {
+					"p-type": 15,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":"話者2",
+					"keyframes": []
+				},
+				"TelopFrame": {
+					"p-type": 16,
+					"p-subtype": 256,
+					"p-cig": false,
+					"p-value":"下枠",
+					"keyframes": []
+				},
+				"TelopTargetLayer": {
+					"p-type": 16,
+					"p-subtype": 257,
+					"p-cig": false,
+					"p-value":"話者2",
+					"keyframes": []
+				},
+				"InitialAudioVolume": {
+					"p-type": 8,
+					"p-subtype": 64,
+					"p-cig": false,
+					"p-value": 1.7999999523162842,
+					"keyframes": []
+				},
+				"BaseLipMorphLevel": {
+					"p-type": 8,
+					"p-subtype": 71,
+					"p-cig": false,
+					"p-value": 1.0,
+					"keyframes": []
+				},
+				"ShowTelopDefault": {
+					"p-type": 6,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value": true,
+					"keyframes": []
+				},
+				"LinkFolder": {
+					"p-type": 14,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":"file://",
+					"keyframes": []
+				}
+			},
+			"layer-objects": [
+				{
+					"objkey": 1000,
+					"type":"Speaker Character",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.0,
+					"end-time": 10.0,
+					"properties": {
+						"CharBounds": {
+							"p-type": 2,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[1560.0,720.0,360.0,360.0],
+							"keyframes": []
+						},
+						"Angle": {
+							"p-type": 9,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"Flip": {
+							"p-type": 16,
+							"p-subtype": 261,
+							"p-cig": false,
+							"p-value":"none",
+							"keyframes": []
+						},
+						"OutSideBounds": {
+							"p-type": 10,
+							"p-subtype": 131,
+							"p-cig": false,
+							"p-value":"lrtp",
+							"keyframes": []
+						},
+						"CropBoundsRate": {
+							"p-type": 2,
+							"p-subtype": 101,
+							"p-cig": false,
+							"p-value":[0.0,0.0,100.0,100.0],
+							"keyframes": []
+						},
+						"DefaultAction": {
+							"p-type": 10,
+							"p-subtype": 132,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"ViewMode": {
+							"p-type": 16,
+							"p-subtype": 259,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"TimeCurve": {
+							"p-type": 20,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": [
+								0.25,
+								0.25,
+								0.75,
+								0.75
+							],
+							"keyframes": []
+						},
+						"Camera": {
+							"p-type": 12,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":{"pos":[7.0,20.0,-25.0],"tar":[0.0,19.0,0.0],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				},
+				{
+					"objkey": 1001,
+					"type":"Speaker Action",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 2.0,
+					"end-time": 4.5,
+					"properties": {
+						"Loop": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"Emotion": {
+							"p-type": 10,
+							"p-subtype": 128,
+							"p-cig": false,
+							"p-value":"yanderu_kiritan:smile",
+							"keyframes": []
+						}
+					},"sub-objects":[{"type":2,"type-name":"","category":"InWeight","start-time":0.0,"duration":0.2,
+							"properties": {},"snap-type":0},{"type":2,"type-name":"","category":"OutWeight","start-time":2.3,"duration":0.2,
+							"properties": {},"snap-type":1}],
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				},
+				{
+					"objkey": 1002,
+					"type":"Speaker Voice",
+					"name":"こんにちは！",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": true,
+					"start-time": 1.6,
+					"end-time": 2.8,
+					"properties": {
+						"AutoUpdateLock": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"FixAudio": {
+							"p-type": 64,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"File": {
+							"p-type": 11,
+							"p-subtype": 2,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"ReloadAudio": {
+							"p-type": 64,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0,
+							"keyframes": []
+						},
+						"AudioVolume": {
+							"p-type": 8,
+							"p-subtype": 64,
+							"p-cig": false,
+							"p-value": 1.7999999523162842,
+							"keyframes": []
+						},
+						"LipMorphLevel": {
+							"p-type": 8,
+							"p-subtype": 71,
+							"p-cig": false,
+							"p-value": 1.0,
+							"keyframes": []
+						},
+						"TelopOn": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": true,
+							"keyframes": []
+						},
+						"TelopFrame": {
+							"p-type": 16,
+							"p-subtype": 256,
+							"p-cig": false,
+							"p-value":"下枠",
+							"keyframes": []
+						},
+						"VoiceroidText": {
+							"p-type": 10,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"text":{"wordwarp":true,"margin":[10.0,10.0,10.0,10.0],"text":"こんにちは！","stext":[{"c":"s","style":"話者2"},{"c":"t","text":"こんにちは！"}],"lines":[{"align":1}]},
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0,"voice-props":{
+						"properties": {}},"voice-hash":0
+				}
+			],"actions":[{"name":"yanderu_kiritan:default","pack":"yanderu_kiritan","l-uk":"default"},{"name":"yanderu_kiritan:smile","pack":"yanderu_kiritan","l-uk":"smile"},{"name":"yanderu_kiritan:Embarrassment","pack":"yanderu_kiritan","l-uk":"Embarrassment"},{"name":"yanderu_kiritan:Angry","pack":"yanderu_kiritan","l-uk":"Angry"},{"name":"yanderu_kiritan:Mean","pack":"yanderu_kiritan","l-uk":"Mean"},{"name":"yanderu_kiritan:Pain","pack":"yanderu_kiritan","l-uk":"Pain"}],"voice-props":{
+				"properties": {
+					"のんびり_FileKey": {
+						"p-type": 10,
+						"p-subtype": 0,
+						"p-cig": true,
+						"p-value":"20260723_020806_94270_2794",
+						"keyframes": []
+					}
+				}}
+		},
+		{
+			"type":"Annot",
+			"name":"注釈1",
+			"locked": false,
+			"selected": false,
+			"visible": true,
+			"volume": 0.0,
+			"mute": false,
+			"view-state": 0,
+			"properties": {
+				"LayerGuiColor": {
+					"p-type": 1,
+					"p-subtype": 0,
+					"p-cig": false,
+					"p-value":[0.250980406999588,0.250980406999588,0.250980406999588,1.0],
+					"keyframes": []
+				}
+			},
+			"layer-objects": [
+				{
+					"objkey": 1000,
+					"type":"Figure",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.13333333333333337,
+					"end-time": 1.1333333333333336,
+					"properties": {
+						"Bounds": {
+							"p-type": 2,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[211.0,629.0,128.0,128.0],
+							"keyframes": []
+						},
+						"Angle": {
+							"p-type": 9,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"FillEnable": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": true,
+							"keyframes": []
+						},
+						"FillColor": {
+							"p-type": 1,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[1.0,1.0,1.0,1.0],
+							"keyframes": []
+						},
+						"BorderEnable": {
+							"p-type": 6,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": false,
+							"keyframes": []
+						},
+						"BorderColor": {
+							"p-type": 1,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[1.0,0.0,0.0,1.0],
+							"keyframes": []
+						},
+						"BorderWidth": {
+							"p-type": 8,
+							"p-subtype": 68,
+							"p-cig": false,
+							"p-value": 10.0,
+							"keyframes": []
+						},
+						"BorderAlignment": {
+							"p-type": 16,
+							"p-subtype": 262,
+							"p-cig": false,
+							"p-value":"center",
+							"keyframes": []
+						},
+						"File": {
+							"p-type": 11,
+							"p-subtype": 6,
+							"p-cig": false,
+							"p-value":"861b435901eeec4c6f2d9afc74ac66f986dd7d09708522a8b642c21bf4847f66",
+							"keyframes": []
+						},
+						"FigureName": {
+							"p-type": 10,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":"ひらめき",
+							"keyframes": []
+						},
+						"FigureKey": {
+							"p-type": 10,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":"Emotion_0019",
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"text":{"wordwarp":true,"margin":[10.0,10.0,10.0,10.0],"text":"","stext":[],"lines":[{"align":1}]},
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				}
+			]
+		}
+	]
+}

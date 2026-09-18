@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>Recotte.Core</PackageId>
+    <Version>0.5.0</Version>
+    <Authors>RecotteStudioMCP contributors</Authors>
+    <Description>Unofficial, limited-version SDK for safely reading, validating, editing, and saving Recotte Studio projects.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/shun126/RecotteStudioMCP</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageTags>recotte;recotte-studio;ccproj;sdk</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <EmbeddedResource Include="..\..\Samples\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Templates\001EmptyProject.ccproj" LogicalName="Recotte.Core.Templates.Empty.ccproj" />
+    <EmbeddedResource Include="..\..\Samples\RecotteProjects\002OneText\002OneText.ccproj" Link="Templates\002OneText.ccproj" LogicalName="Recotte.Core.Templates.Text.ccproj" />
+    <EmbeddedResource Include="..\..\Samples\RecotteProjects\004OneImage\004OneImage.ccproj" Link="Templates\004OneImage.ccproj" LogicalName="Recotte.Core.Templates.Image.ccproj" />
+    <EmbeddedResource Include="..\..\Samples\RecotteProjects\005OneVideo\005OneVideo.ccproj" Link="Templates\005OneVideo.ccproj" LogicalName="Recotte.Core.Templates.Video.ccproj" />
+    <EmbeddedResource Include="..\..\Samples\RecotteProjects\010OneAnnotationText\010OneAnnotationText.ccproj" Link="Templates\010OneAnnotationText.ccproj" LogicalName="Recotte.Core.Templates.AnnotationText.ccproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,64 @@
+name: Release
+
+# v で始まるタグ (例: v0.5.0, v0.6.0-beta.1) を push するとリリースを作成する。
+# ハイフンを含むバージョンはプレリリースとして公開する。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Resolve version
+        id: version
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
+            throw "Tag '${{ github.ref_name }}' is not a valid version (expected vX.Y.Z or vX.Y.Z-suffix)."
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "prerelease=$($version.Contains('-').ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test RecotteStudioMCP.sln -c Release
+
+      - name: Publish MCP server
+        run: >
+          dotnet publish Source/Recotte.McpServer/Recotte.McpServer.csproj
+          -c Release -r win-x64 --self-contained
+          -p:PublishSingleFile=true
+          -p:Version=${{ steps.version.outputs.version }}
+          -o artifacts/publish
+
+      - name: Create archive
+        run: |
+          Copy-Item README.md, LICENSE artifacts/publish/
+          Copy-Item Source/Recotte.McpServer/README.md artifacts/publish/McpServer-README.md
+          Compress-Archive -Path artifacts/publish/* `
+            -DestinationPath "artifacts/RecotteStudioMCP-${{ steps.version.outputs.version }}-win-x64.zip"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $flags = @('--generate-notes', '--title', '${{ github.ref_name }}')
+          if ('${{ steps.version.outputs.prerelease }}' -eq 'true') { $flags += '--prerelease' }
+          gh release create '${{ github.ref_name }}' @flags `
+            "artifacts/RecotteStudioMCP-${{ steps.version.outputs.version }}-win-x64.zip"
