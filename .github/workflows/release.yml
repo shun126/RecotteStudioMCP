@@ -41,7 +41,7 @@ jobs:
 
       - name: Publish MCP server
         run: >
-          dotnet publish Source/Recotte.McpServer/Recotte.McpServer.csproj
+          dotnet publish Source/RecotteStudio.McpServer/RecotteStudio.McpServer.csproj
           -c Release -r win-x64 --self-contained
           -p:PublishSingleFile=true
           -p:Version=${{ steps.version.outputs.version }}
@@ -50,7 +50,7 @@ jobs:
       - name: Create archive
         run: |
           Copy-Item README.md, LICENSE artifacts/publish/
-          Copy-Item Source/Recotte.McpServer/README.md artifacts/publish/McpServer-README.md
+          Copy-Item Source/RecotteStudio.McpServer/README.md artifacts/publish/McpServer-README.md
           Compress-Archive -Path artifacts/publish/* `
             -DestinationPath "artifacts/RecotteStudioMCP-${{ steps.version.outputs.version }}-win-x64.zip"
 
