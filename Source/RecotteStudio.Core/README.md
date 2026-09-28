@@ -173,4 +173,4 @@ Recotte Studio was not run in the automated implementation environment. On a mac
 
 ## Packaging and API change
 
-The project packs as prerelease-stage `RecotteStudio.Core` version `0.5.0` with symbols, this README, and verified project templates embedded in the assembly. Tests, standalone samples, media, models, and backups are outside the package. Version 0.5 adds atomic batch editing, preview, structured lookup and inspection, consecutive text placement, and edit-through-SaveCopy without changing the existing SaveCopy call shape.
+The `RecotteStudio.Core` project version follows `RecotteVersion.SupportedVersion` (currently `1.8.5.0`). NuGet normalizes the trailing `.0` in the package filename, so this version produces `RecotteStudio.Core.1.8.5.nupkg`. The package includes symbols, this README, and verified project templates embedded in the assembly. Tests, standalone samples, media, models, and backups are outside the package. The SDK includes atomic batch editing, preview, structured lookup and inspection, consecutive text placement, and edit-through-SaveCopy without changing the existing SaveCopy call shape.
