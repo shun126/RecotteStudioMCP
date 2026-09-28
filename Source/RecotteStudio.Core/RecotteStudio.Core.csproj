@@ -20,10 +20,10 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
-    <EmbeddedResource Include="..\..\Samples\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Templates\001EmptyProject.ccproj" LogicalName="RecotteStudio.Core.Templates.Empty.ccproj" />
-    <EmbeddedResource Include="..\..\Samples\RecotteProjects\002OneText\002OneText.ccproj" Link="Templates\002OneText.ccproj" LogicalName="RecotteStudio.Core.Templates.Text.ccproj" />
-    <EmbeddedResource Include="..\..\Samples\RecotteProjects\004OneImage\004OneImage.ccproj" Link="Templates\004OneImage.ccproj" LogicalName="RecotteStudio.Core.Templates.Image.ccproj" />
-    <EmbeddedResource Include="..\..\Samples\RecotteProjects\005OneVideo\005OneVideo.ccproj" Link="Templates\005OneVideo.ccproj" LogicalName="RecotteStudio.Core.Templates.Video.ccproj" />
-    <EmbeddedResource Include="..\..\Samples\RecotteProjects\010OneAnnotationText\010OneAnnotationText.ccproj" Link="Templates\010OneAnnotationText.ccproj" LogicalName="RecotteStudio.Core.Templates.AnnotationText.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Templates\001EmptyProject.ccproj" LogicalName="RecotteStudio.Core.Templates.Empty.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\002OneText\002OneText.ccproj" Link="Templates\002OneText.ccproj" LogicalName="RecotteStudio.Core.Templates.Text.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\004OneImage\004OneImage.ccproj" Link="Templates\004OneImage.ccproj" LogicalName="RecotteStudio.Core.Templates.Image.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\005OneVideo\005OneVideo.ccproj" Link="Templates\005OneVideo.ccproj" LogicalName="RecotteStudio.Core.Templates.Video.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\010OneAnnotationText\010OneAnnotationText.ccproj" Link="Templates\010OneAnnotationText.ccproj" LogicalName="RecotteStudio.Core.Templates.AnnotationText.ccproj" />
   </ItemGroup>
 </Project>

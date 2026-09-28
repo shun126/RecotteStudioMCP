@@ -1,38 +1,39 @@
 {
-	"app_version":"1.8.5.0",
-	"time":"2026/07/22 11:33:54.355",
+	"app_version":"1.8.5.5",
+	"time":"2026/09/29 01:25:57.879",
 	"setting": {
-		"guid":"7A2250DD-C73C-4E52-BFC5-A99AB68FAC01",
-		"project-name":"004OneImage",
+		"guid":"6957186E-F8A6-4CF3-A3A2-C7BDA767777E",
+		"project-name":"006OneCharacter",
 		"bg-color":[0.0,0.0,0.0,1.0],
-		"duration": 1.0000000015894573,
+		"duration": 10.0,
 		"position": 0.0,
 		"fps": 60.0,
 		"size":[1920,1080],
 		"dpi": 72.0,
 		"auto-duration": true,
 		"pix-ser-sec": 100.0,
+		"time-line-height-scale": 1.0,
 		"auto-seek": false,
 		"editor-info":{"time-line-left":0.0,"object-move-mode":0,"object-snap":true,"pv-object-snap":true,"move-obj-key":true},
 		"voice-link":"VOICEROID2_EachLayer",
 		"export-video-size":[0,0],
-		"export-video-path":"",
-		"file-explorer-path":"file://D:/Users/smoriya/Documents",
+		"export-video-path":"file://",
+		"file-explorer-path":"file://C:/Users/tele-018/Documents",
 		"frame-counter": 0,
 		"volume": 0.0,
 		"mute": false,
 		"textrender-compatibility-1515": false
 	},
-	"speakers": [],
-	"ui-setting": {},
-	"file-items": [
+	"speakers": [
 		{
-			"loc": 0,
-			"ik":"4962e14edc182f24b395db77e74776d427b1002165df6c5c09abbcc4cdf2303e",
-			"rpath":"Sample.png",
-			"apath":"file://D:/Visual Studio Projects/RecotteHelper/Samples/RecotteProjects/004OneImage/Sample.png"
+			"key":"tsurumaki_maki",
+			"name":"弦巻マキ",
+			"file":"file://C:/Program Files/RecotteStudio/models/tsurumaki_maki.rsp",
+			"r-path":"../../../../../../C:/Program Files/RecotteStudio/models/tsurumaki_maki.rsp"
 		}
 	],
+	"ui-setting": {},
+	"file-items": [],
 	"named-colors": [
 		{
 			"name":"default",
@@ -1462,7 +1463,7 @@
 				"p-type": 2,
 				"p-subtype": 0,
 				"p-cig": false,
-				"p-value":[80.0,800.0,1760.0,200.0],
+				"p-value":[80.0,800.0,1400.0,200.0],
 				"keyframes": []
 			}
 		},
@@ -1486,7 +1487,7 @@
 				"p-type": 2,
 				"p-subtype": 0,
 				"p-cig": false,
-				"p-value":[80.0,80.0,1760.0,200.0],
+				"p-value":[80.0,80.0,1400.0,200.0],
 				"keyframes": []
 			}
 		}
@@ -1524,7 +1525,7 @@
 			"type":"Speaker",
 			"name":"話者1",
 			"locked": false,
-			"selected": false,
+			"selected": true,
 			"visible": true,
 			"volume": 0.0,
 			"mute": false,
@@ -1541,14 +1542,14 @@
 					"p-type": 2,
 					"p-subtype": 0,
 					"p-cig": false,
-					"p-value":[10.0,10.0,256.0,256.0],
+					"p-value":[1560.0,720.0,360.0,360.0],
 					"keyframes": []
 				},
 				"Speaker": {
 					"p-type": 10,
 					"p-subtype": 129,
 					"p-cig": false,
-					"p-value":"",
+					"p-value":"tsurumaki_maki",
 					"keyframes": []
 				},
 				"Physics": {
@@ -1569,7 +1570,7 @@
 					"p-type": 16,
 					"p-subtype": 263,
 					"p-cig": false,
-					"p-value":"ゆっくり",
+					"p-value":"Empty",
 					"keyframes": []
 				},
 				"SpeakerName": {
@@ -1590,14 +1591,14 @@
 					"p-type": 12,
 					"p-subtype": 0,
 					"p-cig": false,
-					"p-value":{"pos":[7.0,20.0,-25.0],"tar":[0.0,19.0,0.0],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
+					"p-value":{"pos":[0.24534250795841218,19.440000534057618,-29.240358352661134],"tar":[0.24534250795841218,17.918180465698243,-0.20227265357971192],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
 					"keyframes": []
 				},
 				"DefaultTextStyle": {
 					"p-type": 15,
 					"p-subtype": 0,
 					"p-cig": false,
-					"p-value":"標準スタイル",
+					"p-value":"話者1",
 					"keyframes": []
 				},
 				"TelopFrame": {
@@ -1643,13 +1644,102 @@
 					"keyframes": []
 				}
 			},
-			"layer-objects": [],"voice-props":{
+			"layer-objects": [
+				{
+					"objkey": 1000,
+					"type":"Speaker Character",
+					"name":"",
+					"tl-locked": false,
+					"st-locked": false,
+					"pv-locked": false,
+					"snap-to-end": false,
+					"fkft": false,
+					"selected": false,
+					"start-time": 0.0,
+					"end-time": 10.0,
+					"properties": {
+						"CharBounds": {
+							"p-type": 2,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":[1560.0,720.0,360.0,360.0],
+							"keyframes": []
+						},
+						"Angle": {
+							"p-type": 9,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": 0.0,
+							"keyframes": []
+						},
+						"Flip": {
+							"p-type": 16,
+							"p-subtype": 261,
+							"p-cig": false,
+							"p-value":"none",
+							"keyframes": []
+						},
+						"OutSideBounds": {
+							"p-type": 10,
+							"p-subtype": 131,
+							"p-cig": false,
+							"p-value":"lrtp",
+							"keyframes": []
+						},
+						"CropBoundsRate": {
+							"p-type": 2,
+							"p-subtype": 101,
+							"p-cig": false,
+							"p-value":[0.0,0.0,100.0,100.0],
+							"keyframes": []
+						},
+						"DefaultAction": {
+							"p-type": 10,
+							"p-subtype": 132,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"ViewMode": {
+							"p-type": 16,
+							"p-subtype": 259,
+							"p-cig": false,
+							"p-value":"",
+							"keyframes": []
+						},
+						"TimeCurve": {
+							"p-type": 20,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value": [
+								0.25,
+								0.25,
+								0.75,
+								0.75
+							],
+							"keyframes": []
+						},
+						"Camera": {
+							"p-type": 12,
+							"p-subtype": 0,
+							"p-cig": false,
+							"p-value":{"pos":[7.0,20.0,-25.0],"tar":[0.0,19.0,0.0],"up":[0.0,1.0,0.0],"fov":0.20943933725357057,"z-near":1.0,"z-far":1000.0},
+							"keyframes": []
+						}
+					},"sub-objects":[],
+					"keyframe-gui": {
+						"scale": 100.0,
+						"scroll": 0.0
+					},
+					"start-snap": 0
+				}
+			],"actions":[{"name":"tsurumaki_maki:StandBy_1.vmd","pack":"tsurumaki_maki","l-uk":"StandBy_1.vmd"},{"name":"tsurumaki_maki:StandBy_2.vmd","pack":"tsurumaki_maki","l-uk":"StandBy_2.vmd"},{"name":"tsurumaki_maki:Talk_I.vmd","pack":"tsurumaki_maki","l-uk":"Talk_I.vmd"},{"name":"tsurumaki_maki:Talk_U.vmd","pack":"tsurumaki_maki","l-uk":"Talk_U.vmd"},{"name":"tsurumaki_maki:ThumbsUp.vmd","pack":"tsurumaki_maki","l-uk":"ThumbsUp.vmd"},{"name":"tsurumaki_maki:Point_R_UP_1.vmd","pack":"tsurumaki_maki","l-uk":"Point_R_UP_1.vmd"},{"name":"tsurumaki_maki:Point_R_UP_2.vmd","pack":"tsurumaki_maki","l-uk":"Point_R_UP_2.vmd"},{"name":"tsurumaki_maki:Point_L_UP_1.vmd","pack":"tsurumaki_maki","l-uk":"Point_L_UP_1.vmd"},{"name":"tsurumaki_maki:Point_L_UP_2.vmd","pack":"tsurumaki_maki","l-uk":"Point_L_UP_2.vmd"},{"name":"tsurumaki_maki:Point_DWN_DBL.vmd","pack":"tsurumaki_maki","l-uk":"Point_DWN_DBL.vmd"},{"name":"tsurumaki_maki:Point_UP_DBL.vmd","pack":"tsurumaki_maki","l-uk":"Point_UP_DBL.vmd"},{"name":"tsurumaki_maki:Smile_1.vmd","pack":"tsurumaki_maki","l-uk":"Smile_1.vmd"},{"name":"tsurumaki_maki:Smile_2.vmd","pack":"tsurumaki_maki","l-uk":"Smile_2.vmd"},{"name":"tsurumaki_maki:AHAHA.vmd","pack":"tsurumaki_maki","l-uk":"AHAHA.vmd"},{"name":"tsurumaki_maki:JITO.vmd","pack":"tsurumaki_maki","l-uk":"JITO.vmd"},{"name":"tsurumaki_maki:PUNSUKA!.vmd","pack":"tsurumaki_maki","l-uk":"PUNSUKA!.vmd"},{"name":"tsurumaki_maki:ANGRY!.vmd","pack":"tsurumaki_maki","l-uk":"ANGRY!.vmd"},{"name":"tsurumaki_maki:Lonely.vmd","pack":"tsurumaki_maki","l-uk":"Lonely.vmd"},{"name":"tsurumaki_maki:Disappointed.vmd","pack":"tsurumaki_maki","l-uk":"Disappointed.vmd"},{"name":"tsurumaki_maki:POROPORO.vmd","pack":"tsurumaki_maki","l-uk":"POROPORO.vmd"},{"name":"tsurumaki_maki:Surprise.vmd","pack":"tsurumaki_maki","l-uk":"Surprise.vmd"},{"name":"tsurumaki_maki:ColdSweat.vmd","pack":"tsurumaki_maki","l-uk":"ColdSweat.vmd"},{"name":"tsurumaki_maki:Blush.vmd","pack":"tsurumaki_maki","l-uk":"Blush.vmd"},{"name":"tsurumaki_maki:TEHEPERO.vmd","pack":"tsurumaki_maki","l-uk":"TEHEPERO.vmd"},{"name":"tsurumaki_maki:Hi.vmd","pack":"tsurumaki_maki","l-uk":"Hi.vmd"},{"name":"tsurumaki_maki:Bye.vmd","pack":"tsurumaki_maki","l-uk":"Bye.vmd"},{"name":"tsurumaki_maki:OJIGI.vmd","pack":"tsurumaki_maki","l-uk":"OJIGI.vmd"},{"name":"tsurumaki_maki:Salute.vmd","pack":"tsurumaki_maki","l-uk":"Salute.vmd"},{"name":"tsurumaki_maki:Uh-huh(Japanese).vmd","pack":"tsurumaki_maki","l-uk":"Uh-huh(Japanese).vmd"},{"name":"tsurumaki_maki:Point_1.vmd","pack":"tsurumaki_maki","l-uk":"Point_1.vmd"}],"voice-props":{
 				"properties": {
 					"ゆっくり_FileKey": {
 						"p-type": 10,
 						"p-subtype": 0,
 						"p-cig": true,
-						"p-value":"20260722_113140_1851073_21909",
+						"p-value":"20260722_113925_325439_21909",
 						"keyframes": []
 					}
 				}}
@@ -1658,7 +1748,7 @@
 			"type":"Annot",
 			"name":"注釈1",
 			"locked": false,
-			"selected": true,
+			"selected": false,
 			"visible": true,
 			"volume": 0.0,
 			"mute": false,
@@ -1672,98 +1762,7 @@
 					"keyframes": []
 				}
 			},
-			"layer-objects": [
-				{
-					"objkey": 1000,
-					"type":"Image",
-					"name":"Sample.png",
-					"tl-locked": false,
-					"st-locked": false,
-					"pv-locked": false,
-					"snap-to-end": false,
-					"fkft": false,
-					"selected": true,
-					"start-time": 1.5894572324981482e-9,
-					"end-time": 1.0000000015894573,
-					"properties": {
-						"Bounds": {
-							"p-type": 2,
-							"p-subtype": 0,
-							"p-cig": false,
-							"p-value":[0.0,0.0,1920.0,1080.0],
-							"keyframes": []
-						},
-						"Angle": {
-							"p-type": 9,
-							"p-subtype": 0,
-							"p-cig": false,
-							"p-value": 0.0,
-							"keyframes": []
-						},
-						"Opacity": {
-							"p-type": 8,
-							"p-subtype": 72,
-							"p-cig": false,
-							"p-value": 1.0,
-							"keyframes": []
-						},
-						"Flip": {
-							"p-type": 16,
-							"p-subtype": 261,
-							"p-cig": false,
-							"p-value":"none",
-							"keyframes": []
-						},
-						"File": {
-							"p-type": 11,
-							"p-subtype": 4,
-							"p-cig": false,
-							"p-value":"4962e14edc182f24b395db77e74776d427b1002165df6c5c09abbcc4cdf2303e",
-							"keyframes": []
-						},
-						"ImageMode": {
-							"p-type": 16,
-							"p-subtype": 260,
-							"p-cig": false,
-							"p-value":"stretch",
-							"keyframes": []
-						},
-						"CropBounds": {
-							"p-type": 2,
-							"p-subtype": 100,
-							"p-cig": false,
-							"p-value":[0.0,0.0,1920.0,1080.0],
-							"keyframes": []
-						},
-						"Brightness": {
-							"p-type": 7,
-							"p-subtype": 0,
-							"p-cig": false,
-							"p-value": 0,
-							"keyframes": []
-						},
-						"Contrast": {
-							"p-type": 7,
-							"p-subtype": 0,
-							"p-cig": false,
-							"p-value": 0,
-							"keyframes": []
-						},
-						"Gamma": {
-							"p-type": 8,
-							"p-subtype": 70,
-							"p-cig": false,
-							"p-value": 1.0,
-							"keyframes": []
-						}
-					},"sub-objects":[],
-					"keyframe-gui": {
-						"scale": 100.0,
-						"scroll": 0.0
-					},
-					"start-snap": 0
-				}
-			]
+			"layer-objects": []
 		}
 	]
 }

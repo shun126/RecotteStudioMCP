@@ -5,7 +5,7 @@ namespace RecotteStudio.Core.Tests;
 public sealed class GenerationAndAssetTests
 {
     private static string Sample(string directory, string file) => Path.Combine(
-        TestProjects.RepositoryRoot, "Samples", "RecotteProjects", directory, file);
+        TestProjects.RepositoryRoot, "Documents", "RecotteProjects", directory, file);
 
     [Fact]
     public void Create_ProducesValidSanitizedEmptyProject()
@@ -238,15 +238,14 @@ public sealed class GenerationAndAssetTests
         try
         {
             RecotteProjectDocument target = RecotteProject.Create(new("Characters", directory));
-            RecotteProjectDocument maleDonor = RecotteProject.Load(Sample("006OneCharacter", "006OneCharacter.ccproj"));
+            RecotteProjectDocument twoDonor = RecotteProject.Load(Sample("008TwoCharacters", "008TwoCharacters.ccproj"));
             using (ProjectEditSession first = target.BeginEdit())
             {
-                CharacterImportResult result = first.Editor.ImportCharacter(new(maleDonor, "2D-スーツ男性", new(0m), new(10m)));
+                CharacterImportResult result = first.Editor.ImportCharacter(new(twoDonor, "2D-スーツ男性", new(0m), new(10m)));
                 Assert.True(result.Success);
                 Assert.Equal(1, result.LayerId?.LayerIndex);
                 Assert.True(first.Commit().Success);
             }
-            RecotteProjectDocument twoDonor = RecotteProject.Load(Sample("008TwoCharacters", "008TwoCharacters.ccproj"));
             using (ProjectEditSession second = target.BeginEdit())
             {
                 CharacterImportResult result = second.Editor.ImportCharacter(new(twoDonor, "2D-スーツ女性", new(0m), new(10m)));
@@ -312,11 +311,11 @@ public sealed class GenerationAndAssetTests
             RecotteProjectDocument donor = RecotteProject.Load(Sample("006OneCharacter", "006OneCharacter.ccproj"));
             using (ProjectEditSession first = target.BeginEdit())
             {
-                Assert.True(first.Editor.ImportCharacter(new(donor, "2D-スーツ男性", new(0m), new(10m))).Success);
+                Assert.True(first.Editor.ImportCharacter(new(donor, "tsurumaki_maki", new(0m), new(10m))).Success);
                 Assert.True(first.Commit().Success);
             }
             using ProjectEditSession second = target.BeginEdit();
-            CharacterImportResult duplicate = second.Editor.ImportCharacter(new(donor, "2D-スーツ男性", new(0m), new(10m)));
+            CharacterImportResult duplicate = second.Editor.ImportCharacter(new(donor, "tsurumaki_maki", new(0m), new(10m)));
             Assert.False(duplicate.Success);
             Assert.Equal("RC4603", duplicate.Diagnostics.Single().Code);
         }

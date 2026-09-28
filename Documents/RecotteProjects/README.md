@@ -31,7 +31,7 @@
 
 以下の名前で保存してください。
 
-- ディレクトリ: `Samples/RecotteProjects/010OneAnnotationText`
+- ディレクトリ: `Documents/RecotteProjects/010OneAnnotationText`
 - プロジェクト: `010OneAnnotationText.ccproj`
 
 空に近いプロジェクトを作成し、注釈トラックへ次の文字クリップを1つだけ追加します。

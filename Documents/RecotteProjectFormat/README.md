@@ -1,6 +1,6 @@
 # Recotte Studio プロジェクト書式解析
 
-このディレクトリは、Recotte Studio が生成したプロジェクトファイル（`.ccproj`）のサンプルから確認できた書式を記録します。実ファイルと管理方針は [Samples/RecotteProjects](../../Samples/RecotteProjects/README.md) を参照してください。
+このディレクトリは、Recotte Studio が生成したプロジェクトファイル（`.ccproj`）のサンプルから確認できた書式を記録します。実ファイルと管理方針は [RecotteProjects](../RecotteProjects/README.md) を参照してください。
 
 この文書は Recotte Studio の公式仕様ではありません。書式を書き換える場合は、未知のキーと値を保持し、元ファイルのバックアップを作成することを推奨します。
 

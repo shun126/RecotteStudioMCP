@@ -11,6 +11,7 @@ Capabilities come from an `IProjectFormatProfile`. Four-part versions in the `1.
 | Recotte Studio | Level | Load | Validate | Edit existing | Add text-only voice | SaveCopy | Backed-up Save |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1.8.5.0 | Supported (verified from repository samples) | Yes | Yes | Yes, constrained | Yes, template clone | Yes | Yes |
+| 1.8.5.5 | Supported (repository samples, via the 1.8.x.x profile) | Yes | Yes | Yes, constrained | Yes, template clone | Yes | Yes |
 | Other 1.8.x.x | Supported (accepted as compatible) | Yes | Yes | Yes, constrained | Yes, template clone | Yes | Yes |
 | 1.7.1.2 | ReadOnly (unverified) | Yes | Warning | No | No | No | No |
 | Other/invalid | Unsupported | JSON permitting | Warning | No | No | No | No |

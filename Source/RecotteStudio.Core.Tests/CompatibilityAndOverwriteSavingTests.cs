@@ -154,7 +154,7 @@ public sealed class CompatibilityAndOverwriteSavingTests
     {
         string directory = Directory.CreateTempSubdirectory("RecotteStudioCoreTests-").FullName;
         string source = Path.Combine(directory, "source.ccproj");
-        string oneText = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "002OneText", "002OneText.ccproj");
+        string oneText = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "002OneText", "002OneText.ccproj");
         try
         {
             File.Copy(oneText, source);

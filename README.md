@@ -1,6 +1,33 @@
-# RecotteStudioMCP
+<div align="center">
+<h1>RecotteStudio MCP</h1>
+<p>
+<a href="https://github.com/shun126/RecotteStudioMCP/issues">Issues</a>,
+<a href="https://github.com/shun126/RecotteStudioMCP/discussions">Discussions</a>,
+<a href="https://github.com/shun126/RecotteStudioMCP/wiki">Wiki</a>,
+<a href="https://deepwiki.com/shun126/RecotteStudioMCP">DeepWiki</a>,
+<a href="https://mnu.sakura.ne.jp/_doxygen/mana">Doxygen</a>
+</p>
+<p>
+<a href="https://github.com/shun126/RecotteStudioMCP/stargazers"><img src="https://img.shields.io/github/stars/shun126/RecotteStudioMCP?style=social"></a>
+<a href="https://github.com/shun126/RecotteStudioMCP/blob/main/LICENSE"><img src="https://img.shields.io/github/license/shun126/RecotteStudioMCP"></a>
+<a href="https://github.com/shun126/RecotteStudioMCP/releases"><img src="https://img.shields.io/github/v/release/shun126/RecotteStudioMCP"></a>
+<a href="https://github.com/shun126/RecotteStudioMCP/releases"><img src="https://img.shields.io/github/downloads/shun126/RecotteStudioMCP/total"></a>
+</p>
+</div>
 
 Recotte Studio の `.ccproj` プロジェクトを MCP クライアントから調査・作成・編集・保存する Windows アプリです。Recotte Studio 自体は起動せず、[RecotteStudio.Core](Source/RecotteStudio.Core/README.md) がプロジェクトファイルを処理します。
+
+> 本プロジェクトは非公式ツールです。株式会社AHS および Recotte Studio の開発元とは関係ありません。
+
+## Recotte Studio とは
+
+[Recotte Studio](https://www.recottestudio.com/) は、株式会社AHS の Windows 向け動画編集ソフトです。3D / 2D のキャラクターと音声合成を組み合わせて、解説動画などを手軽に作成できます。
+
+- VOICEPEAK や VOICEVOX などの音声合成ソフトと連携し、テキストから読み上げ音声付きの動画を作成
+- 3D モデルや 2D 立ち絵のキャラクターに対応し、口パク・まばたき・表情変更が可能
+- カット編集、テロップ、図形、エフェクトなどの一般的な動画編集機能
+
+無料で使える [Recotte Studio Basic](https://www.recottestudio.com/) と、機能を拡張した [製品版](https://www.ah-soft.com/rs/) があります。本ツールが扱う `.ccproj` は Recotte Studio のプロジェクトファイルです。生成したプロジェクトを開いて動画に書き出すには Recotte Studio が必要ですが、Basic の機能の範囲内であれば無料の Recotte Studio Basic でも利用できます。
 
 ## 使い始める
 
@@ -25,15 +52,12 @@ Recotte Studio の `.ccproj` プロジェクトを MCP クライアントから�
 
 ## 開発
 
-.NET 10 SDK と Windows App SDK の NuGet パッケージを使用します。
+.NET 9 SDK と Windows App SDK の NuGet パッケージを使用します。
 
 ```powershell
 dotnet build RecotteStudioMCP.sln
 dotnet test RecotteStudioMCP.sln
-./Scripts/Publish-WinX64.ps1
 ```
-
-発行スクリプトは自己完結型の単一 EXE を `artifacts/publish/win-x64` に作成し、`artifacts/RecotteStudioMCP-win-x64.zip` に収めます。対象は Windows x64 です。WinUI 3 の同梱ライブラリは初回起動時に一時ディレクトリへ展開されます。
 
 | 場所 | 内容 |
 | --- | --- |

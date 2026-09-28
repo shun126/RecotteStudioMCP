@@ -2,7 +2,7 @@ namespace RecotteStudio.Core.Tests;
 
 public sealed class EditingTests
 {
-    private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "002OneText", "002OneText.ccproj");
+    private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "002OneText", "002OneText.ccproj");
 
     [Fact]
     public void Commit_PublishesTextAndIncrementsRevision()
@@ -55,7 +55,7 @@ public sealed class EditingTests
     [Fact]
     public void AudioBackedVoice_TextUpdateIsRejected()
     {
-        string path = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "003OneVoice", "003OneVoice.ccproj");
+        string path = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "003OneVoice", "003OneVoice.ccproj");
         RecotteProjectDocument document = RecotteProject.Load(path);
         using ProjectEditSession session = document.BeginEdit();
 

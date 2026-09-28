@@ -2,7 +2,7 @@ namespace RecotteStudio.Core.Tests;
 
 public sealed class InspectionAndSequenceTests
 {
-    private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "002OneText", "002OneText.ccproj");
+    private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "002OneText", "002OneText.ccproj");
 
     [Fact]
     public void Lookup_DistinguishesFoundNotFoundAndAmbiguous()
@@ -13,7 +13,7 @@ public sealed class InspectionAndSequenceTests
         LookupResult<LayerView> missing = document.FindLayer(new LayerNameReference("missing"));
         LookupResult<LayerView> ambiguous = document.FindLayer(new LayerQuery());
         LookupResult<TimelineObjectView> voice = document.FindTimelineObject(new TimelineObjectIdReference(new(1, 1000)));
-        string fullProject = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "009FullProject", "009FullProject.ccproj");
+        string fullProject = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "009FullProject", "009FullProject.ccproj");
         LookupResult<TimelineObjectView> duplicateKey = RecotteProject.Load(fullProject).FindTimelineObject(new ObjectKeyReference(1000));
 
         Assert.Equal(LookupStatus.Found, found.Status);
@@ -30,7 +30,7 @@ public sealed class InspectionAndSequenceTests
     [Fact]
     public void SpeakerLookupAndSummary_AreStructured()
     {
-        string characterVoice = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects",
+        string characterVoice = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects",
             "007OneCharacterWithVoice", "007OneCharacterWithVoice.ccproj");
         RecotteProjectDocument speakerDocument = RecotteProject.Load(characterVoice);
         SpeakerView speaker = Assert.Single(speakerDocument.Speakers);
@@ -69,7 +69,7 @@ public sealed class InspectionAndSequenceTests
     [Fact]
     public void TimelineCapabilities_AllowRemovingEveryUnlockedObjectKind()
     {
-        string fullProject = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects",
+        string fullProject = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects",
             "009FullProject", "009FullProject.ccproj");
         RecotteProjectDocument document = RecotteProject.Load(fullProject);
 

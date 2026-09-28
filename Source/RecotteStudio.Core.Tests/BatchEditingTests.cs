@@ -2,12 +2,12 @@ namespace RecotteStudio.Core.Tests;
 
 public sealed class BatchEditingTests
 {
-    private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "002OneText", "002OneText.ccproj");
+    private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "002OneText", "002OneText.ccproj");
 
     [Fact]
     public void RemoveTimelineObject_RejectsAmbiguousProjectWideObjectKey()
     {
-        string fullProject = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects",
+        string fullProject = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects",
             "009FullProject", "009FullProject.ccproj");
         RecotteProjectDocument document = RecotteProject.Load(fullProject);
 
@@ -116,8 +116,8 @@ public sealed class BatchEditingTests
         try
         {
             string output = Path.Combine(directory, "assets.ccproj");
-            string image = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "004OneImage", "Sample.png");
-            string video = Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects", "005OneVideo", "Sample.mp4");
+            string image = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "004OneImage", "Sample.png");
+            string video = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "005OneVideo", "Sample.mp4");
             RecotteProjectDocument document = RecotteProject.Create(new("Assets", directory));
 
             ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]

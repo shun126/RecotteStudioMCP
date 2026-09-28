@@ -2,7 +2,7 @@ namespace RecotteStudio.Core.Tests;
 
 public sealed class AnnotationTextTests
 {
-    private static string AnnotationSample => Path.Combine(TestProjects.RepositoryRoot, "Samples", "RecotteProjects",
+    private static string AnnotationSample => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects",
         "010OneAnnotationText", "010OneAnnotationText.ccproj");
 
     [Fact]

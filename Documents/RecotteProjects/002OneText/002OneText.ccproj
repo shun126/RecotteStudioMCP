@@ -1,23 +1,24 @@
 {
-	"app_version":"1.8.5.0",
-	"time":"2026/07/22 11:36:06.937",
+	"app_version":"1.8.5.5",
+	"time":"2026/09/29 01:23:40.140",
 	"setting": {
-		"guid":"A3DCB2AE-874B-49F3-937E-8B8D1F28A908",
-		"project-name":"003OneVoice",
+		"guid":"F4397BFE-CBFF-4327-AD06-492D9EBAAC49",
+		"project-name":"002OneText",
 		"bg-color":[0.0,0.0,0.0,1.0],
-		"duration": 0.832,
-		"position": 0.2,
+		"duration": 1.95,
+		"position": 0.0,
 		"fps": 60.0,
 		"size":[1920,1080],
 		"dpi": 72.0,
 		"auto-duration": true,
 		"pix-ser-sec": 100.0,
+		"time-line-height-scale": 1.0,
 		"auto-seek": false,
 		"editor-info":{"time-line-left":0.0,"object-move-mode":0,"object-snap":true,"pv-object-snap":true,"move-obj-key":true},
 		"voice-link":"VOICEROID2_EachLayer",
 		"export-video-size":[0,0],
-		"export-video-path":"",
-		"file-explorer-path":"file://D:/Users/smoriya/Documents",
+		"export-video-path":"file://",
+		"file-explorer-path":"file://C:/Users/tele-018/Documents",
 		"frame-counter": 0,
 		"volume": 0.0,
 		"mute": false,
@@ -25,14 +26,7 @@
 	},
 	"speakers": [],
 	"ui-setting": {},
-	"file-items": [
-		{
-			"loc": 0,
-			"ik":"3a49c3133fd95258368acdcb0c32d678ae7c5724f6b2b0be1a5d8f47c1cd0ef0",
-			"rpath":"Voice/voice_20260722_113525_85746_41.wav",
-			"apath":"file://D:/Visual Studio Projects/RecotteHelper/Samples/RecotteProjects/003OneVoice/Voice/voice_20260722_113525_85746_41.wav"
-		}
-	],
+	"file-items": [],
 	"named-colors": [
 		{
 			"name":"default",
@@ -1569,7 +1563,7 @@
 					"p-type": 16,
 					"p-subtype": 263,
 					"p-cig": false,
-					"p-value":"ゆっくり",
+					"p-value":"Empty",
 					"keyframes": []
 				},
 				"SpeakerName": {
@@ -1639,7 +1633,7 @@
 					"p-type": 14,
 					"p-subtype": 0,
 					"p-cig": false,
-					"p-value":"file://D:/Visual Studio Projects/RecotteHelper/Samples/RecotteProjects/003OneVoice/Voice",
+					"p-value":"",
 					"keyframes": []
 				}
 			},
@@ -1647,15 +1641,15 @@
 				{
 					"objkey": 1000,
 					"type":"Speaker Voice",
-					"name":"サンプル",
+					"name":"sample text",
 					"tl-locked": false,
 					"st-locked": false,
 					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
 					"selected": true,
-					"start-time": 0.19999999999999996,
-					"end-time": 0.832,
+					"start-time": 0.0,
+					"end-time": 1.95,
 					"properties": {
 						"AutoUpdateLock": {
 							"p-type": 6,
@@ -1675,7 +1669,7 @@
 							"p-type": 11,
 							"p-subtype": 2,
 							"p-cig": false,
-							"p-value":"3a49c3133fd95258368acdcb0c32d678ae7c5724f6b2b0be1a5d8f47c1cd0ef0",
+							"p-value":"",
 							"keyframes": []
 						},
 						"ReloadAudio": {
@@ -1721,22 +1715,13 @@
 							"keyframes": []
 						}
 					},"sub-objects":[],
-					"text":{"wordwarp":true,"margin":[10.0,10.0,10.0,10.0],"text":"サンプル","stext":[{"c":"s","style":"標準スタイル"},{"c":"t","text":"サンプル"}],"lines":[{"align":1}]},
-					"audio":{"ctrl-points":[{"t":0.0,"l":1.0}]},
+					"text":{"wordwarp":true,"margin":[10.0,10.0,10.0,10.0],"text":"sample text","stext":[{"c":"s","style":"標準スタイル"},{"c":"t","text":"sample text"}],"lines":[{"align":1}]},
 					"keyframe-gui": {
 						"scale": 100.0,
 						"scroll": 0.0
 					},
 					"start-snap": 0,"voice-props":{
-						"properties": {
-							"ゆっくり_FileKey": {
-								"p-type": 10,
-								"p-subtype": 0,
-								"p-cig": true,
-								"p-value":"20260722_113525_85746_41",
-								"keyframes": []
-							}
-						}},"voice-hash":1884127780
+						"properties": {}},"voice-hash":0
 				}
 			],"voice-props":{
 				"properties": {
@@ -1744,7 +1729,7 @@
 						"p-type": 10,
 						"p-subtype": 0,
 						"p-cig": true,
-						"p-value":"20260722_113501_61283_21909",
+						"p-value":"20260722_110757_428225_21909",
 						"keyframes": []
 					}
 				}}

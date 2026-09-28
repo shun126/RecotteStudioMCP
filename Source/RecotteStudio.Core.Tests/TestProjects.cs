@@ -6,7 +6,7 @@ public static class TestProjects
 
     public static IEnumerable<object[]> ValidProjects()
     {
-        string samples = Path.Combine(RepositoryRoot, "Samples", "RecotteProjects");
+        string samples = Path.Combine(RepositoryRoot, "Documents", "RecotteProjects");
         foreach (string path in Directory.EnumerateFiles(samples, "*.ccproj", SearchOption.AllDirectories).Order())
         {
             yield return new object[] { path };
@@ -28,7 +28,7 @@ public static class TestProjects
 
     internal static string EmptyProject => Path.Combine(
         RepositoryRoot,
-        "Samples",
+        "Documents",
         "RecotteProjects",
         "001EmptyProject",
         "001EmptyProject.ccproj");

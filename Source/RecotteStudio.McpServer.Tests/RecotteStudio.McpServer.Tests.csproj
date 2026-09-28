@@ -15,6 +15,6 @@
   </ItemGroup>
   <ItemGroup><ProjectReference Include="..\RecotteStudio.McpServer\RecotteStudio.McpServer.csproj" /></ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Samples\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Fixtures\Empty.ccproj" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Documents\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Fixtures\Empty.ccproj" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
