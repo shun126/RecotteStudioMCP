@@ -1,10 +1,10 @@
 name: Release
 
-# v で始まるタグ (例: v0.5.0, v0.6.0-beta.1) を push するとリリースを作成する。
+# vX.Y.Z 形式のタグ (例: v0.0.0, v0.6.0-beta.1) を push するとリリースを作成する。
 # ハイフンを含むバージョンはプレリリースとして公開する。
 on:
   push:
-    tags: ['v*']
+    tags: ['v*.*.*']
 
 permissions:
   contents: write
