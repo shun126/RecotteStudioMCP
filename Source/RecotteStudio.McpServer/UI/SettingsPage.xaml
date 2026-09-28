@@ -1,0 +1,47 @@
+<Page
+    x:Class="RecotteStudio.McpServer.UI.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Padding="32,24" Spacing="24" MaxWidth="720" HorizontalAlignment="Center">
+            <TextBlock Text="設定" Style="{StaticResource TitleTextBlockStyle}" />
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="作業フォルダ" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="空欄の場合は制限なし。変更するとMCPサーバーを再起動します。" TextWrapping="Wrap" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBox x:Name="WorkspaceBox" PlaceholderText="フォルダを選択するか、空欄にしてください" />
+                    <Button Grid.Column="1" Content="参照" Click="BrowseWorkspace_Click" />
+                </Grid>
+                <Button x:Name="ApplyButton" Content="作業フォルダを適用" Click="ApplyWorkspace_Click" HorizontalAlignment="Left" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="Codex に接続" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="%USERPROFILE%\.codex\config.toml の旧 stdio 設定を削除し、次を追加してください。設定後にCodexを再起動します。" TextWrapping="Wrap" />
+                <TextBox x:Name="CodexBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Codex 設定をコピー" Click="CopyCodex_Click" />
+                    <Button Content="エージェントへの設定依頼文をコピー" Click="CopyCodexAgentRequest_Click" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="Claude Code に接続" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="%USERPROFILE%\.claude.json の旧 mcpServers.recotte を削除し、mcpServers.recotte_studio に次の設定を追加・置換してください。他の設定は残し、新しいセッションを開始します。" TextWrapping="Wrap" />
+                <TextBox x:Name="ClaudeBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="190" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Claude Code 設定をコピー" Click="CopyClaude_Click" />
+                    <Button Content="エージェントへの設定依頼文をコピー" Click="CopyClaudeAgentRequest_Click" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="接続トークン" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="接続設定例とエージェントへの依頼文には、このPC専用のトークンが含まれます。依頼文を会話に貼ると、トークンもその会話に含まれます。" TextWrapping="Wrap" />
+                <Button Content="トークンを再発行" Click="RegenerateToken_Click" HorizontalAlignment="Left" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,10 +1,10 @@
 name: Release
 
-# v で始まるタグ (例: v0.5.0, v0.6.0-beta.1) を push するとリリースを作成する。
+# vX.Y.Z 形式のタグ (例: v0.5.0, v0.6.0-beta.1) を push するとリリースを作成する。
 # ハイフンを含むバージョンはプレリリースとして公開する。
 on:
   push:
-    tags: ['v*']
+    tags: ['v*.*.*']
 
 permissions:
   contents: write
@@ -33,6 +33,11 @@ jobs:
           if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
             throw "Tag '${{ github.ref_name }}' is not a valid version (expected vX.Y.Z or vX.Y.Z-suffix)."
           }
+          $serverVersion = dotnet msbuild Source/RecotteStudio.McpServer/RecotteStudio.McpServer.csproj -getProperty:Version
+          if ($LASTEXITCODE -ne 0) { throw 'Could not read the MCP server version.' }
+          if ($version -ne $serverVersion.Trim()) {
+            throw "Tag version '$version' does not match MCP server version '$serverVersion'."
+          }
           "version=$version" >> $env:GITHUB_OUTPUT
           "prerelease=$($version.Contains('-').ToString().ToLower())" >> $env:GITHUB_OUTPUT
 
@@ -41,16 +46,15 @@ jobs:
 
       - name: Publish MCP server
         run: >
-          dotnet publish Source/Recotte.McpServer/Recotte.McpServer.csproj
+          dotnet publish Source/RecotteStudio.McpServer/RecotteStudio.McpServer.csproj
           -c Release -r win-x64 --self-contained
           -p:PublishSingleFile=true
-          -p:Version=${{ steps.version.outputs.version }}
           -o artifacts/publish
 
       - name: Create archive
         run: |
           Copy-Item README.md, LICENSE artifacts/publish/
-          Copy-Item Source/Recotte.McpServer/README.md artifacts/publish/McpServer-README.md
+          Copy-Item Source/RecotteStudio.McpServer/README.md artifacts/publish/McpServer-README.md
           Compress-Archive -Path artifacts/publish/* `
             -DestinationPath "artifacts/RecotteStudioMCP-${{ steps.version.outputs.version }}-win-x64.zip"
 

@@ -1,15 +1,16 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recotte.Core", "Source\Recotte.Core\Recotte.Core.csproj", "{EEE7DAE2-9378-4C4A-AC03-B91403D97FAD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecotteStudio.Core", "Source\RecotteStudio.Core\RecotteStudio.Core.csproj", "{EEE7DAE2-9378-4C4A-AC03-B91403D97FAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recotte.Core.Tests", "Source\Recotte.Core.Tests\Recotte.Core.Tests.csproj", "{9EBD12F2-8ED3-40DA-91D8-5C22A7076CF0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecotteStudio.Core.Tests", "Source\RecotteStudio.Core.Tests\RecotteStudio.Core.Tests.csproj", "{9EBD12F2-8ED3-40DA-91D8-5C22A7076CF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recotte.McpServer", "Source\Recotte.McpServer\Recotte.McpServer.csproj", "{9458AF1E-16D5-47A4-91DE-EAE7FE9201AF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecotteStudio.McpServer", "Source\RecotteStudio.McpServer\RecotteStudio.McpServer.csproj", "{9458AF1E-16D5-47A4-91DE-EAE7FE9201AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recotte.McpServer.Tests", "Source\Recotte.McpServer.Tests\Recotte.McpServer.Tests.csproj", "{02E65AF9-607F-4B2E-8D68-CFBED6D27EFB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecotteStudio.McpServer.Tests", "Source\RecotteStudio.McpServer.Tests\RecotteStudio.McpServer.Tests.csproj", "{02E65AF9-607F-4B2E-8D68-CFBED6D27EFB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{B8EFCA5F-814F-285C-A8CB-F00F14650265}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -72,5 +73,14 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EEE7DAE2-9378-4C4A-AC03-B91403D97FAD} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
+		{9EBD12F2-8ED3-40DA-91D8-5C22A7076CF0} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
+		{9458AF1E-16D5-47A4-91DE-EAE7FE9201AF} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
+		{02E65AF9-607F-4B2E-8D68-CFBED6D27EFB} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3A731C31-A1BC-467D-9D5C-03146AE983BB}
 	EndGlobalSection
 EndGlobal
