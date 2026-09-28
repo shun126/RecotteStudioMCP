@@ -1,0 +1,23 @@
+<Page
+    x:Class="RecotteStudio.McpServer.UI.HomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer>
+        <StackPanel Padding="32,24" Spacing="22" MaxWidth="720" HorizontalAlignment="Center">
+            <StackPanel Spacing="8">
+                <TextBlock Text="ホーム" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="このウィンドウを開いている間、MCPサーバーが利用できます。最小化しても動作します。" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="接続先" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBox x:Name="EndpointBox" IsReadOnly="True" Text="http://127.0.0.1:8765/mcp" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="作業フォルダ" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Name="WorkspaceText" Text="制限なし" TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
