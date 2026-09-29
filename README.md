@@ -31,7 +31,7 @@ Recotte Studio の `.ccproj` プロジェクトを MCP クライアントから�
 
 ## 使い始める
 
-1. [Releases](https://github.com/shun126/RecotteStudioMCP/releases) の `RecotteStudioMCP-<バージョン>-win-x64.zip`（例: `RecotteStudioMCP-0.5.0-win-x64.zip`）を展開します。
+1. [Releases](https://github.com/shun126/RecotteStudioMCP/releases) の `RecotteStudioMCP-<バージョン>-win-x64.zip`（例: `RecotteStudioMCP-0.5.1-win-x64.zip`）を展開します。
 2. `RecotteStudio.McpServer.exe` を起動します。ウィンドウが開いている間、`http://127.0.0.1:8765/mcp` で MCP サーバーが稼働します。最小化しても稼働し、閉じると停止します。
 3. 必要なら画面左下の設定を開き、作業フォルダを指定して「作業フォルダを適用」を押します。未指定の場合は従来どおり、既存ディレクトリ内の任意の `.ccproj` を扱えます。
 4. 設定画面の Codex または Claude Code の接続例をコピーして接続します。接続例にはこの PC 専用の接続トークンが含まれるため、公開しないでください。
