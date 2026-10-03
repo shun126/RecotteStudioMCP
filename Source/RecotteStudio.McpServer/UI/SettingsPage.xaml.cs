@@ -10,7 +10,12 @@ public sealed partial class SettingsPage : Page
 {
     private MainWindow? owner;
 
-    public SettingsPage() => InitializeComponent();
+    public SettingsPage()
+    {
+        InitializeComponent();
+        VersionText.Text = $"Recotte Studio MCP {AppVersion.Version}";
+        BuildText.Text = AppVersion.BuildDescription;
+    }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {

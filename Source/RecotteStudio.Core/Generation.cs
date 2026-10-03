@@ -44,26 +44,64 @@ internal static class ProjectTemplateResources
 
 /// <summary>
 /// Supplies the verified text-only Speaker Voice embedded in this assembly so that a Speaker layer without an existing
-/// voice can still receive one. The clone is offered only to projects that define the named text and telop resources it
-/// references, because a dangling reference would validate here and break when Recotte Studio opens the project.
+/// voice can still receive one. The template's own text style and telop frame are never carried over: the clone is bound
+/// to the target Speaker layer's settings, and is offered only when those resolve in the target project, because a
+/// dangling reference would validate here and break when Recotte Studio opens the project.
 /// </summary>
 internal static class TextVoiceTemplateResources
 {
     internal const string ResourceName = "RecotteStudio.Core.Templates.Text.ccproj";
 
-    private static readonly string[] SharedDefinitions = { "text-styles", "text-style-lib", "telop-frames" };
+    // Voice property <- Speaker layer property. Every Speaker Voice in the repository samples carries its layer's value.
+    private static readonly (string Voice, string Layer)[] LayerDefaults =
+    {
+        ("AudioVolume", "InitialAudioVolume"), ("LipMorphLevel", "BaseLipMorphLevel"), ("TelopOn", "ShowTelopDefault"),
+    };
     private static readonly Lazy<TemplateSource?> Source = new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>Gets whether the embedded template resolves to a verified text-only Speaker Voice.</summary>
     internal static bool Exists => Source.Value is not null;
 
-    /// <summary>Returns whether the embedded template can be cloned into the supplied project root.</summary>
-    internal static bool IsCompatibleWith(JsonObject targetRoot) => Source.Value is TemplateSource source &&
-        SharedDefinitions.All(name => SemanticJsonComparer.Equals(targetRoot[name], source.Root[name]));
+    /// <summary>Returns whether the embedded voice can be bound to the supplied Speaker layer of the project root.</summary>
+    internal static bool CanBindTo(JsonObject targetRoot, JsonObject layer) =>
+        Source.Value is not null && TryResolveLayerTelop(targetRoot, layer, out _, out _);
 
-    /// <summary>Returns a private clone of the embedded voice, or null when it is unavailable or incompatible.</summary>
-    internal static JsonObject? TryClone(JsonObject targetRoot) =>
-        IsCompatibleWith(targetRoot) ? (JsonObject)Source.Value!.Voice.DeepClone() : null;
+    /// <summary>
+    /// Returns a private clone of the embedded voice bound to the layer's text style, telop frame, and voice defaults, or
+    /// null when the template is unavailable or the layer's style or frame is not defined in the project.
+    /// </summary>
+    internal static JsonObject? TryClone(JsonObject targetRoot, JsonObject layer)
+    {
+        if (Source.Value is not TemplateSource source ||
+            !TryResolveLayerTelop(targetRoot, layer, out string style, out string frame)) return null;
+        JsonObject voice = (JsonObject)source.Voice.DeepClone();
+        if (voice["properties"] is not JsonObject properties || properties["TelopFrame"] is not JsonObject telopFrame ||
+            voice["text"] is not JsonObject text || text["stext"] is not JsonArray styledText) return null;
+        JsonObject[] styleRuns = styledText.OfType<JsonObject>()
+            .Where(item => JsonAccess.TryGetString(item, "c", out string kind) && kind == "s").ToArray();
+        if (styleRuns.Length == 0) return null;
+        foreach (JsonObject run in styleRuns) run["style"] = style;
+        telopFrame["p-value"] = frame;
+        if (voice.ContainsKey("selected")) voice["selected"] = false;
+        JsonObject layerProperties = (JsonObject)layer["properties"]!;
+        foreach ((string voiceName, string layerName) in LayerDefaults)
+            if (properties[voiceName] is JsonObject target && layerProperties[layerName] is JsonObject origin &&
+                origin["p-value"] is JsonNode value) target["p-value"] = value.DeepClone();
+        return voice;
+    }
+
+    private static bool TryResolveLayerTelop(JsonObject targetRoot, JsonObject layer, out string style, out string frame)
+    {
+        style = JsonAccess.GetPropertyString(layer, "DefaultTextStyle") ?? string.Empty;
+        frame = JsonAccess.GetPropertyString(layer, "TelopFrame") ?? string.Empty;
+        string styleName = style, frameName = frame;
+        return styleName.Length > 0 && frameName.Length > 0 &&
+            targetRoot["text-styles"] is JsonArray styles && styles.OfType<JsonObject>().Any(item =>
+                JsonAccess.TryGetString(item, "StyleName", out string name) && name == styleName) &&
+            targetRoot["telop-frames"] is JsonArray frames && frames.OfType<JsonObject>().Any(item =>
+                item["FrameName"] is JsonObject property && JsonAccess.TryGetString(property, "p-value", out string name) &&
+                name == frameName);
+    }
 
     private static TemplateSource? Load()
     {
@@ -75,10 +113,10 @@ internal static class TextVoiceTemplateResources
                 .SelectMany(layer => (layer["layer-objects"] as JsonArray)?.OfType<JsonObject>() ?? Array.Empty<JsonObject>())
                 .FirstOrDefault(ProjectEditor.IsTextOnlySpeakerVoice)
             : null;
-        return voice is null ? null : new TemplateSource(root, voice);
+        return voice is null ? null : new TemplateSource(voice);
     }
 
-    private sealed record TemplateSource(JsonObject Root, JsonObject Voice);
+    private sealed record TemplateSource(JsonObject Voice);
 }
 
 /// <summary>Supplies the verified annotation text-box object and the text style referenced by it.</summary>

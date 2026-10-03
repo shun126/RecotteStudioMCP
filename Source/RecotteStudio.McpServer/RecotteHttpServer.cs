@@ -27,8 +27,9 @@ public sealed class RecotteHttpServer : IAsyncDisposable
     public Uri Endpoint { get; private set; } = null!;
 
     public static async Task<RecotteHttpServer> StartAsync(string? workspaceRoot, string token,
-        int port = DefaultPort, CancellationToken cancellationToken = default)
+        int port = DefaultPort, CancellationToken cancellationToken = default, ActivityLog? activity = null)
     {
+        activity ??= new();
         if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("An access token is required.", nameof(token));
         if (port is < 0 or > 65535) throw new ArgumentOutOfRangeException(nameof(port));
         McpServerOptions options = McpServerOptions.Create(workspaceRoot);
@@ -37,6 +38,7 @@ public sealed class RecotteHttpServer : IAsyncDisposable
         builder.WebHost.ConfigureKestrel(kestrel => kestrel.Listen(IPAddress.Loopback, port));
         builder.Logging.ClearProviders();
         builder.Services.AddSingleton(options);
+        builder.Services.AddSingleton(activity);
         builder.Services.AddSingleton<WorkspacePathPolicy>();
         builder.Services.AddSingleton<OutputPathLockManager>();
         builder.Services.AddSingleton<ProjectOperationMapper>();
@@ -50,14 +52,20 @@ public sealed class RecotteHttpServer : IAsyncDisposable
             if (!IsValidHost(context.Request) || !IsValidOrigin(context.Request))
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                activity.Record(ActivityKind.Rejected, "接続を拒否しました", "許可されていない接続元からの要求です (403)");
                 return;
             }
             if (!server.IsAuthorized(context.Request))
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                activity.Record(ActivityKind.Rejected, "接続を拒否しました", "アクセストークンが一致しません (401)");
                 return;
             }
-            await next(context);
+            activity.Pulse();
+            // A client that disconnects, or a server that stops, cancels its open requests (the event stream in
+            // particular). That is the normal end of the request, not a failure to surface.
+            try { await next(context); }
+            catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested) { }
         });
         app.MapMcp("/mcp");
         try
@@ -101,6 +109,8 @@ public sealed class RecotteHttpServer : IAsyncDisposable
     {
         using CancellationTokenSource shutdown = new(TimeSpan.FromSeconds(15));
         try { await app.StopAsync(shutdown.Token); }
+        // Requests still open after the grace period are abandoned; disposal below closes them.
+        catch (OperationCanceledException) { }
         finally { await app.DisposeAsync(); }
     }
 }

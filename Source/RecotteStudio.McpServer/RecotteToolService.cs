@@ -166,7 +166,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
             if (!sequence.Success) return Batch(sequence.BatchResult, new { finalEndTime = sequence.FinalEndTime.TotalSeconds, objectIds = sequence.ObjectIds });
             ProjectSaveResult saved = document.SaveCopy(output.FullPath!, new() { AllowOverwrite = allowOverwrite });
             return Ok(new { projectPath = input.FullPath, outputPath = output.FullPath, finalEndTime = sequence.FinalEndTime.TotalSeconds,
-                objectIds = sequence.ObjectIds, batch = BatchData(sequence.BatchResult), save = Save(saved) }, sequence.BatchResult.Diagnostics.Concat(saved.Warnings));
+                objectIds = sequence.ObjectIds, batch = BatchData(sequence.BatchResult, true), save = Save(saved) }, sequence.BatchResult.Diagnostics.Concat(saved.Warnings));
         }
         catch (Exception exception) { return ExceptionResult(exception); }
     }
@@ -216,8 +216,8 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
     private static McpToolResult<object> BatchSave(string source, string output, ProjectBatchSaveResult result) =>
         new(result.Success, result.Success ? "success" : result.SaveFailureKind is null ? "edit" : "save",
             result.SaveFailureKind?.ToString(), result.Success ? null : "The atomic edit or SaveCopy operation failed.",
-            new { projectPath = source, outputPath = output, batch = BatchData(result.BatchResult), save = result.SaveResult is null ? null : Save(result.SaveResult) },
-            Diagnostics(result.Diagnostics));
+            new { projectPath = source, outputPath = output, batch = BatchData(result.BatchResult, result.Success), save = result.SaveResult is null ? null : Save(result.SaveResult) },
+            Diagnostics(Kept(result.Diagnostics, result.Success)));
     private static McpToolResult<object> OverwriteResult(string path, ProjectBatchSaveResult result)
     {
         ProjectSaveResult? save = result.SaveResult;
@@ -228,16 +228,24 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
             result.Success ? null : result.SaveFailureKind == ProjectSaveFailureKind.SourceChanged
                 ? "The source project changed after it was loaded." : "The atomic edit or overwrite operation failed.",
             new { saveMode = "overwrite", projectPath = path, destinationPath = save?.DestinationPath,
-                backupPath = save?.BackupPath, revision = save?.Revision,
+                backupPath = save?.BackupPath, revision = save?.Revision, batch = BatchData(result.BatchResult, result.Success),
                 validation = save is null ? null : new { isValid = save.ValidationAfterSave.IsValid,
-                    diagnostics = Diagnostics(save.ValidationAfterSave.Diagnostics) } }, Diagnostics(result.Diagnostics));
+                    diagnostics = Diagnostics(save.ValidationAfterSave.Diagnostics) } }, Diagnostics(Kept(result.Diagnostics, result.Success)));
     }
     private static McpToolResult<object> Batch(ProjectBatchResult result, object? extra = null, IEnumerable<ProjectDiagnostic>? diagnostics = null) =>
         new(result.Success, result.Success ? "success" : "edit", null, result.Success ? null : "The atomic operation preview failed.",
-            new { batch = BatchData(result), extra }, Diagnostics(diagnostics ?? result.Diagnostics));
-    private static object BatchData(ProjectBatchResult value) => new { value.Success, value.AppliedOperationCount, value.FailedOperationIndex,
+            new { batch = BatchData(result, result.Success), extra }, Diagnostics(Kept(diagnostics ?? result.Diagnostics, result.Success)));
+    // changesKept is false when the batch failed or its save failed: every operation was rolled back or never reached the
+    // file, so no clip's text changed even though earlier operations in the batch report success.
+    private static object BatchData(ProjectBatchResult value, bool changesKept) => new { value.Success, value.AppliedOperationCount, value.FailedOperationIndex,
+        // Clips whose text changed while their audio still speaks the old text; the user regenerates these in Recotte Studio.
+        audioRegenerationRequired = value.OperationResults.Where(item => changesKept && item.Success &&
+            item.Diagnostics.Any(diagnostic => diagnostic.Code == StaleAudio)).Select(item => item.Target).ToArray(),
         value.OperationResults, value.Changes, validation = new { value.Validation.IsValid, diagnostics = Diagnostics(value.Validation.Diagnostics) },
         value.CanCommit, value.Committed, value.RolledBack };
+    private const string StaleAudio = "RC4208";
+    private static IEnumerable<ProjectDiagnostic> Kept(IEnumerable<ProjectDiagnostic> diagnostics, bool changesKept) =>
+        changesKept ? diagnostics : diagnostics.Where(diagnostic => diagnostic.Code != StaleAudio);
     private static object Save(ProjectSaveResult value) => new { value.DestinationPath, value.BackupPath, value.Revision, value.SavedAtUtc,
         warnings = Diagnostics(value.Warnings), validation = new { value.ValidationAfterSave.IsValid, diagnostics = Diagnostics(value.ValidationAfterSave.Diagnostics) } };
     private static object Summary(ProjectSummary value) => new { value.ApplicationVersion, compatibilityLevel = value.Compatibility.ToString(),
@@ -247,7 +255,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
     private static object Timeline(TimelineEntryView value) => new { value.LayerIndex, value.LayerName, value.LayerType,
         objectKey = value.ObjectId?.ObjectKey, value.ObjectIndex, value.ObjectType, value.Name, value.Text,
         start = value.StartTime?.TotalSeconds, end = value.EndTime?.TotalSeconds, duration = value.Duration?.TotalSeconds,
-        locked = value.IsLocked, value.Capabilities };
+        locked = value.IsLocked, hasAudio = value.HasAudio, value.Capabilities };
     private static ProjectTimeRange? Range(decimal? start, decimal? end) => start is null && end is null ? null :
         start is decimal a && end is decimal b ? new(new(a), new(b)) : throw new ArgumentException("start and end must be supplied together.");
     private static McpToolResult<object> Ok(object data, IEnumerable<ProjectDiagnostic>? diagnostics = null) =>
