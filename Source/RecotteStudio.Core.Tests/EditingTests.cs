@@ -53,15 +53,29 @@ public sealed class EditingTests
     }
 
     [Fact]
-    public void AudioBackedVoice_TextUpdateIsRejected()
+    public void AudioBackedVoice_TextUpdateKeepsAudioAndReportsRegeneration()
     {
         string path = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "003OneVoice", "003OneVoice.ccproj");
         RecotteProjectDocument document = RecotteProject.Load(path);
         using ProjectEditSession session = document.BeginEdit();
 
-        EditResult result = session.Editor.UpdateSpeakerText(new(new TimelineObjectId(1, 1000), "unsafe"));
+        SpeakerVoiceView before = Assert.IsType<SpeakerVoiceView>(document.Layers[1].Objects.Single());
+        string? fileBefore = before.FileItemKey;
 
-        Assert.False(result.Success);
-        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4205");
+        EditResult result = session.Editor.UpdateSpeakerText(new(new TimelineObjectId(1, 1000), "changed"));
+
+        Assert.True(result.Success);
+        ProjectDiagnostic warning = Assert.Single(result.Diagnostics);
+        Assert.Equal("RC4208", warning.Code);
+        Assert.Equal(DiagnosticSeverity.Warning, warning.Severity);
+        Assert.True(session.Commit().Success);
+        SpeakerVoiceView after = Assert.IsType<SpeakerVoiceView>(document.Layers[1].Objects.Single());
+        Assert.Equal("changed", after.Name);
+        Assert.Equal("changed", after.Text);
+        Assert.Equal(fileBefore, after.FileItemKey);
+        Assert.NotEmpty(after.FileItemKey!);
+        TimelineEntryView entry = document.GetTimelineEntries().Single(item => item.ObjectType == "Speaker Voice");
+        Assert.True(entry.HasAudio);
+        Assert.True(entry.Capabilities.CanUpdateText);
     }
 }

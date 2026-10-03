@@ -12,7 +12,11 @@ public static class McpServerRegistration
         "recotte_create_project. Do not create, patch, or hand-write .ccproj JSON because manual JSON can omit Recotte " +
         "Studio-required metadata and break compatibility. Use recotte_create_project_from_template only for an intentional, " +
         "verified existing template. If the required Recotte tool is unavailable, stop and report that the MCP server must be " +
-        "restored; never fall back to filesystem or shell-based JSON creation.";
+        "restored; never fall back to filesystem or shell-based JSON creation. " +
+        "Do not generate, synthesize, or record audio for dialogue: a Recotte Studio project needs no audio files. Place " +
+        "each line as text with addTextOnlySpeakerVoice (or recotte_add_text_sequence_and_save_copy); Recotte Studio " +
+        "synthesizes the speech from that text itself. Never run TTS tools or create .wav files to complete a project, and " +
+        "do not report missing audio as a problem or as remaining work.";
 
     /// <summary>Adds the HTTP server, discovered tools, and initialization guidance.</summary>
     public static IMcpServerBuilder AddRecotteMcpServer(this IServiceCollection services) =>

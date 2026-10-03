@@ -236,6 +236,9 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         new(result.Success, result.Success ? "success" : "edit", null, result.Success ? null : "The atomic operation preview failed.",
             new { batch = BatchData(result), extra }, Diagnostics(diagnostics ?? result.Diagnostics));
     private static object BatchData(ProjectBatchResult value) => new { value.Success, value.AppliedOperationCount, value.FailedOperationIndex,
+        // Clips whose text changed while their audio still speaks the old text; the user regenerates these in Recotte Studio.
+        audioRegenerationRequired = value.OperationResults.Where(item => item.Success &&
+            item.Diagnostics.Any(diagnostic => diagnostic.Code == "RC4208")).Select(item => item.Target).ToArray(),
         value.OperationResults, value.Changes, validation = new { value.Validation.IsValid, diagnostics = Diagnostics(value.Validation.Diagnostics) },
         value.CanCommit, value.Committed, value.RolledBack };
     private static object Save(ProjectSaveResult value) => new { value.DestinationPath, value.BackupPath, value.Revision, value.SavedAtUtc,
@@ -247,7 +250,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
     private static object Timeline(TimelineEntryView value) => new { value.LayerIndex, value.LayerName, value.LayerType,
         objectKey = value.ObjectId?.ObjectKey, value.ObjectIndex, value.ObjectType, value.Name, value.Text,
         start = value.StartTime?.TotalSeconds, end = value.EndTime?.TotalSeconds, duration = value.Duration?.TotalSeconds,
-        locked = value.IsLocked, value.Capabilities };
+        locked = value.IsLocked, hasAudio = value.HasAudio, value.Capabilities };
     private static ProjectTimeRange? Range(decimal? start, decimal? end) => start is null && end is null ? null :
         start is decimal a && end is decimal b ? new(new(a), new(b)) : throw new ArgumentException("start and end must be supplied together.");
     private static McpToolResult<object> Ok(object data, IEnumerable<ProjectDiagnostic>? diagnostics = null) =>

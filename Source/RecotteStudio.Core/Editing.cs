@@ -185,7 +185,10 @@ public sealed partial class ProjectEditor
         return found is null ? null : TimelineObjectView.Create(found.Value.obj, id.LayerIndex, found.Value.objectIndex);
     }
 
-    /// <summary>Synchronizes the supported text fields of a text-only Speaker Voice.</summary>
+    /// <summary>
+    /// Synchronizes the supported text fields of a Speaker Voice. An audio-backed voice keeps its audio reference and
+    /// voice-hash untouched and the result carries an RC4208 warning, because only Recotte Studio can regenerate the audio.
+    /// </summary>
     public EditResult UpdateSpeakerText(UpdateSpeakerTextRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -194,8 +197,7 @@ public sealed partial class ProjectEditor
         if (rejected is not null) return rejected;
         JsonObject obj = found!.Value.obj;
         string path = found.Value.path;
-        if (obj.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(obj, "File")) || (JsonAccess.TryGetInt32(obj, "voice-hash", out int hash) && hash != 0))
-            return EditResult.Failed("RC4205", "Text editing of an audio-backed Speaker Voice is not supported because voice-hash cannot be regenerated safely.", path);
+        bool audioBacked = obj.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(obj, "File")) || (JsonAccess.TryGetInt32(obj, "voice-hash", out int hash) && hash != 0);
         if (obj["text"] is not JsonObject text || text["stext"] is not JsonArray styled || !JsonAccess.TryGetString(text, "text", out string oldText))
             return EditResult.Failed("RC4203", "The required text structure is missing.", $"{path}.text");
         JsonObject[] fragments = styled.OfType<JsonObject>().Where(x => JsonAccess.TryGetString(x, "c", out string c) && c == "t").ToArray();
@@ -205,7 +207,14 @@ public sealed partial class ProjectEditor
         Change(obj, "name", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.name", made);
         Change(text, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.text", made);
         Change(fragments[0], "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.stext[{styled.IndexOf(fragments[0])}].text", made);
-        return EditResult.Succeeded(made);
+        // The text handed to the voice engine repeats the body after an engine-specific prefix; keep the prefix as it is.
+        if (oldText.Length > 0 && obj["properties"] is JsonObject properties && properties["VoiceroidText"] is JsonObject spoken &&
+            JsonAccess.TryGetString(spoken, "p-value", out string spokenText) && spokenText.EndsWith(oldText, StringComparison.Ordinal))
+            Change(spoken, "p-value", spokenText[..^oldText.Length] + request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.properties.VoiceroidText.p-value", made);
+        if (!audioBacked || oldText == request.Text) return EditResult.Succeeded(made);
+        ProjectDiagnostic stale = new("RC4208", DiagnosticSeverity.Warning,
+            $"The text of the audio-backed Speaker Voice with object key {request.ObjectId.ObjectKey} on layer {request.ObjectId.LayerIndex} was changed. Its existing audio still speaks the old text; regenerate the audio for this clip in Recotte Studio.", path);
+        return new(true, new[] { stale }, made);
     }
 
     /// <summary>Moves a Speaker Voice after validating locks, range, and duration policy.</summary>
@@ -221,7 +230,10 @@ public sealed partial class ProjectEditor
         return EditResult.Succeeded(made);
     }
 
-    /// <summary>Adds a text-only Speaker Voice by deep-cloning a compatible object in the target layer.</summary>
+    /// <summary>
+    /// Adds a text-only Speaker Voice by deep-cloning one from the target layer, or else the built-in template bound to
+    /// the layer's text style and telop frame.
+    /// </summary>
     public EditResult AddTextOnlySpeakerVoice(AddSpeakerTextRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -236,8 +248,8 @@ public sealed partial class ProjectEditor
         {
             // The layer has no voice to clone, so fall back to the embedded template the same way assets do.
             if (!TextVoiceTemplateResources.Exists) return EditResult.Failed("RC4402", "No verified text-only Speaker Voice template exists in the target layer or in the built-in template.");
-            template = TextVoiceTemplateResources.TryClone(root);
-            if (template is null) return EditResult.Failed("RC4405", "The built-in text template and the target project define incompatible text styles or telop frames, so cloning it would create dangling references.");
+            template = TextVoiceTemplateResources.TryClone(root, layer);
+            if (template is null) return EditResult.Failed("RC4405", "The target Speaker layer's DefaultTextStyle or TelopFrame is not defined in the project's text styles or telop frames, so the built-in text template cannot be bound to the layer without creating dangling references.");
             if (!IsTextOnlySpeakerVoice(template)) return EditResult.Failed("RC4402", "The built-in text template is not a verified text-only Speaker Voice.");
         }
         HashSet<int> keys = Layers().SelectMany(x => (x.layer["layer-objects"] as JsonArray)?.OfType<JsonObject>() ?? Array.Empty<JsonObject>()).Where(x => JsonAccess.TryGetInt32(x, "objkey", out _)).Select(x => { JsonAccess.TryGetInt32(x, "objkey", out int k); return k; }).ToHashSet();

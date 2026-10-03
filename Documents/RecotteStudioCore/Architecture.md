@@ -2,7 +2,7 @@
 
 Confirmed by repository samples and automated tests: the 1.8.5.0 structural reader/validator, unknown-field retention, transactional constrained Speaker Voice edits, semantic SaveCopy, backed-up Save, SHA-256 conflict detection, CRLF/BOM-free output, and exact profile lookup.
 
-Inferred and deliberately constrained: text-only Speaker Voice creation clones an existing same-layer template and uses maximum `objkey` plus one. No proprietary identifier or derived value is guessed.
+Inferred and deliberately constrained: text-only Speaker Voice creation clones an existing same-layer text-only voice, or else the built-in template bound to the target layer's `DefaultTextStyle`, `TelopFrame`, `InitialAudioVolume`, `BaseLipMorphLevel`, and `ShowTelopDefault` (rejected with RC4405 when the layer's style or frame is not defined in the project), and uses maximum `objkey` plus one. No proprietary identifier or derived value is guessed.
 
 Unconfirmed: Recotte Studio 1.7.1.2 write compatibility and application-level acceptance of generated files. Consequently 1.7.1.2 is read-only, unknown versions cannot save, and no migration exists.
 

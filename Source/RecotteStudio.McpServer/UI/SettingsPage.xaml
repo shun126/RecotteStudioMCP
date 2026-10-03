@@ -42,6 +42,14 @@
                 <TextBlock Text="接続設定例とエージェントへの依頼文には、このPC専用のトークンが含まれます。依頼文を会話に貼ると、トークンもその会話に含まれます。" TextWrapping="Wrap" />
                 <Button Content="トークンを再発行" Click="RegenerateToken_Click" HorizontalAlignment="Left" />
             </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="バージョン情報" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Name="VersionText" IsTextSelectionEnabled="True" />
+                <TextBlock x:Name="BuildText" IsTextSelectionEnabled="True"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>

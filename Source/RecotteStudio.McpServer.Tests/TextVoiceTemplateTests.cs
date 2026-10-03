@@ -110,6 +110,42 @@ public sealed class TextVoiceTemplateTests : IDisposable
     }
 
     [Fact]
+    public async Task EmbeddedTemplateIsBoundToTheTargetLayerSettings()
+    {
+        string project = Path.Combine(root, "customized.ccproj");
+        Assert.True((await service.CreateProjectAsync("customized", project, false,
+            Array.Empty<ProjectOperationDto>(), default)).Success);
+
+        // Diverge from the embedded template: a resized telop frame and a layer using its own style and volume.
+        Mutate(project, root =>
+        {
+            JsonObject frame = ((JsonArray)root["telop-frames"]!).OfType<JsonObject>().First();
+            frame["Bounds"]!["p-value"] = new JsonArray(51.0, 858.0, 1632.0, 200.0);
+            JsonObject layer = (JsonObject)root["layers"]![1]!["properties"]!;
+            layer["DefaultTextStyle"]!["p-value"] = "話者1";
+            layer["InitialAudioVolume"]!["p-value"] = 1.0;
+        });
+        string framesBefore = Read(project)["telop-frames"]!.ToJsonString();
+
+        Assert.True(RecotteProject.Load(project).Capabilities.CanAddTextOnlySpeakerVoice);
+        string output = Path.Combine(root, "customized-edited.ccproj");
+        Assert.True((await service.ApplyOperationsAndSaveCopyAsync(project, output, false,
+            new[] { AddText("レイヤーの設定を使う", 200m, 218m) }, default)).Success);
+
+        JsonObject voice = SpeakerVoices(output).Single();
+        JsonObject style = ((JsonArray)voice["text"]!["stext"]!).OfType<JsonObject>().Single(run => (string?)run["c"] == "s");
+        Assert.Equal("話者1", (string?)style["style"]);
+        Assert.Equal("LowerFrame", (string?)voice["properties"]!["TelopFrame"]!["p-value"]);
+        Assert.Equal(1.0, (double?)voice["properties"]!["AudioVolume"]!["p-value"]);
+        Assert.Equal(200m, (decimal?)voice["start-time"]);
+        Assert.Equal(218m, (decimal?)voice["end-time"]);
+        Assert.False(voice.ContainsKey("audio"));
+        Assert.Equal(0, (int?)voice["voice-hash"]);
+        Assert.Equal(string.Empty, (string?)voice["properties"]!["File"]!["p-value"]);
+        Assert.Equal(framesBefore, Read(output)["telop-frames"]!.ToJsonString());
+    }
+
+    [Fact]
     public async Task CapabilityMatchesTheActualOutcomeForACreatedProject()
     {
         string project = Path.Combine(root, "capability.ccproj");

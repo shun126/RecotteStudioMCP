@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -12,16 +13,49 @@ public sealed partial class MainWindow : Window
     private string? token;
     private bool allowClose;
     private bool closing;
+    private const int MaxActivityItems = 200;
+    private readonly ActivityLog activity = new();
 
     internal string? WorkspaceRoot { get; private set; }
     internal string? AccessToken => token;
     internal Uri? ServerEndpoint => server?.Endpoint;
 
+    internal ObservableCollection<ActivityItem> Activity { get; } = new();
+    internal int RunningCalls { get; private set; }
+    internal int ToolCallCount { get; private set; }
+    internal DateTimeOffset? LastAccess { get; private set; }
+
+    /// <summary>Raised on the UI thread when the log or the lamp state changes.</summary>
+    internal event Action? ActivityChanged;
+
+    /// <summary>Raised on the UI thread for every authorized request.</summary>
+    internal event Action? ActivityPulsed;
+
     public MainWindow()
     {
         InitializeComponent();
         AppWindow.Resize(new Windows.Graphics.SizeInt32(840, 700));
+        string icon = Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico");
+        if (File.Exists(icon)) AppWindow.SetIcon(icon);
         AppWindow.Closing += AppWindow_Closing;
+        // The log reports from request threads; everything the pages read is updated on the UI thread.
+        activity.RequestReceived += () => DispatcherQueue.TryEnqueue(() =>
+        {
+            LastAccess = DateTimeOffset.Now;
+            ActivityPulsed?.Invoke();
+        });
+        activity.RunningChanged += running => DispatcherQueue.TryEnqueue(() =>
+        {
+            RunningCalls = running;
+            ActivityChanged?.Invoke();
+        });
+        activity.Recorded += entry => DispatcherQueue.TryEnqueue(() =>
+        {
+            if (entry.Duration is not null) ToolCallCount++;
+            Activity.Insert(0, new ActivityItem(entry));
+            while (Activity.Count > MaxActivityItems) Activity.RemoveAt(Activity.Count - 1);
+            ActivityChanged?.Invoke();
+        });
         NavView.SelectedItem = HomeItem;
         if (ContentFrame.Content is null) ContentFrame.Navigate(typeof(HomePage), this);
     }
@@ -64,10 +98,12 @@ public sealed partial class MainWindow : Window
                 SetStatus(InfoBarSeverity.Informational, "停止中", "実行中の要求が終わるまで待っています。");
                 await server.DisposeAsync();
                 server = null;
+                activity.Record(ActivityKind.Info, "サーバーを停止しました");
                 RefreshPage();
             }
             SetStatus(InfoBarSeverity.Informational, "起動中", "MCPサーバーを開始しています。");
-            server = await RecotteHttpServer.StartAsync(WorkspaceRoot, token!);
+            server = await RecotteHttpServer.StartAsync(WorkspaceRoot, token!, activity: activity);
+            activity.Record(ActivityKind.Info, "サーバーを開始しました", server.Endpoint.ToString());
             SetStatus(InfoBarSeverity.Success, "稼働中", "このウィンドウを閉じると接続を停止します。");
             RefreshPage();
         }
@@ -82,6 +118,12 @@ public sealed partial class MainWindow : Window
         StatusBar.Severity = severity;
         StatusBar.Title = title;
         StatusBar.Message = message;
+    }
+
+    internal void ClearActivity()
+    {
+        Activity.Clear();
+        ActivityChanged?.Invoke();
     }
 
     internal void OpenSettings() => NavView.SelectedItem = NavView.SettingsItem;
