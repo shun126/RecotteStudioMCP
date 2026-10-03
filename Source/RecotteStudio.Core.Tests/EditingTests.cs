@@ -53,6 +53,24 @@ public sealed class EditingTests
     }
 
     [Fact]
+    public void VoiceWithoutHashOrAudioMarkers_IsNotReportedAsAudioBacked()
+    {
+        string json = File.ReadAllText(OneText);
+        int at = json.IndexOf("\"voice-hash\"", StringComparison.Ordinal);
+        Assert.True(at >= 0);
+        // Rename the member so the voice has no voice-hash at all; the validator does not require it.
+        RecotteProjectDocument document = RecotteProject.Load(new MemoryStream(
+            System.Text.Encoding.UTF8.GetBytes(json.Remove(at, "\"voice-hash\"".Length).Insert(at, "\"x-voice-hash\""))));
+
+        Assert.True(document.Validate().IsValid);
+        Assert.False(document.GetTimelineEntries().Single(item => item.ObjectType == "Speaker Voice").HasAudio);
+        using ProjectEditSession session = document.BeginEdit();
+        EditResult result = session.Editor.UpdateSpeakerText(new(new TimelineObjectId(1, 1000), "changed"));
+        Assert.True(result.Success);
+        Assert.Empty(result.Diagnostics);
+    }
+
+    [Fact]
     public void AudioBackedVoice_TextUpdateKeepsAudioAndReportsRegeneration()
     {
         string path = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "003OneVoice", "003OneVoice.ccproj");

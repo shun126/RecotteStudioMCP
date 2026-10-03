@@ -197,7 +197,7 @@ public sealed partial class ProjectEditor
         if (rejected is not null) return rejected;
         JsonObject obj = found!.Value.obj;
         string path = found.Value.path;
-        bool audioBacked = obj.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(obj, "File")) || (JsonAccess.TryGetInt32(obj, "voice-hash", out int hash) && hash != 0);
+        bool audioBacked = HasAudioMarker(obj);
         if (obj["text"] is not JsonObject text || text["stext"] is not JsonArray styled || !JsonAccess.TryGetString(text, "text", out string oldText))
             return EditResult.Failed("RC4203", "The required text structure is missing.", $"{path}.text");
         JsonObject[] fragments = styled.OfType<JsonObject>().Where(x => JsonAccess.TryGetString(x, "c", out string c) && c == "t").ToArray();
@@ -312,6 +312,8 @@ public sealed partial class ProjectEditor
         }
     }
     private static bool IsLocked(JsonObject o) => new[] { "locked", "tl-locked", "st-locked", "pv-locked" }.Any(n => o[n] is JsonValue v && v.TryGetValue(out bool b) && b);
+    /// <summary>Returns whether an object carries any sign of generated audio: an audio member, a file reference, or a nonzero voice-hash.</summary>
+    internal static bool HasAudioMarker(JsonObject o) => o.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(o, "File")) || (JsonAccess.TryGetInt32(o, "voice-hash", out int h) && h != 0);
     internal static bool IsTextOnlySpeakerVoice(JsonObject o) => JsonAccess.TryGetString(o,"type",out string t)&&t=="Speaker Voice"&&!o.ContainsKey("audio")&&string.IsNullOrEmpty(JsonAccess.GetPropertyString(o,"File"))&&JsonAccess.TryGetInt32(o,"voice-hash",out int h)&&h==0&&o["text"] is JsonObject tx&&tx["stext"] is JsonArray;
     private EditResult? ApplyDuration(decimal required) { if (root["setting"] is not JsonObject s || !JsonAccess.TryGetDecimal(s,"duration",out decimal current)) return EditResult.Failed("RC4101","Project duration is unavailable.","$.setting.duration"); bool automatic=s["auto-duration"] is JsonValue v&&v.TryGetValue(out bool b)&&b; ProjectDurationDecision d=durationPolicy.Evaluate(current,automatic,required); if (!d.Accepted) return new(false,d.Diagnostic is null?Array.Empty<ProjectDiagnostic>():new[]{d.Diagnostic},Array.Empty<ProjectChange>()); if (d.Duration>current) s["duration"]=d.Duration; return null; }
     private void Change(JsonObject node,string property,object value,string operation,string target,string path,List<ProjectChange> made) { object? before=Snapshot(node[property]); node[property]=JsonValue.Create(value); ProjectChange c=new(operation,target,before,value,path); changes.Add(c); made.Add(c); }

@@ -305,15 +305,14 @@ public sealed partial class RecotteProjectDocument
     {
         bool locked = IsLocked(layer.JsonNode) || IsLocked(item.JsonNode);
         bool speakerVoice = item.Type == "Speaker Voice";
-        bool textOnly = speakerVoice && !item.JsonNode.ContainsKey("audio") && string.IsNullOrEmpty(item.FileItemKey) &&
-            JsonAccess.TryGetInt32(item.JsonNode, "voice-hash", out int hash) && hash == 0;
+        bool hasAudio = speakerVoice && ProjectEditor.HasAudioMarker(item.JsonNode);
         ProjectTime? start = item.StartTime is decimal startSeconds && startSeconds >= 0 ? new(startSeconds) : null;
         ProjectTime? end = item.EndTime is decimal endSeconds && endSeconds >= 0 ? new(endSeconds) : null;
         ProjectTime? duration = start is ProjectTime a && end is ProjectTime b && b.TotalSeconds >= a.TotalSeconds
             ? new(b.TotalSeconds - a.TotalSeconds) : null;
         TimelineObjectId? id = item.ObjectKey is int key ? new(item.LayerIndex, key) : null;
         return new(layer.Index, layer.Name, layer.Type, item.Index, id, item.Type, item.Name, item.Text, start, end,
-            duration, locked, !textOnly && speakerVoice, new(speakerVoice && !locked && Capabilities.CanEditSpeakerText,
+            duration, locked, hasAudio, new(speakerVoice && !locked && Capabilities.CanEditSpeakerText,
                 speakerVoice && !locked && Capabilities.CanMoveTimelineObject,
                 id is not null && !locked && Capabilities.CanRemoveTimelineObject));
     }
