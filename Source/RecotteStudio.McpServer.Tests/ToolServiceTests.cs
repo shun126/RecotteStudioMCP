@@ -112,6 +112,67 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task EverySaveModeListsAudioBackedClipsWhoseTextChanged()
+    {
+        string voiced = Path.Combine(root, "voiced.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "OneVoice.ccproj"), voiced);
+        ProjectOperationDto[] operations = { new("updateSpeakerText", Target: new TimelineObjectTargetDto(1, 1000), Text: "書き換え") };
+
+        McpToolResult<object>[] results =
+        {
+            service.PreviewOperations(voiced, operations),
+            service.PreviewOperationsAndSave(voiced, Path.Combine(root, "voiced-preview.ccproj"), false, operations),
+            service.PreviewOperationsAndOverwrite(voiced, operations),
+            await service.ApplyOperationsAndSaveCopyAsync(voiced, Path.Combine(root, "voiced-copy.ccproj"), false, operations, default),
+            await service.ApplyOperationsAndOverwriteAsync(voiced, operations, default),
+        };
+
+        Assert.All(results, result =>
+        {
+            Assert.True(result.Success);
+            Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+            System.Text.Json.JsonElement targets = System.Text.Json.JsonSerializer.SerializeToElement(result.Data)
+                .GetProperty("batch").GetProperty("audioRegenerationRequired");
+            Assert.Equal(1, targets.GetArrayLength());
+        });
+    }
+
+    [Fact]
+    public async Task RolledBackBatchesDoNotAskForAudioRegeneration()
+    {
+        string voiced = Path.Combine(root, "rolled-back.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "OneVoice.ccproj"), voiced);
+        byte[] before = File.ReadAllBytes(voiced);
+        // The text update succeeds, then the missing target fails the batch and rolls the update back.
+        ProjectOperationDto[] operations =
+        {
+            new("updateSpeakerText", Target: new TimelineObjectTargetDto(1, 1000), Text: "書き換え"),
+            new("removeTimelineObject", Target: new TimelineObjectTargetDto(1, 999999)),
+        };
+        string copy = Path.Combine(root, "rolled-back-copy.ccproj");
+
+        McpToolResult<object>[] results =
+        {
+            service.PreviewOperations(voiced, operations),
+            service.PreviewOperationsAndSave(voiced, copy, false, operations),
+            service.PreviewOperationsAndOverwrite(voiced, operations),
+            await service.ApplyOperationsAndSaveCopyAsync(voiced, copy, false, operations, default),
+            await service.ApplyOperationsAndOverwriteAsync(voiced, operations, default),
+        };
+
+        Assert.All(results, result =>
+        {
+            Assert.False(result.Success);
+            Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+            System.Text.Json.JsonElement targets = System.Text.Json.JsonSerializer.SerializeToElement(result.Data)
+                .GetProperty("batch").GetProperty("audioRegenerationRequired");
+            Assert.Equal(0, targets.GetArrayLength());
+        });
+        Assert.False(File.Exists(copy));
+        Assert.Equal(before, File.ReadAllBytes(voiced));
+    }
+
+    [Fact]
     public void OverwritePreviewDoesNotChangeFiles()
     {
         byte[] before = File.ReadAllBytes(project);
