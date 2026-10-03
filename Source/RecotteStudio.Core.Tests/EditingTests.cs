@@ -70,6 +70,25 @@ public sealed class EditingTests
         Assert.Empty(result.Diagnostics);
     }
 
+    [Theory]
+    [InlineData("\"c\":\"t\"", "\"c\":\"x\"", "RC4204")]
+    [InlineData("\"stext\"", "\"x-stext\"", "RC4203")]
+    public void AudioBackedVoiceWithUnsupportedText_IsNotAdvertisedAsUpdatable(string find, string replace, string code)
+    {
+        string path = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "003OneVoice", "003OneVoice.ccproj");
+        string json = File.ReadAllText(path);
+        Assert.Contains(find, json);
+        RecotteProjectDocument document = RecotteProject.Load(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json.Replace(find, replace))));
+
+        Assert.True(document.Validate().IsValid);
+        TimelineEntryView entry = document.GetTimelineEntries().Single(item => item.ObjectType == "Speaker Voice");
+        Assert.False(entry.Capabilities.CanUpdateText);
+        using ProjectEditSession session = document.BeginEdit();
+        EditResult result = session.Editor.UpdateSpeakerText(new(entry.ObjectId!.Value, "changed"));
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == code);
+    }
+
     [Fact]
     public void AudioBackedVoice_TextUpdateKeepsAudioAndReportsRegeneration()
     {

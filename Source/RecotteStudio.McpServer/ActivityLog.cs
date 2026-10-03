@@ -14,12 +14,16 @@ public sealed record ActivityEntry(DateTimeOffset Time, ActivityKind Kind, strin
 /// </summary>
 public sealed class ActivityLog
 {
+    private readonly object runningGate = new();
     private int running;
 
     /// <summary>Raised for every authorized HTTP request reaching the MCP endpoint.</summary>
     public event Action? RequestReceived;
 
-    /// <summary>Raised when a tool call starts or ends, with the number of calls still running.</summary>
+    /// <summary>
+    /// Raised when a tool call starts or ends, with the number of calls still running. Notifications arrive in order
+    /// and are raised while a lock is held, so handlers must return quickly.
+    /// </summary>
     public event Action<int>? RunningChanged;
 
     /// <summary>Raised when an entry is recorded.</summary>
@@ -50,7 +54,7 @@ public sealed class ActivityLog
 
     private long Begin()
     {
-        RunningChanged?.Invoke(Interlocked.Increment(ref running));
+        ChangeRunning(1);
         return Stopwatch.GetTimestamp();
     }
 
@@ -68,7 +72,14 @@ public sealed class ActivityLog
     private void Complete(ActivityKind kind, string tool, string? detail, long started)
     {
         Recorded?.Invoke(new(DateTimeOffset.Now, kind, tool, detail, Stopwatch.GetElapsedTime(started)));
-        RunningChanged?.Invoke(Interlocked.Decrement(ref running));
+        ChangeRunning(-1);
+    }
+
+    // The count and its notification are published under one lock so that subscribers receive counts in the order
+    // they were reached; otherwise a stale count could arrive last and stick. Subscribers must therefore not block.
+    private void ChangeRunning(int delta)
+    {
+        lock (runningGate) RunningChanged?.Invoke(running += delta);
     }
 
     private static string? Describe(string? path, string? reason)

@@ -312,7 +312,8 @@ public sealed partial class RecotteProjectDocument
             ? new(b.TotalSeconds - a.TotalSeconds) : null;
         TimelineObjectId? id = item.ObjectKey is int key ? new(item.LayerIndex, key) : null;
         return new(layer.Index, layer.Name, layer.Type, item.Index, id, item.Type, item.Name, item.Text, start, end,
-            duration, locked, hasAudio, new(speakerVoice && !locked && Capabilities.CanEditSpeakerText,
+            duration, locked, hasAudio, new(speakerVoice && id is not null && !locked && Capabilities.CanEditSpeakerText &&
+                    ProjectEditor.HasEditableText(item.JsonNode),
                 speakerVoice && !locked && Capabilities.CanMoveTimelineObject,
                 id is not null && !locked && Capabilities.CanRemoveTimelineObject));
     }

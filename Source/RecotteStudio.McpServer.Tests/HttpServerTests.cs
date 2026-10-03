@@ -125,6 +125,28 @@ public sealed class HttpServerTests
     }
 
     [Fact]
+    public async Task RunningCountNotificationsArriveInOrderUnderConcurrency()
+    {
+        ActivityLog activity = new();
+        int last = -1, outOfOrder = 0, expected = 0;
+        // Handlers run under the log's lock, so this replays the counter and catches any reordered notification.
+        activity.RunningChanged += running =>
+        {
+            if (Math.Abs(running - expected) != 1) outOfOrder++;
+            expected = last = running;
+        };
+        McpToolResult<object> result = new(true, "success", null, null, null, Array.Empty<McpDiagnosticDto>());
+
+        await Task.WhenAll(Enumerable.Range(0, 64).Select(_ => Task.Run(() =>
+        {
+            for (int call = 0; call < 200; call++) activity.Track("tool", null, () => result);
+        })));
+
+        Assert.Equal(0, outOfOrder);
+        Assert.Equal(0, last);
+    }
+
+    [Fact]
     public async Task CannotConnectAfterServerStops()
     {
         RecotteHttpServer server = await RecotteHttpServer.StartAsync(null, Token, 0);

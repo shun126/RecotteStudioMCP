@@ -198,15 +198,13 @@ public sealed partial class ProjectEditor
         JsonObject obj = found!.Value.obj;
         string path = found.Value.path;
         bool audioBacked = HasAudioMarker(obj);
-        if (obj["text"] is not JsonObject text || text["stext"] is not JsonArray styled || !JsonAccess.TryGetString(text, "text", out string oldText))
-            return EditResult.Failed("RC4203", "The required text structure is missing.", $"{path}.text");
-        JsonObject[] fragments = styled.OfType<JsonObject>().Where(x => JsonAccess.TryGetString(x, "c", out string c) && c == "t").ToArray();
-        if (fragments.Length != 1 || !JsonAccess.TryGetString(fragments[0], "text", out string fragmentText) || fragmentText != oldText || styled.OfType<JsonObject>().Any(x => JsonAccess.TryGetString(x, "c", out string c) && c is not ("s" or "t")))
-            return EditResult.Failed("RC4204", "The styled text contains multiple fragments or unsupported decoration.", $"{path}.text.stext");
+        string? structureError = ResolveEditableText(obj, out JsonObject? text, out JsonArray? styled, out JsonObject? fragment, out string oldText);
+        if (structureError == "RC4203") return EditResult.Failed("RC4203", "The required text structure is missing.", $"{path}.text");
+        if (structureError is not null) return EditResult.Failed("RC4204", "The styled text contains multiple fragments or unsupported decoration.", $"{path}.text.stext");
         List<ProjectChange> made = new();
         Change(obj, "name", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.name", made);
-        Change(text, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.text", made);
-        Change(fragments[0], "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.stext[{styled.IndexOf(fragments[0])}].text", made);
+        Change(text!, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.text", made);
+        Change(fragment!, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.stext[{styled!.IndexOf(fragment)}].text", made);
         // The text handed to the voice engine repeats the body after an engine-specific prefix; keep the prefix as it is.
         if (oldText.Length > 0 && obj["properties"] is JsonObject properties && properties["VoiceroidText"] is JsonObject spoken &&
             JsonAccess.TryGetString(spoken, "p-value", out string spokenText) && spokenText.EndsWith(oldText, StringComparison.Ordinal))
@@ -312,6 +310,21 @@ public sealed partial class ProjectEditor
         }
     }
     private static bool IsLocked(JsonObject o) => new[] { "locked", "tl-locked", "st-locked", "pv-locked" }.Any(n => o[n] is JsonValue v && v.TryGetValue(out bool b) && b);
+    /// <summary>Returns whether UpdateSpeakerText can rewrite the object's text: one plain fragment matching the body.</summary>
+    internal static bool HasEditableText(JsonObject o) => ResolveEditableText(o, out _, out _, out _, out _) is null;
+
+    /// <summary>Resolves the text nodes UpdateSpeakerText rewrites, or returns the diagnostic code explaining why it cannot.</summary>
+    private static string? ResolveEditableText(JsonObject o, out JsonObject? text, out JsonArray? styled, out JsonObject? fragment, out string oldText)
+    {
+        text = o["text"] as JsonObject; styled = text?["stext"] as JsonArray; fragment = null; oldText = string.Empty;
+        if (text is null || styled is null || !JsonAccess.TryGetString(text, "text", out oldText)) return "RC4203";
+        JsonObject[] fragments = styled.OfType<JsonObject>().Where(x => JsonAccess.TryGetString(x, "c", out string c) && c == "t").ToArray();
+        if (fragments.Length != 1 || !JsonAccess.TryGetString(fragments[0], "text", out string fragmentText) || fragmentText != oldText ||
+            styled.OfType<JsonObject>().Any(x => JsonAccess.TryGetString(x, "c", out string c) && c is not ("s" or "t"))) return "RC4204";
+        fragment = fragments[0];
+        return null;
+    }
+
     /// <summary>Returns whether an object carries any sign of generated audio: an audio member, a file reference, or a nonzero voice-hash.</summary>
     internal static bool HasAudioMarker(JsonObject o) => o.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(o, "File")) || (JsonAccess.TryGetInt32(o, "voice-hash", out int h) && h != 0);
     internal static bool IsTextOnlySpeakerVoice(JsonObject o) => JsonAccess.TryGetString(o,"type",out string t)&&t=="Speaker Voice"&&!o.ContainsKey("audio")&&string.IsNullOrEmpty(JsonAccess.GetPropertyString(o,"File"))&&JsonAccess.TryGetInt32(o,"voice-hash",out int h)&&h==0&&o["text"] is JsonObject tx&&tx["stext"] is JsonArray;
