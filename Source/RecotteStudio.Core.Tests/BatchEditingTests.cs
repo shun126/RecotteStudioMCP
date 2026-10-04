@@ -3,6 +3,7 @@ namespace RecotteStudio.Core.Tests;
 public sealed class BatchEditingTests
 {
     private static string OneText => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "002OneText", "002OneText.ccproj");
+    private static string OneVoice => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "003OneVoice", "003OneVoice.ccproj");
 
     [Fact]
     public void RemoveTimelineObject_RejectsAmbiguousProjectWideObjectKey()
@@ -107,6 +108,60 @@ public sealed class BatchEditingTests
         Assert.Equal(preview.BatchResult.OperationResults.Select(item => item.OperationType),
             applied.OperationResults.Select(item => item.OperationType));
         Assert.Equal(preview.BatchResult.Changes.Select(item => item.Operation), applied.Changes.Select(item => item.Operation));
+    }
+
+    [Fact]
+    public void ApplyOperations_AudioRegenerationRequired_UsesFinalChangedState()
+    {
+        RecotteProjectDocument document = RecotteProject.Load(OneVoice);
+        TimelineObjectId id = new(1, 1000);
+
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+        {
+            new UpdateSpeakerTextOperation(new TimelineObjectIdReference(id), "changed"),
+        });
+
+        Assert.True(result.Success);
+        Assert.Equal(new[] { id }, result.AudioRegenerationRequired);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+    }
+
+    [Fact]
+    public void ApplyOperations_AudioRegenerationRequired_ExcludesRemovedVoice()
+    {
+        RecotteProjectDocument document = RecotteProject.Load(OneVoice);
+        TimelineObjectId id = new(1, 1000);
+
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+        {
+            new UpdateSpeakerTextOperation(new TimelineObjectIdReference(id), "changed"),
+            new RemoveTimelineObjectOperation(new TimelineObjectIdReference(id)),
+        });
+
+        Assert.True(result.Success);
+        Assert.Empty(result.AudioRegenerationRequired);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+        Assert.Contains(result.OperationResults[0].Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+    }
+
+    [Fact]
+    public void ApplyOperations_AudioRegenerationRequired_ExcludesTextRevertedToBatchBaseline()
+    {
+        RecotteProjectDocument document = RecotteProject.Load(OneVoice);
+        TimelineObjectId id = new(1, 1000);
+        string originalText = Assert.IsType<SpeakerVoiceView>(document.Layers[1].Objects.Single()).Text!;
+
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+        {
+            new UpdateSpeakerTextOperation(new TimelineObjectIdReference(id), "changed"),
+            new UpdateSpeakerTextOperation(new TimelineObjectIdReference(id), originalText),
+        });
+
+        Assert.True(result.Success);
+        Assert.Empty(result.AudioRegenerationRequired);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+        Assert.All(result.OperationResults, operation =>
+            Assert.Contains(operation.Diagnostics, diagnostic => diagnostic.Code == "RC4208"));
     }
 
     [Fact]
