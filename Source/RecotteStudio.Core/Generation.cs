@@ -86,9 +86,20 @@ internal static class TextVoiceTemplateResources
         JsonObject layerProperties = (JsonObject)layer["properties"]!;
         foreach ((string voiceName, string layerName) in LayerDefaults)
             if (properties[voiceName] is JsonObject target && layerProperties[layerName] is JsonObject origin &&
-                origin["p-value"] is JsonNode value) target["p-value"] = value.DeepClone();
+                origin["p-value"] is JsonNode value && IsCompatibleDefaultValue(voiceName, value))
+                target["p-value"] = value.DeepClone();
         return voice;
     }
+
+    private static bool IsCompatibleDefaultValue(string voiceName, JsonNode value) =>
+        voiceName switch
+        {
+            "AudioVolume" or "LipMorphLevel" => value is JsonValue number &&
+                (number.TryGetValue<decimal>(out _) || number.TryGetValue<double>(out _) ||
+                 number.TryGetValue<float>(out _) || number.TryGetValue<int>(out _)),
+            "TelopOn" => value is JsonValue boolean && boolean.TryGetValue<bool>(out _),
+            _ => false,
+        };
 
     private static bool TryResolveLayerTelop(JsonObject targetRoot, JsonObject layer, out string style, out string frame)
     {
