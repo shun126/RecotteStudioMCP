@@ -107,7 +107,14 @@ public sealed record ProjectBatchResult(
     ProjectValidationResult Validation,
     bool CanCommit,
     bool Committed,
-    bool RolledBack);
+    bool RolledBack)
+{
+    /// <summary>
+    /// Gets audio-backed Speaker Voice clips whose final text differs from the text present before this batch.
+    /// Intermediate edits that are reverted or removed later in the same atomic batch are excluded.
+    /// </summary>
+    public IReadOnlyList<TimelineObjectId> AudioRegenerationRequired { get; init; } = Array.Empty<TimelineObjectId>();
+}
 
 /// <summary>Contains a non-mutating batch simulation.</summary>
 public sealed record ProjectBatchPreview(ProjectBatchResult BatchResult, ProjectTime? EstimatedDuration, bool CanSaveCopy);
@@ -159,8 +166,72 @@ public sealed partial class ProjectEditSession
                 diagnostics.Distinct().ToArray(), validation, false, false, true);
         }
 
+        (IReadOnlyList<TimelineObjectId> audioRegenerationRequired, IReadOnlyList<ProjectDiagnostic> finalDiagnostics) =
+            FinalizeAudioRegeneration(before, workingRoot, results, diagnostics);
         return new(true, operations.Count, null, results.ToArray(), Changes.ToArray(),
-            diagnostics.Distinct().ToArray(), validation, true, false, false);
+            finalDiagnostics, validation, true, false, false)
+        {
+            AudioRegenerationRequired = audioRegenerationRequired,
+        };
+    }
+
+    private const string StaleAudioDiagnosticCode = "RC4208";
+
+    private static (IReadOnlyList<TimelineObjectId> Targets, IReadOnlyList<ProjectDiagnostic> Diagnostics)
+        FinalizeAudioRegeneration(JsonObject before, JsonObject after, IReadOnlyList<ProjectOperationResult> results,
+            IEnumerable<ProjectDiagnostic> diagnostics)
+    {
+        HashSet<string> candidates = results
+            .Where(result => result.Success && result.Target is not null &&
+                result.Diagnostics.Any(diagnostic => diagnostic.Code == StaleAudioDiagnosticCode))
+            .Select(result => result.Target!)
+            .ToHashSet(StringComparer.Ordinal);
+
+        List<TimelineObjectId> targets = new();
+        foreach ((TimelineObjectId id, JsonObject beforeObject) in TimelineObjects(before))
+        {
+            if (!candidates.Contains(id.ToString()) || !ProjectEditor.HasAudioMarker(beforeObject) ||
+                !TryGetSpeakerText(beforeObject, out string beforeText))
+                continue;
+
+            JsonObject? afterObject = TimelineObjects(after)
+                .Where(item => item.Id == id)
+                .Select(item => item.Object)
+                .FirstOrDefault();
+            if (afterObject is null || !ProjectEditor.HasAudioMarker(afterObject) ||
+                !TryGetSpeakerText(afterObject, out string afterText) ||
+                string.Equals(beforeText, afterText, StringComparison.Ordinal))
+                continue;
+
+            targets.Add(id);
+        }
+
+        HashSet<string> keptTargets = targets.Select(id => id.ToString()).ToHashSet(StringComparer.Ordinal);
+        ProjectDiagnostic[] finalDiagnostics = diagnostics
+            .Where(diagnostic => diagnostic.Code != StaleAudioDiagnosticCode)
+            .Concat(results.Where(result => result.Target is not null && keptTargets.Contains(result.Target))
+                .SelectMany(result => result.Diagnostics.Where(diagnostic => diagnostic.Code == StaleAudioDiagnosticCode)))
+            .Distinct()
+            .ToArray();
+        return (targets.ToArray(), finalDiagnostics);
+    }
+
+    private static IEnumerable<(TimelineObjectId Id, JsonObject Object)> TimelineObjects(JsonObject root)
+    {
+        if (root["layers"] is not JsonArray layers) yield break;
+        for (int layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+        {
+            if (layers[layerIndex] is not JsonObject layer || layer["layer-objects"] is not JsonArray objects) continue;
+            foreach (JsonObject item in objects.OfType<JsonObject>())
+                if (JsonAccess.TryGetInt32(item, "objkey", out int objectKey))
+                    yield return (new(layerIndex, objectKey), item);
+        }
+    }
+
+    private static bool TryGetSpeakerText(JsonObject value, out string text)
+    {
+        text = string.Empty;
+        return value["text"] is JsonObject textObject && JsonAccess.TryGetString(textObject, "text", out text);
     }
 
     private void RestoreWorkingRoot(JsonObject snapshot)
@@ -272,7 +343,9 @@ public sealed partial class RecotteProjectDocument
         EditResult committed = edit.Commit();
         if (!committed.Success)
             return staged with { Success = false, CanCommit = false, RolledBack = true,
-                Diagnostics = staged.Diagnostics.Concat(committed.Diagnostics).Distinct().ToArray(), Validation = new(committed.Diagnostics) };
+                AudioRegenerationRequired = Array.Empty<TimelineObjectId>(),
+                Diagnostics = staged.Diagnostics.Where(diagnostic => diagnostic.Code != "RC4208")
+                    .Concat(committed.Diagnostics).Distinct().ToArray(), Validation = new(committed.Diagnostics) };
         return staged with { CanCommit = false, Committed = true };
     }
 
