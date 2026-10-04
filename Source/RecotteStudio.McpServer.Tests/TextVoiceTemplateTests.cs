@@ -167,10 +167,12 @@ public sealed class TextVoiceTemplateTests : IDisposable
 
         JsonObject voice = SpeakerVoices(output).Single();
         JsonObject properties = (JsonObject)voice["properties"]!;
-        Assert.IsType<JsonValue>(properties["AudioVolume"]!["p-value"]);
-        Assert.True(properties["AudioVolume"]!["p-value"]!.AsValue().TryGetValue<double>(out _));
-        Assert.True(properties["LipMorphLevel"]!["p-value"]!.AsValue().TryGetValue<double>(out _));
-        Assert.True(properties["TelopOn"]!["p-value"]!.AsValue().TryGetValue<bool>(out _));
+        JsonValue audioVolume = Assert.IsAssignableFrom<JsonValue>(properties["AudioVolume"]!["p-value"]);
+        JsonValue lipMorphLevel = Assert.IsAssignableFrom<JsonValue>(properties["LipMorphLevel"]!["p-value"]);
+        JsonValue telopOn = Assert.IsAssignableFrom<JsonValue>(properties["TelopOn"]!["p-value"]);
+        Assert.True(audioVolume.TryGetValue<double>(out _));
+        Assert.True(lipMorphLevel.TryGetValue<double>(out _));
+        Assert.True(telopOn.TryGetValue<bool>(out _));
     }
 
     [Fact]
