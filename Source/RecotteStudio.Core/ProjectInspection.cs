@@ -101,8 +101,11 @@ public sealed record TimelineEntryView(
     ProjectTime? EndTime,
     ProjectTime? Duration,
     bool IsLocked,
-    bool HasAudio,
-    TimelineEntryCapabilities Capabilities);
+    TimelineEntryCapabilities Capabilities)
+{
+    /// <summary>Gets whether the Speaker Voice carries generated-audio markers.</summary>
+    public bool HasAudio { get; init; }
+}
 
 /// <summary>Filters flattened timeline entries. Range matching uses half-open intervals.</summary>
 public sealed record TimelineQuery
@@ -312,10 +315,13 @@ public sealed partial class RecotteProjectDocument
             ? new(b.TotalSeconds - a.TotalSeconds) : null;
         TimelineObjectId? id = item.ObjectKey is int key ? new(item.LayerIndex, key) : null;
         return new(layer.Index, layer.Name, layer.Type, item.Index, id, item.Type, item.Name, item.Text, start, end,
-            duration, locked, hasAudio, new(speakerVoice && id is not null && !locked && Capabilities.CanEditSpeakerText &&
+            duration, locked, new(speakerVoice && id is not null && !locked && Capabilities.CanEditSpeakerText &&
                     ProjectEditor.HasEditableText(item.JsonNode),
                 speakerVoice && !locked && Capabilities.CanMoveTimelineObject,
-                id is not null && !locked && Capabilities.CanRemoveTimelineObject));
+                id is not null && !locked && Capabilities.CanRemoveTimelineObject))
+        {
+            HasAudio = hasAudio,
+        };
     }
 
     private static LookupResult<T> ToLookup<T>(IEnumerable<T> source, string target)
