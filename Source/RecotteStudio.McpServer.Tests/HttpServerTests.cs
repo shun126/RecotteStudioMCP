@@ -79,6 +79,74 @@ public sealed class HttpServerTests
     }
 
     [Fact]
+    public async Task ActivityLogReportsRequestsToolCallsAndRejections()
+    {
+        ActivityLog activity = new();
+        List<ActivityEntry> entries = new();
+        int pulses = 0, peakRunning = 0;
+        activity.Recorded += entry => { lock (entries) entries.Add(entry); };
+        activity.RequestReceived += () => Interlocked.Increment(ref pulses);
+        activity.RunningChanged += running => peakRunning = Math.Max(peakRunning, running);
+
+        await using RecotteHttpServer server = await RecotteHttpServer.StartAsync(null, Token, 0, activity: activity);
+        using HttpClient http = new();
+        using HttpResponseMessage noToken = await http.PostAsync(server.Endpoint, null);
+        Assert.Equal(HttpStatusCode.Unauthorized, noToken.StatusCode);
+        Assert.Equal(0, pulses);
+
+        var transport = new HttpClientTransport(new HttpClientTransportOptions
+        {
+            Endpoint = server.Endpoint,
+            TransportMode = HttpTransportMode.StreamableHttp,
+            AdditionalHeaders = new Dictionary<string, string> { ["Authorization"] = $"Bearer {Token}" }
+        });
+        await using McpClient client = await McpClient.CreateAsync(transport);
+        string fixture = Path.Combine(AppContext.BaseDirectory, "Fixtures", "Empty.ccproj");
+        await client.CallToolAsync("recotte_inspect_project", new Dictionary<string, object?> { ["projectPath"] = fixture });
+        await client.CallToolAsync("recotte_inspect_project",
+            new Dictionary<string, object?> { ["projectPath"] = Path.Combine(Path.GetTempPath(), "missing.ccproj") });
+
+        Assert.True(pulses > 0);
+        Assert.Equal(1, peakRunning);
+        Assert.Collection(entries,
+            rejected => Assert.Equal(ActivityKind.Rejected, rejected.Kind),
+            succeeded =>
+            {
+                Assert.Equal(ActivityKind.Success, succeeded.Kind);
+                Assert.Equal("recotte_inspect_project", succeeded.Title);
+                Assert.Equal("Empty.ccproj", succeeded.Detail);
+                Assert.NotNull(succeeded.Duration);
+            },
+            failed =>
+            {
+                Assert.Equal(ActivityKind.Failure, failed.Kind);
+                Assert.StartsWith("missing.ccproj — ", failed.Detail);
+            });
+    }
+
+    [Fact]
+    public async Task RunningCountNotificationsArriveInOrderUnderConcurrency()
+    {
+        ActivityLog activity = new();
+        int last = -1, outOfOrder = 0, expected = 0;
+        // Handlers run under the log's lock, so this replays the counter and catches any reordered notification.
+        activity.RunningChanged += running =>
+        {
+            if (Math.Abs(running - expected) != 1) outOfOrder++;
+            expected = last = running;
+        };
+        McpToolResult<object> result = new(true, "success", null, null, null, Array.Empty<McpDiagnosticDto>());
+
+        await Task.WhenAll(Enumerable.Range(0, 64).Select(_ => Task.Run(() =>
+        {
+            for (int call = 0; call < 200; call++) activity.Track("tool", null, () => result);
+        })));
+
+        Assert.Equal(0, outOfOrder);
+        Assert.Equal(0, last);
+    }
+
+    [Fact]
     public async Task CannotConnectAfterServerStops()
     {
         RecotteHttpServer server = await RecotteHttpServer.StartAsync(null, Token, 0);

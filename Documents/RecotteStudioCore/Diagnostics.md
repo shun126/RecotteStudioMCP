@@ -11,7 +11,7 @@ Codes, rather than English messages, are the stable machine-readable contract. E
 | New-project creation | RC2301-RC2307 | required root/settings, GUID, name, directory, layers, styles, time, or template sanitization failure |
 | Unknown retained structure | RC3001, RC3002 | unknown layer/object preserved |
 | Version compatibility | RC3101, RC3102 | unknown or read-only version |
-| Editing/duration | RC4101-RC4102, RC4201-RC4207, RC4301, RC4401-RC4405 | unsupported edit, lock, duration, missing or incompatible clone template, or key allocation |
+| Editing/duration | RC4101-RC4102, RC4201-RC4204, RC4207-RC4208, RC4301, RC4401-RC4405 | unsupported edit, lock, duration, missing or incompatible clone template, or key allocation; RC4208 is a warning that an audio-backed Speaker Voice's text changed and its audio must be regenerated in Recotte Studio |
 | Save planning/validation | RC5101-RC5107 | capability, edit state, validity, path, overwrite, or required safety option |
 | External change | RC5201 | source state differs from load/latest Save |
 | Backup/recovery | RC5301-RC5303 | unsafe, non-adjacent, or colliding backup path |

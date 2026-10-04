@@ -1,12 +1,6 @@
 <div align="center">
+<img src="Documents/Images/AppIcon.png" width="128" height="128" alt="RecotteStudio MCP">
 <h1>RecotteStudio MCP</h1>
-<p>
-<a href="https://github.com/shun126/RecotteStudioMCP/issues">Issues</a>,
-<a href="https://github.com/shun126/RecotteStudioMCP/discussions">Discussions</a>,
-<a href="https://github.com/shun126/RecotteStudioMCP/wiki">Wiki</a>,
-<a href="https://deepwiki.com/shun126/RecotteStudioMCP">DeepWiki</a>,
-<a href="https://mnu.sakura.ne.jp/_doxygen/mana">Doxygen</a>
-</p>
 <p>
 <a href="https://github.com/shun126/RecotteStudioMCP/stargazers"><img src="https://img.shields.io/github/stars/shun126/RecotteStudioMCP?style=social"></a>
 <a href="https://github.com/shun126/RecotteStudioMCP/blob/main/LICENSE"><img src="https://img.shields.io/github/license/shun126/RecotteStudioMCP"></a>
@@ -31,7 +25,7 @@ Recotte Studio の `.ccproj` プロジェクトを MCP クライアントから�
 
 ## 使い始める
 
-1. [Releases](https://github.com/shun126/RecotteStudioMCP/releases) の `RecotteStudioMCP-<バージョン>-win-x64.zip`（例: `RecotteStudioMCP-0.5.1-win-x64.zip`）を展開します。
+1. [Releases](https://github.com/shun126/RecotteStudioMCP/releases) の `RecotteStudioMCP-<バージョン>-win-x64.zip`（例: `RecotteStudioMCP-0.5.2-win-x64.zip`）を展開します。
 2. `RecotteStudio.McpServer.exe` を起動します。ウィンドウが開いている間、`http://127.0.0.1:8765/mcp` で MCP サーバーが稼働します。最小化しても稼働し、閉じると停止します。
 3. 必要なら画面左下の設定を開き、作業フォルダを指定して「作業フォルダを適用」を押します。未指定の場合は従来どおり、既存ディレクトリ内の任意の `.ccproj` を扱えます。
 4. 設定画面の Codex または Claude Code の接続例をコピーして接続します。接続例にはこの PC 専用の接続トークンが含まれるため、公開しないでください。

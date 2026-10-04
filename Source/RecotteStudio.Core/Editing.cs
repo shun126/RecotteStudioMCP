@@ -185,7 +185,10 @@ public sealed partial class ProjectEditor
         return found is null ? null : TimelineObjectView.Create(found.Value.obj, id.LayerIndex, found.Value.objectIndex);
     }
 
-    /// <summary>Synchronizes the supported text fields of a text-only Speaker Voice.</summary>
+    /// <summary>
+    /// Synchronizes the supported text fields of a Speaker Voice. An audio-backed voice keeps its audio reference and
+    /// voice-hash untouched and the result carries an RC4208 warning, because only Recotte Studio can regenerate the audio.
+    /// </summary>
     public EditResult UpdateSpeakerText(UpdateSpeakerTextRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -194,18 +197,22 @@ public sealed partial class ProjectEditor
         if (rejected is not null) return rejected;
         JsonObject obj = found!.Value.obj;
         string path = found.Value.path;
-        if (obj.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(obj, "File")) || (JsonAccess.TryGetInt32(obj, "voice-hash", out int hash) && hash != 0))
-            return EditResult.Failed("RC4205", "Text editing of an audio-backed Speaker Voice is not supported because voice-hash cannot be regenerated safely.", path);
-        if (obj["text"] is not JsonObject text || text["stext"] is not JsonArray styled || !JsonAccess.TryGetString(text, "text", out string oldText))
-            return EditResult.Failed("RC4203", "The required text structure is missing.", $"{path}.text");
-        JsonObject[] fragments = styled.OfType<JsonObject>().Where(x => JsonAccess.TryGetString(x, "c", out string c) && c == "t").ToArray();
-        if (fragments.Length != 1 || !JsonAccess.TryGetString(fragments[0], "text", out string fragmentText) || fragmentText != oldText || styled.OfType<JsonObject>().Any(x => JsonAccess.TryGetString(x, "c", out string c) && c is not ("s" or "t")))
-            return EditResult.Failed("RC4204", "The styled text contains multiple fragments or unsupported decoration.", $"{path}.text.stext");
+        bool audioBacked = HasAudioMarker(obj);
+        string? structureError = ResolveEditableText(obj, out JsonObject? text, out JsonArray? styled, out JsonObject? fragment, out string oldText);
+        if (structureError == "RC4203") return EditResult.Failed("RC4203", "The required text structure is missing.", $"{path}.text");
+        if (structureError is not null) return EditResult.Failed("RC4204", "The styled text contains multiple fragments or unsupported decoration.", $"{path}.text.stext");
         List<ProjectChange> made = new();
         Change(obj, "name", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.name", made);
-        Change(text, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.text", made);
-        Change(fragments[0], "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.stext[{styled.IndexOf(fragments[0])}].text", made);
-        return EditResult.Succeeded(made);
+        Change(text!, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.text", made);
+        Change(fragment!, "text", request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.text.stext[{styled!.IndexOf(fragment)}].text", made);
+        // The text handed to the voice engine repeats the body after an engine-specific prefix; keep the prefix as it is.
+        if (oldText.Length > 0 && obj["properties"] is JsonObject properties && properties["VoiceroidText"] is JsonObject spoken &&
+            JsonAccess.TryGetString(spoken, "p-value", out string spokenText) && spokenText.EndsWith(oldText, StringComparison.Ordinal))
+            Change(spoken, "p-value", spokenText[..^oldText.Length] + request.Text, "UpdateSpeakerText", request.ObjectId.ToString(), $"{path}.properties.VoiceroidText.p-value", made);
+        if (!audioBacked || oldText == request.Text) return EditResult.Succeeded(made);
+        ProjectDiagnostic stale = new("RC4208", DiagnosticSeverity.Warning,
+            $"The text of the audio-backed Speaker Voice with object key {request.ObjectId.ObjectKey} on layer {request.ObjectId.LayerIndex} was changed. Its existing audio still speaks the old text; regenerate the audio for this clip in Recotte Studio.", path);
+        return new(true, new[] { stale }, made);
     }
 
     /// <summary>Moves a Speaker Voice after validating locks, range, and duration policy.</summary>
@@ -221,7 +228,10 @@ public sealed partial class ProjectEditor
         return EditResult.Succeeded(made);
     }
 
-    /// <summary>Adds a text-only Speaker Voice by deep-cloning a compatible object in the target layer.</summary>
+    /// <summary>
+    /// Adds a text-only Speaker Voice by deep-cloning one from the target layer, or else the built-in template bound to
+    /// the layer's text style and telop frame.
+    /// </summary>
     public EditResult AddTextOnlySpeakerVoice(AddSpeakerTextRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -236,8 +246,8 @@ public sealed partial class ProjectEditor
         {
             // The layer has no voice to clone, so fall back to the embedded template the same way assets do.
             if (!TextVoiceTemplateResources.Exists) return EditResult.Failed("RC4402", "No verified text-only Speaker Voice template exists in the target layer or in the built-in template.");
-            template = TextVoiceTemplateResources.TryClone(root);
-            if (template is null) return EditResult.Failed("RC4405", "The built-in text template and the target project define incompatible text styles or telop frames, so cloning it would create dangling references.");
+            template = TextVoiceTemplateResources.TryClone(root, layer);
+            if (template is null) return EditResult.Failed("RC4405", "The target Speaker layer's DefaultTextStyle or TelopFrame is not defined in the project's text styles or telop frames, so the built-in text template cannot be bound to the layer without creating dangling references.");
             if (!IsTextOnlySpeakerVoice(template)) return EditResult.Failed("RC4402", "The built-in text template is not a verified text-only Speaker Voice.");
         }
         HashSet<int> keys = Layers().SelectMany(x => (x.layer["layer-objects"] as JsonArray)?.OfType<JsonObject>() ?? Array.Empty<JsonObject>()).Where(x => JsonAccess.TryGetInt32(x, "objkey", out _)).Select(x => { JsonAccess.TryGetInt32(x, "objkey", out int k); return k; }).ToHashSet();
@@ -300,6 +310,23 @@ public sealed partial class ProjectEditor
         }
     }
     private static bool IsLocked(JsonObject o) => new[] { "locked", "tl-locked", "st-locked", "pv-locked" }.Any(n => o[n] is JsonValue v && v.TryGetValue(out bool b) && b);
+    /// <summary>Returns whether UpdateSpeakerText can rewrite the object's text: one plain fragment matching the body.</summary>
+    internal static bool HasEditableText(JsonObject o) => ResolveEditableText(o, out _, out _, out _, out _) is null;
+
+    /// <summary>Resolves the text nodes UpdateSpeakerText rewrites, or returns the diagnostic code explaining why it cannot.</summary>
+    private static string? ResolveEditableText(JsonObject o, out JsonObject? text, out JsonArray? styled, out JsonObject? fragment, out string oldText)
+    {
+        text = o["text"] as JsonObject; styled = text?["stext"] as JsonArray; fragment = null; oldText = string.Empty;
+        if (text is null || styled is null || !JsonAccess.TryGetString(text, "text", out oldText)) return "RC4203";
+        JsonObject[] fragments = styled.OfType<JsonObject>().Where(x => JsonAccess.TryGetString(x, "c", out string c) && c == "t").ToArray();
+        if (fragments.Length != 1 || !JsonAccess.TryGetString(fragments[0], "text", out string fragmentText) || fragmentText != oldText ||
+            styled.OfType<JsonObject>().Any(x => JsonAccess.TryGetString(x, "c", out string c) && c is not ("s" or "t"))) return "RC4204";
+        fragment = fragments[0];
+        return null;
+    }
+
+    /// <summary>Returns whether an object carries any sign of generated audio: an audio member, a file reference, or a nonzero voice-hash.</summary>
+    internal static bool HasAudioMarker(JsonObject o) => o.ContainsKey("audio") || !string.IsNullOrEmpty(JsonAccess.GetPropertyString(o, "File")) || (JsonAccess.TryGetInt32(o, "voice-hash", out int h) && h != 0);
     internal static bool IsTextOnlySpeakerVoice(JsonObject o) => JsonAccess.TryGetString(o,"type",out string t)&&t=="Speaker Voice"&&!o.ContainsKey("audio")&&string.IsNullOrEmpty(JsonAccess.GetPropertyString(o,"File"))&&JsonAccess.TryGetInt32(o,"voice-hash",out int h)&&h==0&&o["text"] is JsonObject tx&&tx["stext"] is JsonArray;
     private EditResult? ApplyDuration(decimal required) { if (root["setting"] is not JsonObject s || !JsonAccess.TryGetDecimal(s,"duration",out decimal current)) return EditResult.Failed("RC4101","Project duration is unavailable.","$.setting.duration"); bool automatic=s["auto-duration"] is JsonValue v&&v.TryGetValue(out bool b)&&b; ProjectDurationDecision d=durationPolicy.Evaluate(current,automatic,required); if (!d.Accepted) return new(false,d.Diagnostic is null?Array.Empty<ProjectDiagnostic>():new[]{d.Diagnostic},Array.Empty<ProjectChange>()); if (d.Duration>current) s["duration"]=d.Duration; return null; }
     private void Change(JsonObject node,string property,object value,string operation,string target,string path,List<ProjectChange> made) { object? before=Snapshot(node[property]); node[property]=JsonValue.Create(value); ProjectChange c=new(operation,target,before,value,path); changes.Add(c); made.Add(c); }

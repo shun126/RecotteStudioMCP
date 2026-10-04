@@ -101,7 +101,11 @@ public sealed record TimelineEntryView(
     ProjectTime? EndTime,
     ProjectTime? Duration,
     bool IsLocked,
-    TimelineEntryCapabilities Capabilities);
+    TimelineEntryCapabilities Capabilities)
+{
+    /// <summary>Gets whether the Speaker Voice carries generated-audio markers.</summary>
+    public bool HasAudio { get; init; }
+}
 
 /// <summary>Filters flattened timeline entries. Range matching uses half-open intervals.</summary>
 public sealed record TimelineQuery
@@ -158,11 +162,11 @@ public sealed partial class RecotteProjectDocument
         ProjectCompatibility.CanOverwrite);
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>
-    private bool HasTextOnlySpeakerVoiceTemplate => TextVoiceTemplateResources.IsCompatibleWith(root) ||
-        (root["layers"] is JsonArray layers && layers.OfType<JsonObject>()
-            .Where(layer => JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker")
-            .SelectMany(layer => (layer["layer-objects"] as JsonArray)?.OfType<JsonObject>() ?? Array.Empty<JsonObject>())
-            .Any(ProjectEditor.IsTextOnlySpeakerVoice));
+    private bool HasTextOnlySpeakerVoiceTemplate => root["layers"] is JsonArray layers && layers.OfType<JsonObject>()
+        .Where(layer => JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker")
+        .Any(layer => TextVoiceTemplateResources.CanBindTo(root, layer) ||
+            ((layer["layer-objects"] as JsonArray)?.OfType<JsonObject>() ?? Array.Empty<JsonObject>())
+                .Any(ProjectEditor.IsTextOnlySpeakerVoice));
 
     public LookupResult<LayerView> FindLayer(LayerReference reference)
     {
@@ -304,17 +308,20 @@ public sealed partial class RecotteProjectDocument
     {
         bool locked = IsLocked(layer.JsonNode) || IsLocked(item.JsonNode);
         bool speakerVoice = item.Type == "Speaker Voice";
-        bool textOnly = speakerVoice && !item.JsonNode.ContainsKey("audio") && string.IsNullOrEmpty(item.FileItemKey) &&
-            JsonAccess.TryGetInt32(item.JsonNode, "voice-hash", out int hash) && hash == 0;
+        bool hasAudio = speakerVoice && ProjectEditor.HasAudioMarker(item.JsonNode);
         ProjectTime? start = item.StartTime is decimal startSeconds && startSeconds >= 0 ? new(startSeconds) : null;
         ProjectTime? end = item.EndTime is decimal endSeconds && endSeconds >= 0 ? new(endSeconds) : null;
         ProjectTime? duration = start is ProjectTime a && end is ProjectTime b && b.TotalSeconds >= a.TotalSeconds
             ? new(b.TotalSeconds - a.TotalSeconds) : null;
         TimelineObjectId? id = item.ObjectKey is int key ? new(item.LayerIndex, key) : null;
         return new(layer.Index, layer.Name, layer.Type, item.Index, id, item.Type, item.Name, item.Text, start, end,
-            duration, locked, new(textOnly && !locked && Capabilities.CanEditSpeakerText,
+            duration, locked, new(speakerVoice && id is not null && !locked && Capabilities.CanEditSpeakerText &&
+                    ProjectEditor.HasEditableText(item.JsonNode),
                 speakerVoice && !locked && Capabilities.CanMoveTimelineObject,
-                id is not null && !locked && Capabilities.CanRemoveTimelineObject));
+                id is not null && !locked && Capabilities.CanRemoveTimelineObject))
+        {
+            HasAudio = hasAudio,
+        };
     }
 
     private static LookupResult<T> ToLookup<T>(IEnumerable<T> source, string target)
