@@ -238,9 +238,10 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
     // changesKept is false when the batch failed or its save failed: every operation was rolled back or never reached the
     // file, so no clip's text changed even though earlier operations in the batch report success.
     private static object BatchData(ProjectBatchResult value, bool changesKept) => new { value.Success, value.AppliedOperationCount, value.FailedOperationIndex,
-        // Clips whose text changed while their audio still speaks the old text; the user regenerates these in Recotte Studio.
-        audioRegenerationRequired = value.OperationResults.Where(item => changesKept && item.Success &&
-            item.Diagnostics.Any(diagnostic => diagnostic.Code == StaleAudio)).Select(item => item.Target).ToArray(),
+        // Core derives this from the final atomic batch state, so removed or reverted intermediate edits are excluded.
+        audioRegenerationRequired = changesKept
+            ? value.AudioRegenerationRequired.Select(item => item.ToString()).ToArray()
+            : Array.Empty<string>(),
         value.OperationResults, value.Changes, validation = new { value.Validation.IsValid, diagnostics = Diagnostics(value.Validation.Diagnostics) },
         value.CanCommit, value.Committed, value.RolledBack };
     private const string StaleAudio = "RC4208";
