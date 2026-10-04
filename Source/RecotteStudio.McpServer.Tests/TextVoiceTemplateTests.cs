@@ -146,6 +146,34 @@ public sealed class TextVoiceTemplateTests : IDisposable
     }
 
     [Fact]
+    public async Task InvalidLayerDefaultsDoNotCorruptTheVerifiedVoiceTemplate()
+    {
+        string project = Path.Combine(root, "invalid-defaults.ccproj");
+        Assert.True((await service.CreateProjectAsync("invalid-defaults", project, false,
+            Array.Empty<ProjectOperationDto>(), default)).Success);
+
+        Mutate(project, root =>
+        {
+            JsonObject layer = (JsonObject)root["layers"]![1]!["properties"]!;
+            layer["InitialAudioVolume"]!["p-value"] = "invalid";
+            layer["BaseLipMorphLevel"]!["p-value"] = true;
+            layer["ShowTelopDefault"]!["p-value"] = 1;
+        });
+
+        Assert.True(RecotteProject.Load(project).Capabilities.CanAddTextOnlySpeakerVoice);
+        string output = Path.Combine(root, "invalid-defaults-edited.ccproj");
+        Assert.True((await service.ApplyOperationsAndSaveCopyAsync(project, output, false,
+            new[] { AddText("安全な既定値を使う", 0m, 1m) }, default)).Success);
+
+        JsonObject voice = SpeakerVoices(output).Single();
+        JsonObject properties = (JsonObject)voice["properties"]!;
+        Assert.IsType<JsonValue>(properties["AudioVolume"]!["p-value"]);
+        Assert.True(properties["AudioVolume"]!["p-value"]!.AsValue().TryGetValue<double>(out _));
+        Assert.True(properties["LipMorphLevel"]!["p-value"]!.AsValue().TryGetValue<double>(out _));
+        Assert.True(properties["TelopOn"]!["p-value"]!.AsValue().TryGetValue<bool>(out _));
+    }
+
+    [Fact]
     public async Task CapabilityMatchesTheActualOutcomeForACreatedProject()
     {
         string project = Path.Combine(root, "capability.ccproj");
