@@ -3,8 +3,40 @@ using RecotteStudio.Core;
 namespace RecotteStudio.McpServer;
 
 public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperationMapper operationMapper,
-    OutputPathLockManager outputLocks)
+    OutputPathLockManager outputLocks, EffectCatalogProvider? effectCatalog = null)
 {
+    private readonly EffectCatalogProvider effectCatalog = effectCatalog ?? new();
+
+    public McpToolResult<object> ListEffects(string? kind = null, string? tag = null, string? nameContains = null, int limit = 100)
+    {
+        EffectCatalog catalog;
+        try { catalog = effectCatalog.Load(); }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        { return Fail("unsupported", "MCP_EFFECTS_UNAVAILABLE", exception.Message); }
+        var matches = catalog.Effects.Where(effect =>
+            (kind is null || string.Equals(effect.Kind, kind, StringComparison.OrdinalIgnoreCase)) &&
+            (tag is null || string.Equals(effect.Tag, tag, StringComparison.OrdinalIgnoreCase)) &&
+            (nameContains is null || new[] { effect.Key, effect.NameJa, effect.NameEn }.Any(name =>
+                name?.Contains(nameContains, StringComparison.OrdinalIgnoreCase) == true))).ToArray();
+        return Ok(new { effectsDirectory = catalog.Directory, matched = matches.Length,
+            kinds = catalog.Effects.GroupBy(effect => effect.Kind).Select(group => new { kind = group.Key, count = group.Count() }).ToArray(),
+            effects = matches.Take(Math.Max(0, limit)).Select(effect => new {
+                effectKey = effect.Key, kind = effect.Kind, tag = effect.Tag, nameJa = effect.NameJa, nameEn = effect.NameEn,
+                editable = effect.CanEdit, defaultDuration = effect.DefaultDuration, propertyKeys = effect.PropertyKeys,
+                relativePath = effect.RelativePath }), catalog.Diagnostics });
+    }
+
+    public McpToolResult<object> ListObjectEffects(string projectPath, TimelineObjectTargetDto target) =>
+        WithDocument(projectPath, (_, document) =>
+        {
+            TimelineObjectReference reference;
+            try { reference = operationMapper.MapObject(target); }
+            catch (ArgumentException exception) { return Fail("invalid", "MCP_EFFECT_TARGET_INVALID", exception.Message); }
+            var found = document.FindTimelineObject(reference);
+            if (found.Value?.ObjectKey is not int key) return Fail("invalid", "MCP_EFFECT_TARGET_INVALID", "The target was not found uniquely.");
+            return Ok(new { effects = document.GetFadeEffects(new(found.Value.LayerIndex, key)) });
+        });
+
     public McpToolResult<object> InspectProject(string projectPath) => WithDocument(projectPath, (path, document) =>
     {
         ProjectSummary summary = document.GetSummary();

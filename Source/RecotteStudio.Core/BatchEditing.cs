@@ -14,6 +14,9 @@ public enum ProjectOperationKind
     AddImageAsset,
     AddVideoAsset,
     AddAnnotationText,
+    AddFadeEffect,
+    UpdateFadeEffect,
+    RemoveFadeEffect,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -249,6 +252,12 @@ public sealed partial class ProjectEditor
     {
         return operation switch
         {
+            AddFadeEffectOperation value => WithObject(value.Target,
+                id => new(AddFadeEffect(id, value.EffectKey, value.Duration), id.ToString())),
+            UpdateFadeEffectOperation value => WithObject(value.Target,
+                id => new(UpdateFadeEffect(id, value.EffectIndex, value.EffectKey, value.Duration), id.ToString())),
+            RemoveFadeEffectOperation value => WithObject(value.Target,
+                id => new(RemoveFadeEffect(id, value.EffectIndex), id.ToString())),
             UpdateSpeakerTextOperation value => WithObject(value.Target,
                 id => new(UpdateSpeakerText(new(id, value.Text)), id.ToString())),
             MoveTimelineObjectOperation value => WithObject(value.Target,

@@ -1,5 +1,7 @@
 # RecotteStudio.McpServer
 
+エフェクトの一覧取得と画像・動画へのフェード追加・変更・削除に対応しています。[使用例と検証状況](../../Documents/RecotteStudioCore/Effects.md)を参照してください。
+
 `RecotteStudio.McpServer` は、[RecotteStudio.Core](../RecotteStudio.Core/README.md) の機能を Streamable HTTP MCP ツールとして公開する WinUI 3 アプリです。ウィンドウを閉じるとサーバーは停止します。
 
 接続先は `http://127.0.0.1:8765/mcp` です。全てのリクエストに GUI が生成した `Authorization: Bearer <token>` ヘッダーが必要です。待受先はループバックのみで、`Host` と `Origin` を検証します。

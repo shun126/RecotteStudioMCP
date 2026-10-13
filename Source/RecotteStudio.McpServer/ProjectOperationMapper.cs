@@ -11,6 +11,7 @@ public sealed class ProjectOperationMapper
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText",
+        "addFadeEffect", "updateFadeEffect", "removeFadeEffect",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
@@ -24,6 +25,9 @@ public sealed class ProjectOperationMapper
             {
                 mapped.Add(value.Type switch
                 {
+                    "addFadeEffect" => new AddFadeEffectOperation(Object(value.Target), Required(value.EffectKey, "effectKey"), Time(value.Duration, "duration")),
+                    "updateFadeEffect" => new UpdateFadeEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required."), Required(value.EffectKey, "effectKey"), Time(value.Duration, "duration")),
+                    "removeFadeEffect" => new RemoveFadeEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required.")),
                     "updateSpeakerText" => new UpdateSpeakerTextOperation(Object(value.Target), Required(value.Text, "text")),
                     "moveTimelineObject" => new MoveTimelineObjectOperation(Object(value.Target), Time(value.Start, "start"), Time(value.End, "end")),
                     "addTextOnlySpeakerVoice" => new AddTextOnlySpeakerVoiceOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
@@ -39,6 +43,7 @@ public sealed class ProjectOperationMapper
         return new(true, mapped, null, null);
     }
 
+    public TimelineObjectReference MapObject(TimelineObjectTargetDto? value) => Object(value);
     public LayerReference MapLayer(LayerTargetDto? value) => Layer(value);
     private static LayerReference Layer(LayerTargetDto? value)
     {

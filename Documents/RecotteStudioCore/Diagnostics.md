@@ -13,6 +13,7 @@ Codes, rather than English messages, are the stable machine-readable contract. E
 | Version compatibility | RC3101, RC3102 | unknown or read-only version |
 | Editing/duration | RC4101-RC4102, RC4201-RC4204, RC4207-RC4208, RC4301, RC4401-RC4405 | unsupported edit, lock, duration, missing or incompatible clone template, or key allocation; RC4208 is a warning that an audio-backed Speaker Voice's text changed and its audio must be regenerated in Recotte Studio |
 | Save planning/validation | RC5101-RC5107 | capability, edit state, validity, path, overwrite, or required safety option |
+| Fade editing | RC4901-RC4905 | unsupported target type, malformed sub-object array, invalid fade index, unsupported fade key, or duration outside the clip |
 | External change | RC5201 | source state differs from load/latest Save |
 | Backup/recovery | RC5301-RC5303 | unsafe, non-adjacent, or colliding backup path |
 | Cleanup | RC5401 | non-fatal temporary-file cleanup failure |

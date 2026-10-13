@@ -82,7 +82,10 @@ public sealed record ProjectCapabilities(
     bool CanAddAudioObject,
     bool CanAddCharacter,
     bool CanSaveCopy,
-    bool CanOverwrite);
+    bool CanOverwrite)
+{
+    public bool CanEditFadeEffects { get; init; }
+}
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
 public sealed record TimelineEntryCapabilities(bool CanUpdateText, bool CanMove, bool CanRemove);
@@ -159,7 +162,8 @@ public sealed partial class RecotteProjectDocument
         ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
         false, false, false, false,
         ProjectCompatibility.CanSaveCopy,
-        ProjectCompatibility.CanOverwrite);
+        ProjectCompatibility.CanOverwrite)
+    { CanEditFadeEffects = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>
     private bool HasTextOnlySpeakerVoiceTemplate => root["layers"] is JsonArray layers && layers.OfType<JsonObject>()
