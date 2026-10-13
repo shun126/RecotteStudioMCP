@@ -14,6 +14,7 @@ public enum ProjectOperationKind
     AddImageAsset,
     AddVideoAsset,
     AddAnnotationText,
+    AddFigure,
     AddFadeEffect,
     UpdateFadeEffect,
     RemoveFadeEffect,
@@ -78,6 +79,12 @@ public sealed record AddAnnotationTextOperation(LayerReference Layer, string Tex
     ProjectTime StartTime, ProjectTime EndTime) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.AddAnnotationText;
+}
+
+public sealed record AddFigureOperation(LayerReference Layer, FigureDefinition Figure, ProjectTime StartTime,
+    ProjectTime EndTime, decimal X, decimal Y, decimal Width, decimal Height) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddFigure;
 }
 
 /// <summary>Configures allocators and duration handling used by a document-level batch.</summary>
@@ -289,6 +296,12 @@ public sealed partial class ProjectEditor
                 TimelineObjectId? created = edit.Success && edit.Changes.LastOrDefault() is ProjectChange change &&
                     int.TryParse(change.Target, out int key) ? new(layerIndex, key) : null;
                 return new(edit, $"layer:{layerIndex}", created);
+            }),
+            AddFigureOperation value => WithLayer(value.Layer, layerIndex =>
+            {
+                AssetAddResult asset = AddFigure(new(layerIndex, value.Figure, value.StartTime, value.EndTime,
+                    value.X, value.Y, value.Width, value.Height));
+                return new(asset.EditResult, $"layer:{layerIndex}", asset.ObjectId, asset.FileItemKey);
             }),
             _ => new(EditResult.Failed("RC6101", "The operation type is not supported."), operation.GetType().Name),
         };

@@ -41,6 +41,7 @@ public sealed class RecotteHttpServer : IAsyncDisposable
         builder.Services.AddSingleton(activity);
         builder.Services.AddSingleton<WorkspacePathPolicy>();
         builder.Services.AddSingleton<OutputPathLockManager>();
+        builder.Services.AddSingleton(new FigureCatalogProvider());
         builder.Services.AddSingleton<ProjectOperationMapper>();
         builder.Services.AddSingleton<RecotteToolService>();
         builder.Services.AddRecotteMcpServer();

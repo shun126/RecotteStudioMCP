@@ -22,10 +22,12 @@ internal static class JsonAccess
         return node[name] is JsonValue jsonValue && jsonValue.TryGetValue(out value);
     }
 
-    internal static bool TryGetDecimal(JsonObject node, string name, out decimal value)
+    internal static bool TryGetDecimal(JsonObject node, string name, out decimal value) => TryGetDecimal(node[name], out value);
+
+    internal static bool TryGetDecimal(JsonNode? node, out decimal value)
     {
         value = default;
-        if (node[name] is not JsonValue jsonValue)
+        if (node is not JsonValue jsonValue)
         {
             return false;
         }
@@ -49,6 +51,19 @@ internal static class JsonAccess
         }
 
         return false;
+    }
+
+    /// <summary>Reads the [x, y, width, height] Bounds entry of a property bag.</summary>
+    internal static bool TryGetBounds(JsonObject properties, out decimal x, out decimal y, out decimal width, out decimal height)
+    {
+        x = y = width = height = default;
+        if (properties["Bounds"] is not JsonObject bounds || bounds["p-value"] is not JsonArray values || values.Count != 4)
+        {
+            return false;
+        }
+
+        return TryGetDecimal(values[0], out x) && TryGetDecimal(values[1], out y) &&
+            TryGetDecimal(values[2], out width) && TryGetDecimal(values[3], out height);
     }
 
     internal static string? GetPropertyString(JsonObject node, string propertyName)

@@ -8,8 +8,9 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
 {
     private const string ReadOnly = "Reads one .ccproj through RecotteStudio.Core without changing or creating files.";
     private const string Removal = " removeTimelineObject removes any unlocked timeline object, prunes a file-item registration only when it becomes unused, and never deletes asset files from disk.";
-    private const string NoAudio = " Dialogue needs no audio file: addTextOnlySpeakerVoice places the line as text and Recotte Studio synthesizes the speech itself, so do not generate audio or run TTS. updateSpeakerText also works on a clip that already has audio: the audio is kept, the clip is listed in audioRegenerationRequired with an RC4208 warning, and you must tell the user to regenerate the audio for those clips in Recotte Studio.";
-    private const string OperationTypes = " Supported operation types are updateSpeakerText, moveTimelineObject, addTextOnlySpeakerVoice, removeTimelineObject, addImageObject, addVideoObject, addAnnotationText, addFadeEffect, updateFadeEffect, and removeFadeEffect. addAnnotationText places an editor hint text box on an Annot layer. Fades support unlocked Image and Video clips: effectKey is Alpha Fade or Alpha Fade Out, duration is positive seconds within the clip; placement is at its start or end. updateFadeEffect and removeFadeEffect require effectIndex from recotte_list_object_effects (the index in the full sub-objects array; removal shifts subsequent indices). Curve editing is unsupported." + NoAudio;
+    private const string Dialogue = " addTextOnlySpeakerVoice places a dialogue line as text only: Recotte Studio synthesizes the speech and draws the telop, so supply no audio and put no dialogue text into images or videos. updateSpeakerText also works on a clip that already has audio: the audio is kept, the clip is listed in audioRegenerationRequired with an RC4208 warning, and you must tell the user to regenerate the audio for those clips in Recotte Studio.";
+    private const string Figure = " addFigureObject places an installed stamp on an Annot layer: figureKey comes from recotte_list_figures, x and y are the top-left corner in screen pixels, and width (default 128) and height (default: width) set its size.";
+    private const string OperationTypes = " Supported operation types are updateSpeakerText, moveTimelineObject, addTextOnlySpeakerVoice, removeTimelineObject, addImageObject, addVideoObject, addAnnotationText, addFigureObject, addFadeEffect, updateFadeEffect, and removeFadeEffect. Fades support unlocked Image and Video clips: effectKey is Alpha Fade or Alpha Fade Out, duration is positive seconds within the clip; placement is at its start or end. updateFadeEffect and removeFadeEffect require effectIndex from recotte_list_object_effects (the index in the full sub-objects array; removal shifts subsequent indices). Curve editing is unsupported. addAnnotationText places an editor hint text box on an Annot layer." + Figure + Dialogue;
     private const string Editing = "Atomically applies supported RecotteStudio.Core operations and saves the result to a different .ccproj file. The source project is never modified. Recotte Studio is not launched." + OperationTypes + Removal;
     private const string Overwriting = "Atomically applies supported RecotteStudio.Core operations and safely overwrites the loaded source .ccproj using RecotteStudio.Core Save(). A mandatory backup and external-change detection are used. Recotte Studio is not launched." + OperationTypes + Removal;
 
@@ -24,7 +25,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
     [McpServerTool(Name = "recotte_inspect_project"), Description(ReadOnly + " Returns its summary, capabilities, and validation diagnostics.")]
     public McpToolResult<object> InspectProject(string projectPath) => activity.Track("recotte_inspect_project", projectPath, () => service.InspectProject(projectPath));
 
-    [McpServerTool(Name = "recotte_validate_project"), Description(ReadOnly + " Validation errors are returned as structured results, not protocol errors.")]
+    [McpServerTool(Name = "recotte_validate_project"), Description(ReadOnly + " Validation errors are returned as structured results, not protocol errors. An RC2401 warning marks an image or video that does not fill the screen and is on screen while a dialogue telop is drawn over it, and names the covered region.")]
     public McpToolResult<object> ValidateProject(string projectPath) => activity.Track("recotte_validate_project", projectPath, () => service.ValidateProject(projectPath));
 
     [McpServerTool(Name = "recotte_list_layers"), Description(ReadOnly + " Lists Core's safe layer views.")]
@@ -39,8 +40,12 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
         string? textContains = null, decimal? start = null, decimal? end = null) =>
         activity.Track("recotte_find_timeline_objects", projectPath, () => service.FindTimelineObjects(projectPath, layerName, objectType, textContains, start, end));
 
-    [McpServerTool(Name = "recotte_get_capabilities"), Description(ReadOnly + " Returns the exact Core capabilities for the loaded project version; call before editing.")]
+    [McpServerTool(Name = "recotte_get_capabilities"), Description(ReadOnly + " Returns the exact Core capabilities for the loaded project version; call before editing. Also returns layout: the screen size, each telop frame's bounds in pixels, and the telop frame every Speaker layer uses, so images and videos can be composed around the dialogue.")]
     public McpToolResult<object> GetCapabilities(string projectPath) => activity.Track("recotte_get_capabilities", projectPath, () => service.GetCapabilities(projectPath));
+
+    [McpServerTool(Name = "recotte_list_figures"), Description("Lists the stamps (figures) installed with Recotte Studio, such as emotion marks, arrows, symbols, and onomatopoeia, without reading or changing any project. Filter by tag or by nameContains (matches the key and the Japanese or English name); the result also returns every tag with its count. Pass a returned figureKey to addFigureObject; only figures with placeable true can be placed.")]
+    public McpToolResult<object> ListFigures(string? tag = null, string? nameContains = null, int limit = 50) =>
+        activity.Track("recotte_list_figures", null, () => service.ListFigures(tag, nameContains, limit));
 
     [McpServerTool(Name = "recotte_inspect_assets"), Description(ReadOnly + " Returns unsupported unless RecotteStudio.Core exposes safe asset inspection; it never infers ccproj references.")]
     public McpToolResult<object> InspectAssets(string projectPath) => activity.Track("recotte_inspect_assets", projectPath, () => service.InspectAssets(projectPath));

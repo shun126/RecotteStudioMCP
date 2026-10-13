@@ -5,12 +5,15 @@ namespace RecotteStudio.McpServer;
 public sealed record OperationMapResult(bool Success, IReadOnlyList<ProjectOperation> Operations,
     string? ErrorCode, string? Message);
 
-public sealed class ProjectOperationMapper
+public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog = null)
 {
+    public const decimal DefaultFigureSize = 128m;
+    private readonly FigureCatalogProvider figureCatalog = figureCatalog ?? new();
+
     public static readonly IReadOnlyList<string> SupportedTypes = new[]
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
-        "addImageObject", "addVideoObject", "addAnnotationText",
+        "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
         "addFadeEffect", "updateFadeEffect", "removeFadeEffect",
     };
 
@@ -35,6 +38,7 @@ public sealed class ProjectOperationMapper
                     "addImageObject" => new AddImageAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addVideoObject" => new AddVideoAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addAnnotationText" => new AddAnnotationTextOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
+                    "addFigureObject" => Figure(value),
                     _ => throw new ArgumentException($"Unsupported operation '{value.Type}'. Supported operations: {string.Join(", ", SupportedTypes)}."),
                 });
             }
@@ -43,8 +47,23 @@ public sealed class ProjectOperationMapper
         return new(true, mapped, null, null);
     }
 
-    public TimelineObjectReference MapObject(TimelineObjectTargetDto? value) => Object(value);
+    private AddFigureOperation Figure(ProjectOperationDto value)
+    {
+        string key = Required(value.FigureKey, "figureKey");
+        FigureDefinition figure;
+        try
+        {
+            figure = figureCatalog.Load().Find(key)
+                ?? throw new ArgumentException($"figureKey '{key}' is not an installed figure; call recotte_list_figures for valid keys.");
+        }
+        catch (DirectoryNotFoundException exception) { throw new ArgumentException(exception.Message); }
+        if (value.X is not decimal x || value.Y is not decimal y) throw new ArgumentException("x and y are required.");
+        decimal width = value.Width ?? DefaultFigureSize;
+        return new(Layer(value.Layer), figure, Time(value.Start, "start"), Time(value.End, "end"), x, y, width, value.Height ?? width);
+    }
+
     public LayerReference MapLayer(LayerTargetDto? value) => Layer(value);
+    public TimelineObjectReference MapObject(TimelineObjectTargetDto? value) => Object(value);
     private static LayerReference Layer(LayerTargetDto? value)
     {
         if (value is null) throw new ArgumentException("layer is required.");

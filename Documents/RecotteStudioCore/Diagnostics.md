@@ -8,10 +8,12 @@ Codes, rather than English messages, are the stable machine-readable contract. E
 | Required structure | RC1101, RC1102, RC2001 | app version or required typed structure missing/invalid |
 | Registry/reference integrity | RC2101, RC2102 | unregistered file or speaker reference |
 | Timeline | RC2201, RC2202, RC2203 | invalid range or duplicate/cross-layer object key |
+| Layout | RC2401 | warning that an Image or Video not filling the screen is shown while a Speaker Voice telop is drawn over it; the message names the telop frame and its bounds, and the project stays valid |
 | New-project creation | RC2301-RC2307 | required root/settings, GUID, name, directory, layers, styles, time, or template sanitization failure |
 | Unknown retained structure | RC3001, RC3002 | unknown layer/object preserved |
 | Version compatibility | RC3101, RC3102 | unknown or read-only version |
 | Editing/duration | RC4101-RC4102, RC4201-RC4204, RC4207-RC4208, RC4301, RC4401-RC4405 | unsupported edit, lock, duration, missing or incompatible clone template, or key allocation; RC4208 is a warning that an audio-backed Speaker Voice's text changed and its audio must be regenerated in Recotte Studio |
+| Figure (stamp) placement | RC4801-RC4805 | figure shape not verified for placement (only SVG figures with the plain `figure` style are), invalid time range or size, target is not an unlocked Annot layer, template or file-item registry unavailable, or key allocation |
 | Save planning/validation | RC5101-RC5107 | capability, edit state, validity, path, overwrite, or required safety option |
 | Fade editing | RC4901-RC4905 | unsupported target type, malformed sub-object array, invalid fade index, unsupported fade key, or duration outside the clip |
 | External change | RC5201 | source state differs from load/latest Save |

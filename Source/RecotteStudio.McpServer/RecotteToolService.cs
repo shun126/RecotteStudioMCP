@@ -3,8 +3,9 @@ using RecotteStudio.Core;
 namespace RecotteStudio.McpServer;
 
 public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperationMapper operationMapper,
-    OutputPathLockManager outputLocks, EffectCatalogProvider? effectCatalog = null)
+    OutputPathLockManager outputLocks, FigureCatalogProvider? figureCatalog = null, EffectCatalogProvider? effectCatalog = null)
 {
+    private readonly FigureCatalogProvider figureCatalog = figureCatalog ?? new();
     private readonly EffectCatalogProvider effectCatalog = effectCatalog ?? new();
 
     public McpToolResult<object> ListEffects(string? kind = null, string? tag = null, string? nameContains = null, int limit = 100)
@@ -36,6 +37,29 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
             if (found.Value?.ObjectKey is not int key) return Fail("invalid", "MCP_EFFECT_TARGET_INVALID", "The target was not found uniquely.");
             return Ok(new { effects = document.GetFadeEffects(new(found.Value.LayerIndex, key)) });
         });
+
+    public McpToolResult<object> ListFigures(string? tag = null, string? nameContains = null, int limit = 50)
+    {
+        FigureCatalog catalog;
+        try { catalog = figureCatalog.Load(); }
+        catch (DirectoryNotFoundException exception) { return Fail("unsupported", "MCP_FIGURES_UNAVAILABLE", exception.Message); }
+        FigureDefinition[] matches = catalog.Figures.Where(figure =>
+            (tag is null || string.Equals(figure.Tag, tag, StringComparison.OrdinalIgnoreCase)) &&
+            (nameContains is null || new[] { figure.Key, figure.DisplayNameJa, figure.DisplayNameEn }.Any(name =>
+                name?.Contains(nameContains, StringComparison.OrdinalIgnoreCase) == true))).ToArray();
+        return Ok(new
+        {
+            figuresDirectory = catalog.Directory,
+            tags = catalog.Figures.GroupBy(figure => figure.Tag)
+                .Select(group => new { tag = group.Key, count = group.Count(), placeable = group.Count(figure => figure.CanPlace) }).ToArray(),
+            matched = matches.Length,
+            figures = matches.Take(Math.Max(limit, 0)).Select(figure => new
+            {
+                figureKey = figure.Key, tag = figure.Tag, nameJa = figure.DisplayNameJa, nameEn = figure.DisplayNameEn,
+                placeable = figure.CanPlace,
+            }).ToArray(),
+        });
+    }
 
     public McpToolResult<object> InspectProject(string projectPath) => WithDocument(projectPath, (path, document) =>
     {
@@ -89,6 +113,19 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         applicationVersion = document.ApplicationVersionText,
         compatibilityLevel = document.Compatibility.ToString(),
         capabilities = document.Capabilities,
+        layout = new
+        {
+            screenWidth = document.Settings?.Width, screenHeight = document.Settings?.Height,
+            telopFrames = document.TelopFrames.Select(frame => new
+            {
+                frame.Name, frame.DisplayName, x = frame.X, y = frame.Y, width = frame.Width, height = frame.Height,
+            }).ToArray(),
+            speakerLayers = document.Layers.OfType<SpeakerLayerView>().Select(layer => new
+            {
+                layerIndex = layer.Index, layer.Name, telopFrame = layer.TelopFrame,
+            }).ToArray(),
+            guidance = McpServerRegistration.TelopLayout,
+        },
     }));
 
     public McpToolResult<object> InspectAssets(string projectPath) => WithDocument(projectPath, (_, document) =>
