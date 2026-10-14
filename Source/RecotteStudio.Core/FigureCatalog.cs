@@ -50,7 +50,9 @@ public sealed class FigureCatalog
             throw new DirectoryNotFoundException($"The Recotte Studio figures directory does not exist: {root}");
 
         Dictionary<string, FigureDefinition> figures = new(StringComparer.Ordinal);
-        foreach (string file in System.IO.Directory.EnumerateFiles(root, "*.json", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
+        // Unreadable subdirectories are skipped like unreadable files instead of aborting the whole enumeration.
+        EnumerationOptions options = new() { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = 0 };
+        foreach (string file in System.IO.Directory.EnumerateFiles(root, "*.json", options).Order(StringComparer.Ordinal))
         {
             JsonObject? definition;
             try { definition = JsonNode.Parse(File.ReadAllText(file)) as JsonObject; }

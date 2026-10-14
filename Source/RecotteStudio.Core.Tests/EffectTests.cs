@@ -118,6 +118,26 @@ public sealed class EffectTests : IDisposable
     }
 
     [Fact]
+    public void CatalogReportsInaccessibleKindFolderAndReadsTheOthers()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        Directory.CreateDirectory(Path.Combine(directory, "text"));
+        File.WriteAllText(Path.Combine(directory, "text", "pop.lua"), """
+            function GetInfo()
+                local info = { name = "Pop" }
+                return info
+            end
+            """);
+        using InaccessibleDirectory locked = new(Path.Combine(directory, "effects"));
+        if (!locked.IsDenied) return;
+
+        EffectCatalog catalog = EffectCatalog.Load(directory);
+
+        Assert.Equal("Pop", Assert.Single(catalog.Effects).Key);
+        Assert.StartsWith($"Cannot read {Path.Combine(directory, "effects")}", Assert.Single(catalog.Diagnostics));
+    }
+
+    [Fact]
     public void InstalledCatalogReadsEveryDefinition()
     {
         string installed = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "RecotteStudio", "effects");

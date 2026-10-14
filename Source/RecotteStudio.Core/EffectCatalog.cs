@@ -29,7 +29,11 @@ public sealed class EffectCatalog
         {
             string folder = Path.Combine(root, kind);
             if (!System.IO.Directory.Exists(folder)) continue;
-            foreach (string file in System.IO.Directory.EnumerateFiles(folder, "*.lua").Order(StringComparer.Ordinal))
+            string[] files;
+            try { files = System.IO.Directory.EnumerateFiles(folder, "*.lua").Order(StringComparer.Ordinal).ToArray(); }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            { diagnostics.Add($"Cannot read {folder}: {exception.Message}"); continue; }
+            foreach (string file in files)
             {
                 try
                 {

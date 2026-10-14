@@ -45,6 +45,18 @@ public sealed class FigureTests : IDisposable
         Assert.Throws<DirectoryNotFoundException>(() => FigureCatalog.Load(Path.Combine(directory, "absent")));
 
     [Fact]
+    public void Load_SkipsInaccessibleSubdirectories()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using InaccessibleDirectory locked = new(Path.Combine(figures, "locked"));
+        if (!locked.IsDenied) return;
+
+        FigureCatalog catalog = FigureCatalog.Load(figures);
+
+        Assert.Equal(new[] { "Balloon_0001", "Emotion_0019" }, catalog.Figures.Select(figure => figure.Key));
+    }
+
+    [Fact]
     public void AddFigure_ReproducesTheFigureSavedByRecotteStudio()
     {
         string samplePath = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "009FullProject",
