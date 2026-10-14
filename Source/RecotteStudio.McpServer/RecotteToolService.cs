@@ -159,7 +159,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         {
             IReadOnlyList<SubtitleCue> cues = RecotteProject.Load(input.FullPath!).GetSubtitleCues();
             if (cues.Count == 0) return Fail("invalid", "MCP_SUBTITLE_NO_CUES", "The project has no Speaker Voice with text; no file was written.");
-            if (texts is { Count: > 0 })
+            if (texts is not null)
             {
                 McpToolResult<object>? mismatch = ReplaceTexts(ref cues, texts);
                 if (mismatch is not null) return mismatch;
@@ -174,9 +174,9 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
             File.Move(temporary, output.FullPath!, allowOverwrite);
             temporary = null;
             return Ok(new { projectPath = input.FullPath, outputPath = output.FullPath, cueCount = cues.Count,
-                translated = texts is { Count: > 0 } });
+                translated = texts is not null });
         }
-        catch (Exception exception) { return ExceptionResult(exception); }
+        catch (Exception exception) when (exception is not OperationCanceledException) { return ExceptionResult(exception); }
         finally { if (temporary is not null) File.Delete(temporary); }
     }
 
@@ -431,7 +431,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
                 new() { SaveOptions = new() { AllowOverwrite = allowOverwrite } });
             return BatchSave(input.FullPath!, output.FullPath!, result);
         }
-        catch (Exception exception) { return ExceptionResult(exception); }
+        catch (Exception exception) when (exception is not OperationCanceledException) { return ExceptionResult(exception); }
     }
 
     public McpToolResult<object> PreviewOperationsAndOverwrite(string projectPath,
@@ -488,7 +488,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
             return Ok(new { projectPath = input.FullPath, outputPath = output.FullPath, finalEndTime = sequence.FinalEndTime.TotalSeconds,
                 objectIds = sequence.ObjectIds, batch = BatchData(sequence.BatchResult, true), save = Save(saved) }, sequence.BatchResult.Diagnostics.Concat(saved.Warnings));
         }
-        catch (Exception exception) { return ExceptionResult(exception); }
+        catch (Exception exception) when (exception is not OperationCanceledException) { return ExceptionResult(exception); }
     }
 
     public Task<McpToolResult<object>> CreateProjectFromTemplateAsync(string templatePath, string outputPath,

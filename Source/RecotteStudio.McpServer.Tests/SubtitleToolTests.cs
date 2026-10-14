@@ -63,6 +63,7 @@ public sealed class SubtitleToolTests : IDisposable
         SubtitleTextDto second = new(cues[1].ObjectId.LayerIndex, cues[1].ObjectId.ObjectKey, "Nice weather");
         string output = Path.Combine(root, "dialogue.en.srt");
 
+        Assert.Equal("MCP_SUBTITLE_TEXT_MISSING", (await Export(output)).ErrorCode); // an empty list is not an omitted one
         Assert.Equal("MCP_SUBTITLE_TEXT_MISSING", (await Export(output, first)).ErrorCode);
         Assert.Equal("MCP_SUBTITLE_TEXT_DUPLICATE", (await Export(output, first, first, second)).ErrorCode);
         Assert.Equal("MCP_SUBTITLE_TEXT_UNKNOWN", (await Export(output, first, second, new(99, 1, "x"))).ErrorCode);
@@ -95,6 +96,26 @@ public sealed class SubtitleToolTests : IDisposable
         File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Empty.ccproj"), empty);
         Assert.Equal("MCP_SUBTITLE_NO_CUES", (await service.ExportSubtitlesAsync(empty, Path.Combine(root, "empty.srt"), false, null, default)).ErrorCode);
         Assert.False(File.Exists(Path.Combine(root, "empty.srt")));
+    }
+
+    [Fact]
+    public async Task ExportPropagatesCancellationAfterTheOutputLockIsHeld()
+    {
+        await CreateDialogue();
+        OutputPathLockManager locks = new();
+        RecotteToolService cancellable = new(new WorkspacePathPolicy(new(root)), new(), locks);
+        string output = Path.Combine(root, "dialogue.srt");
+        using CancellationTokenSource cancellation = new();
+        IAsyncDisposable held = await locks.AcquireAsync(output, default);
+
+        Task<McpToolResult<object>> export = cancellable.ExportSubtitlesAsync(project, output, false, null, cancellation.Token);
+        // Release grants the waiting export and resumes it asynchronously, so it is cancelled once inside its guarded block.
+        await held.DisposeAsync();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => export);
+        Assert.False(File.Exists(output));
+        Assert.Empty(Directory.EnumerateFiles(root, "*.tmp"));
     }
 
     [Fact]

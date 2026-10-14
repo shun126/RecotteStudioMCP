@@ -82,8 +82,10 @@ public sealed class ValidationTests
     [InlineData("LowerFrame", true, 0, 540, 540, 1, 2, false)] // on screen only after the line has ended
     [InlineData("LowerFrame", false, 0, 540, 540, 0, 2, false)] // the telop is switched off
     [InlineData("Missing", true, 0, 540, 540, 0, 2, false)] // the frame is not defined in the project
+    [InlineData("LowerFrame", true, 0, 540, 540, 0, 2, false, false)] // the Speaker layer is hidden
+    [InlineData("LowerFrame", true, 0, 540, 540, 0, 2, false, true, false)] // the image layer is hidden
     public void Validate_ImageUnderDialogueTelop_WarnsOnlyWhenCovered(string telopFrame, bool telopOn, int imageX,
-        int imageY, int imageHeight, int imageStart, int imageEnd, bool expected)
+        int imageY, int imageHeight, int imageStart, int imageEnd, bool expected, bool speakerVisible = true, bool imageVisible = true)
     {
         string json = $$"""
             {
@@ -98,7 +100,7 @@ public sealed class ValidationTests
                 { "FrameName": { "p-value": "UpperFrame" }, "Bounds": { "p-value": [80.0, 80.0, 1760.0, 200.0] } }
               ],
               "layers": [{
-                "type": "Speaker",
+                "type": "Speaker",{{(speakerVisible ? "" : " \"visible\": false,")}}
                 "layer-objects": [{
                   "type": "Speaker Voice",
                   "objkey": 1000,
@@ -110,7 +112,7 @@ public sealed class ValidationTests
                   }
                 }]
               }, {
-                "type": "Annot",
+                "type": "Annot",{{(imageVisible ? "" : " \"visible\": false,")}}
                 "layer-objects": [{
                   "type": "Image",
                   "objkey": 1001,

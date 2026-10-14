@@ -33,7 +33,7 @@ internal static class ProjectValidator
         if (frames.Count == 0) return;
 
         List<(decimal Start, decimal End, TelopFrameView Frame)> telops = new();
-        foreach ((JsonObject voice, _) in ObjectsOfType(layers, "Speaker Voice"))
+        foreach ((JsonObject voice, _) in VisibleObjectsOfType(layers, "Speaker Voice"))
         {
             if (voice["properties"] is JsonObject properties && properties["TelopOn"] is JsonObject telopOn &&
                 telopOn["p-value"] is JsonValue shown && shown.TryGetValue(out bool isShown) && isShown &&
@@ -48,7 +48,7 @@ internal static class ProjectValidator
         (decimal Width, decimal Height)? screen = root["setting"] is JsonObject setting && setting["size"] is JsonArray screenSize &&
             screenSize.Count == 2 && JsonAccess.TryGetDecimal(screenSize[0], out decimal screenWidth) &&
             JsonAccess.TryGetDecimal(screenSize[1], out decimal screenHeight) ? (screenWidth, screenHeight) : null;
-        foreach ((JsonObject asset, string path) in ObjectsOfType(layers, "Image", "Video"))
+        foreach ((JsonObject asset, string path) in VisibleObjectsOfType(layers, "Image", "Video"))
         {
             if (asset["properties"] is not JsonObject properties ||
                 !JsonAccess.TryGetBounds(properties, out decimal x, out decimal y, out decimal width, out decimal height) ||
@@ -73,11 +73,13 @@ internal static class ProjectValidator
         }
     }
 
-    private static IEnumerable<(JsonObject Object, string Path)> ObjectsOfType(JsonArray layers, params string[] types)
+    // A hidden layer draws nothing, so neither its assets nor its telops are on screen. A layer without the flag is shown.
+    private static IEnumerable<(JsonObject Object, string Path)> VisibleObjectsOfType(JsonArray layers, params string[] types)
     {
         for (int layerIndex = 0; layerIndex < layers.Count; layerIndex++)
         {
             if (layers[layerIndex] is not JsonObject layer || layer["layer-objects"] is not JsonArray objects) continue;
+            if (layer["visible"] is JsonValue visible && visible.TryGetValue(out bool isVisible) && !isVisible) continue;
             for (int objectIndex = 0; objectIndex < objects.Count; objectIndex++)
             {
                 if (objects[objectIndex] is JsonObject item && JsonAccess.TryGetString(item, "type", out string type) &&
