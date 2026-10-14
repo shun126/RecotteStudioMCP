@@ -3,10 +3,15 @@ using RecotteStudio.Core;
 namespace RecotteStudio.McpServer;
 
 public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperationMapper operationMapper,
-    OutputPathLockManager outputLocks, FigureCatalogProvider? figureCatalog = null, EffectCatalogProvider? effectCatalog = null)
+    OutputPathLockManager outputLocks, FigureCatalogProvider? figureCatalog = null, EffectCatalogProvider? effectCatalog = null,
+    FfmpegLocator? ffmpeg = null, IFfmpegRunner? ffmpegRunner = null)
 {
     private readonly FigureCatalogProvider figureCatalog = figureCatalog ?? new();
     private readonly EffectCatalogProvider effectCatalog = effectCatalog ?? new();
+    private readonly FfmpegLocator ffmpeg = ffmpeg ?? new();
+    private readonly IFfmpegRunner ffmpegRunner = ffmpegRunner ?? new FfmpegProcess();
+    // Encoding uses every core, so clips are made one at a time.
+    private readonly SemaphoreSlim videoJobs = new(1, 1);
 
     public McpToolResult<object> ListEffects(string? kind = null, string? tag = null, string? nameContains = null, int limit = 100)
     {
@@ -131,6 +136,252 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
     public McpToolResult<object> InspectAssets(string projectPath) => WithDocument(projectPath, (_, document) =>
         Fail("unsupported", "MCP_ASSET_INSPECTION_UNSUPPORTED",
             "RecotteStudio.Core does not expose a safe asset-inspection API; no references were inferred.", document.LoadDiagnostics));
+
+    public McpToolResult<object> ListSubtitleCues(string projectPath) => WithDocument(projectPath, (_, document) => Ok(new
+    {
+        cues = document.GetSubtitleCues().Select(cue => new
+        {
+            layerIndex = cue.ObjectId.LayerIndex, objectKey = cue.ObjectId.ObjectKey, cue.LayerName,
+            start = cue.Start.TotalSeconds, end = cue.End.TotalSeconds, text = cue.Text,
+        }).ToArray(),
+    }));
+
+    public async Task<McpToolResult<object>> ExportSubtitlesAsync(string projectPath, string outputPath, bool allowOverwrite,
+        IReadOnlyList<SubtitleTextDto>? texts, CancellationToken cancellationToken)
+    {
+        PathPolicyResult input = paths.ValidateInput(projectPath);
+        if (!input.Success) return PathFailure(input);
+        PathPolicyResult output = paths.ValidateOutput(outputPath, ".srt");
+        if (!output.Success) return PathFailure(output);
+        await using IAsyncDisposable held = await outputLocks.AcquireAsync(output.FullPath!, cancellationToken);
+        string? temporary = null;
+        try
+        {
+            IReadOnlyList<SubtitleCue> cues = RecotteProject.Load(input.FullPath!).GetSubtitleCues();
+            if (cues.Count == 0) return Fail("invalid", "MCP_SUBTITLE_NO_CUES", "The project has no Speaker Voice with text; no file was written.");
+            if (texts is { Count: > 0 })
+            {
+                McpToolResult<object>? mismatch = ReplaceTexts(ref cues, texts);
+                if (mismatch is not null) return mismatch;
+            }
+            if (!allowOverwrite && File.Exists(output.FullPath!))
+                return Fail("path", "MCP_PATH_OUTPUT_EXISTS", "The output file exists; set allowOverwrite to replace it.");
+            string content = SubRipFormatter.Format(cues);
+            cancellationToken.ThrowIfCancellationRequested();
+            // Write beside the destination and move it into place, so a failed write never leaves a partial subtitle file.
+            temporary = Path.Combine(Path.GetDirectoryName(output.FullPath!)!, $".{Path.GetFileName(output.FullPath!)}.{Guid.NewGuid():N}.tmp");
+            await File.WriteAllTextAsync(temporary, content, new System.Text.UTF8Encoding(true), cancellationToken);
+            File.Move(temporary, output.FullPath!, allowOverwrite);
+            temporary = null;
+            return Ok(new { projectPath = input.FullPath, outputPath = output.FullPath, cueCount = cues.Count,
+                translated = texts is { Count: > 0 } });
+        }
+        catch (Exception exception) { return ExceptionResult(exception); }
+        finally { if (temporary is not null) File.Delete(temporary); }
+    }
+
+    public Task<McpToolResult<object>> CreateVideoFromImageAsync(string projectPath, string imagePath, string outputPath,
+        bool allowOverwrite, decimal duration, string? motion, decimal zoom, decimal focusX, decimal focusY, string? easing,
+        string? fit, string? background, CancellationToken cancellationToken)
+    {
+        VideoClipSettings? settings = VideoClip.Parse(duration, motion, zoom, focusX, focusY, easing, fit, background, out string? invalid);
+        if (settings is null) return Task.FromResult(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID", invalid!));
+        PathPolicyResult image = paths.ValidateInput(imagePath, VideoClip.ImageExtensions);
+        if (ImageFailure(image, null) is McpToolResult<object> rejected) return Task.FromResult(rejected);
+        return MakeVideoAsync(projectPath, outputPath, allowOverwrite, Path.GetFileNameWithoutExtension(image.FullPath!),
+            async (executable, format, temporary, token) =>
+            {
+                FfmpegRunResult run = await ffmpegRunner.RunAsync(executable, VideoClip.BuildArguments(image.FullPath!, temporary, settings, format),
+                    VideoTimeout(settings.Duration), token);
+                return EncodingFailure(run, null) is McpToolResult<object> failed ? new(failed) : new(null, format.FrameCount(settings.Duration),
+                    new() { ["imagePath"] = image.FullPath, ["motion"] = settings.Motion.ToString() });
+            }, cancellationToken);
+    }
+
+    public Task<McpToolResult<object>> CreateFlipbookVideoAsync(string projectPath, IReadOnlyList<FlipbookFrameDto>? frames,
+        string outputPath, bool allowOverwrite, decimal frameDuration, int loops, string? fit, string? background,
+        CancellationToken cancellationToken)
+    {
+        FlipbookSettings? settings = FlipbookVideo.Parse(frameDuration, loops, fit, background, out string? invalid);
+        if (settings is null) return Task.FromResult(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID", invalid!));
+        if (frames is not { Count: > 0 } || frames.Count > FlipbookVideo.MaxFrames)
+            return Task.FromResult(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID", $"frames must contain 1 to {FlipbookVideo.MaxFrames} entries."));
+        string[] imagePaths = new string[frames.Count];
+        for (int index = 0; index < frames.Count; index++)
+        {
+            if (frames[index].Duration is decimal seconds && !FlipbookVideo.IsFrameDuration(seconds))
+                return Task.FromResult(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID",
+                    $"frames[{index}].duration must be between {FlipbookVideo.MinFrameDuration} and {FlipbookVideo.MaxFrameDuration} seconds."));
+            PathPolicyResult image = paths.ValidateInput(frames[index].ImagePath, VideoClip.ImageExtensions);
+            if (ImageFailure(image, index) is McpToolResult<object> rejected) return Task.FromResult(rejected);
+            imagePaths[index] = image.FullPath!;
+        }
+        // Each distinct image is prepared once, however often it is shown.
+        string[] distinct = imagePaths.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        if (distinct.Length > FlipbookVideo.MaxImages)
+            return Task.FromResult(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID", $"frames may use at most {FlipbookVideo.MaxImages} different images."));
+        int[] imageIndexes = imagePaths.Select(path => Array.FindIndex(distinct, other => string.Equals(other, path, StringComparison.OrdinalIgnoreCase))).ToArray();
+
+        return MakeVideoAsync(projectPath, outputPath, allowOverwrite, Path.GetFileNameWithoutExtension(outputPath),
+            async (executable, format, temporary, token) =>
+            {
+                decimal fps = format.FramesPerSecond;
+                int[] holds = frames.Select(frame => FlipbookVideo.Hold(frame.Duration ?? settings.FrameDuration, fps)).ToArray();
+                int total = holds.Sum() * settings.Loops;
+                if (total > format.FrameCount(VideoClip.MaxDuration))
+                    return new(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID",
+                        $"The flipbook lasts {Math.Round(total / fps, 3)} seconds including loops; the limit is {VideoClip.MaxDuration}."));
+                string work = Path.Combine(Path.GetTempPath(), "RecotteStudioMCP", Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(work);
+                try
+                {
+                    for (int index = 0; index < distinct.Length; index++)
+                    {
+                        FfmpegRunResult prepared = await ffmpegRunner.RunAsync(executable, FlipbookVideo.PrepareArguments(distinct[index],
+                            Path.Combine(work, FlipbookVideo.FrameFileName(index)), settings, format), PrepareTimeout, token);
+                        if (EncodingFailure(prepared, distinct[index]) is McpToolResult<object> failed) return new(failed);
+                    }
+                    string list = Path.Combine(work, "frames.ffconcat");
+                    await File.WriteAllTextAsync(list, FlipbookVideo.ConcatList(imageIndexes, holds, settings.Loops, fps),
+                        new System.Text.UTF8Encoding(false), token);
+                    FfmpegRunResult run = await ffmpegRunner.RunAsync(executable, FlipbookVideo.EncodeArguments(list, temporary, total, format),
+                        VideoTimeout(total / fps), token);
+                    if (EncodingFailure(run, null) is McpToolResult<object> encodeFailed) return new(encodeFailed);
+                }
+                finally
+                {
+                    try { Directory.Delete(work, true); }
+                    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { }
+                }
+                int start = 0;
+                return new(null, total, new()
+                {
+                    ["loops"] = settings.Loops, ["frameCountPerLoop"] = holds.Sum(), ["imageCount"] = frames.Count,
+                    ["distinctImageCount"] = distinct.Length,
+                    // Where each image appears in the first loop, so the flipbook can be timed against dialogue.
+                    ["frames"] = holds.Select((hold, index) =>
+                    {
+                        var item = new { index, imagePath = imagePaths[index], start = Math.Round(start / fps, 6),
+                            duration = Math.Round(hold / fps, 6), frameCount = hold };
+                        start += hold;
+                        return item;
+                    }).ToArray(),
+                });
+            }, cancellationToken);
+    }
+
+    private sealed record VideoJob(McpToolResult<object>? Failure, int FrameCount = 0, Dictionary<string, object?>? Details = null);
+
+    // Shared by the video tools: checks the project and output, finds ffmpeg, lets encode write the clip to a temporary
+    // file beside the output, and publishes that file only when encoding succeeded.
+    private async Task<McpToolResult<object>> MakeVideoAsync(string projectPath, string outputPath, bool allowOverwrite, string displayName,
+        Func<string, VideoFrameFormat, string, CancellationToken, Task<VideoJob>> encode, CancellationToken cancellationToken)
+    {
+        PathPolicyResult project = paths.ValidateInput(projectPath);
+        if (!project.Success) return PathFailure(project);
+        PathPolicyResult output = paths.ValidateOutput(outputPath, ".mp4");
+        if (!output.Success) return PathFailure(output);
+        FfmpegResolution resolution = ffmpeg.Resolve();
+        if (!resolution.Found) return FfmpegUnavailable(resolution.Message!);
+        await using IAsyncDisposable held = await outputLocks.AcquireAsync(output.FullPath!, cancellationToken);
+        string? temporary = null;
+        try
+        {
+            RecotteProjectDocument document = RecotteProject.Load(project.FullPath!);
+            // The verified Video template is 1920x1080, and Core does not resize it to the clip.
+            if (document.Settings is not { Width: 1920, Height: 1080, FramesPerSecond: decimal fps } || fps is < 1m or > 120m)
+                return Fail("unsupported", "MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED", "Only 1920x1080 projects with a frame rate of 1 to 120 are supported.");
+            if (!allowOverwrite && File.Exists(output.FullPath!))
+                return Fail("path", "MCP_PATH_OUTPUT_EXISTS", "The output file exists; set allowOverwrite to replace it.");
+            FfmpegProbeResult probe = await FfmpegLocator.ProbeAsync(ffmpegRunner, resolution.ExecutablePath!, cancellationToken);
+            if (!probe.Success) return FfmpegUnavailable(probe.Message!);
+
+            VideoFrameFormat format = new(1920, 1080, fps);
+            temporary = Path.Combine(Path.GetDirectoryName(output.FullPath!)!, $".{Path.GetFileName(output.FullPath!)}.{Guid.NewGuid():N}.tmp");
+            long started = Environment.TickCount64;
+            VideoJob job;
+            await videoJobs.WaitAsync(cancellationToken);
+            try { job = await encode(resolution.ExecutablePath!, format, temporary, cancellationToken); }
+            finally { videoJobs.Release(); }
+            if (job.Failure is not null) return job.Failure;
+            if (!File.Exists(temporary)) return Fail("ffmpeg", "MCP_FFMPEG_FAILED", "ffmpeg reported success but wrote no file.");
+            File.Move(temporary, output.FullPath!, allowOverwrite);
+            temporary = null;
+
+            decimal actual = Math.Round(job.FrameCount / fps, 6);
+            int? videoLayer = document.Layers.OfType<VideoLayerView>().Select(layer => (int?)layer.Index).FirstOrDefault();
+            Dictionary<string, object?> data = new()
+            {
+                ["projectPath"] = project.FullPath, ["outputPath"] = output.FullPath,
+                ["width"] = format.Width, ["height"] = format.Height, ["fps"] = fps, ["duration"] = actual, ["frameCount"] = job.FrameCount,
+                ["videoFormat"] = VideoClip.OutputFormat, ["ffmpegPath"] = resolution.ExecutablePath, ["ffmpegVersion"] = probe.Version,
+                ["elapsedSeconds"] = Math.Round((Environment.TickCount64 - started) / 1000m, 1),
+            };
+            foreach ((string key, object? value) in job.Details ?? new()) data[key] = value;
+            // Ready for recotte_apply_operations_and_save_copy: set start and end to where the clip belongs.
+            data["suggestedOperation"] = new
+            {
+                type = "addVideoObject", layer = videoLayer is int index ? new { layerIndex = index } : null,
+                assetPath = output.FullPath, projectPath = project.FullPath, displayName, start = 0m, end = actual,
+            };
+            return Ok(data);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException) { return ExceptionResult(exception); }
+        finally { if (temporary is not null) File.Delete(temporary); }
+    }
+
+    private static McpToolResult<object>? ImageFailure(PathPolicyResult image, int? frame)
+    {
+        string where = frame is int index ? $"frames[{index}]: " : string.Empty;
+        if (image.ErrorCode == "MCP_PATH_EXTENSION")
+            return Fail("argument", "MCP_VIDEO_IMAGE_UNSUPPORTED", $"{where}The image must be one of {string.Join(", ", VideoClip.ImageExtensions)}.");
+        return image.Success ? null : Fail("path", image.ErrorCode!, where + image.Message);
+    }
+
+    private static McpToolResult<object>? EncodingFailure(FfmpegRunResult run, string? imagePath)
+    {
+        string subject = imagePath is null ? "ffmpeg" : $"ffmpeg could not read {imagePath}:";
+        if (run.TimedOut) return Fail("ffmpeg", "MCP_FFMPEG_TIMEOUT", $"{subject} did not finish in time; try a shorter duration.");
+        return run.Succeeded ? null
+            : Fail("ffmpeg", "MCP_FFMPEG_FAILED", $"{subject} failed (exit code {run.ExitCode}): {Excerpt(run.StartError ?? run.StandardError)}");
+    }
+
+    private static readonly TimeSpan PrepareTimeout = TimeSpan.FromSeconds(30);
+
+    private static McpToolResult<object> FfmpegUnavailable(string reason) => Fail("unsupported", "MCP_FFMPEG_UNAVAILABLE",
+        $"{reason} Ask the user to install ffmpeg and set it in the ffmpeg section of the Recotte Studio MCP settings window.");
+    // Encoding a 60-second clip can take minutes on a machine with few cores.
+    private static TimeSpan VideoTimeout(decimal duration) => TimeSpan.FromSeconds(60 + (double)duration * 10);
+    private static string Excerpt(string text)
+    {
+        text = text.Trim();
+        return text.Length <= 2000 ? text : "..." + text[^2000..];
+    }
+
+    // Replacement texts must match the cues one to one, so a file never mixes translated and original lines.
+    private static McpToolResult<object>? ReplaceTexts(ref IReadOnlyList<SubtitleCue> cues, IReadOnlyList<SubtitleTextDto> texts)
+    {
+        Dictionary<TimelineObjectId, string> byId = new();
+        foreach (SubtitleTextDto text in texts)
+        {
+            TimelineObjectId id = new(text.LayerIndex, text.ObjectKey);
+            if (string.IsNullOrWhiteSpace(text.Text))
+                return Fail("argument", "MCP_SUBTITLE_TEXT_EMPTY", $"The text for layerIndex {id.LayerIndex}, objectKey {id.ObjectKey} is empty.");
+            if (!byId.TryAdd(id, text.Text))
+                return Fail("argument", "MCP_SUBTITLE_TEXT_DUPLICATE", $"layerIndex {id.LayerIndex}, objectKey {id.ObjectKey} is given more than once.");
+        }
+        HashSet<TimelineObjectId> known = cues.Select(cue => cue.ObjectId).ToHashSet();
+        string[] unknown = byId.Keys.Where(id => !known.Contains(id)).Select(Describe).ToArray();
+        if (unknown.Length > 0)
+            return Fail("argument", "MCP_SUBTITLE_TEXT_UNKNOWN", $"No subtitle cue matches {string.Join(", ", unknown)}; use recotte_list_subtitle_cues.");
+        string[] missing = cues.Where(cue => !byId.ContainsKey(cue.ObjectId)).Select(cue => Describe(cue.ObjectId)).ToArray();
+        if (missing.Length > 0)
+            return Fail("argument", "MCP_SUBTITLE_TEXT_MISSING", $"Every cue needs a text; missing {string.Join(", ", missing)}.");
+        cues = cues.Select(cue => cue with { Text = byId[cue.ObjectId] }).ToArray();
+        return null;
+
+        static string Describe(TimelineObjectId id) => $"(layerIndex {id.LayerIndex}, objectKey {id.ObjectKey})";
+    }
 
     public McpToolResult<object> PreviewOperations(string projectPath, IReadOnlyList<ProjectOperationDto>? operations) =>
         WithMappedDocument(projectPath, operations, (_, document, mapped) =>

@@ -18,6 +18,23 @@
             </StackPanel>
 
             <StackPanel Spacing="8">
+                <TextBlock Text="ffmpeg" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="画像から動画素材を作る機能などで使います。ffmpeg は同梱していないため、別途インストールしてください。空欄の場合は PATH から探します。" TextWrapping="Wrap" />
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBox x:Name="FfmpegBox" PlaceholderText="ffmpeg.exe を選択するか、空欄にしてください" />
+                    <Button Grid.Column="1" Content="参照" Click="BrowseFfmpeg_Click" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="ApplyFfmpegButton" Content="ffmpeg を適用" Click="ApplyFfmpeg_Click" />
+                    <Button x:Name="CheckFfmpegButton" Content="確認" Click="CheckFfmpeg_Click" />
+                </StackPanel>
+                <TextBlock x:Name="FfmpegStatusText" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="Codex に接続" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock Text="%USERPROFILE%\.codex\config.toml の旧 stdio 設定を削除し、次を追加してください。設定後にCodexを再起動します。" TextWrapping="Wrap" />
                 <TextBox x:Name="CodexBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" />

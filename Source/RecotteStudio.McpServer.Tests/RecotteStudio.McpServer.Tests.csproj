@@ -17,5 +17,6 @@
   <ItemGroup>
     <None Include="..\..\Documents\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Fixtures\Empty.ccproj" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteProjects\003OneVoice\003OneVoice.ccproj" Link="Fixtures\OneVoice.ccproj" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Documents\RecotteProjects\004OneImage\Sample.png" Link="Fixtures\Sample.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

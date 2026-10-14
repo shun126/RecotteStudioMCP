@@ -229,11 +229,13 @@ public sealed class ToolServiceTests : IDisposable
         string[] files = Directory.GetFiles(Path.Combine(sourceRoot, "RecotteStudio.McpServer"), "*.cs")
             .Concat(Directory.GetFiles(Path.Combine(sourceRoot, "RecotteStudio.Core"), "*.cs")).ToArray();
         string source = string.Join('\n', files.Select(File.ReadAllText));
+        // Only the optional ffmpeg integration may start a process, and never as part of loading or saving a project.
+        string saving = string.Join('\n', files.Where(file => Path.GetFileName(file) != "FfmpegProcess.cs").Select(File.ReadAllText));
 
-        Assert.DoesNotContain("System.Diagnostics.Process", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("Process.Start", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("UseShellExecute", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("ShellExecute", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("System.Diagnostics.Process", saving, StringComparison.Ordinal);
+        Assert.DoesNotContain("Process.Start", saving, StringComparison.Ordinal);
+        Assert.DoesNotContain("UseShellExecute", saving, StringComparison.Ordinal);
+        Assert.DoesNotContain("ShellExecute", saving, StringComparison.Ordinal);
         Assert.DoesNotContain("Recotte Studio.exe", source, StringComparison.OrdinalIgnoreCase);
     }
 }
