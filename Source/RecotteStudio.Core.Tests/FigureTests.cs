@@ -57,6 +57,43 @@ public sealed class FigureTests : IDisposable
     }
 
     [Fact]
+    public void Load_TreatsAnUnresolvableSvgPathAsMissing()
+    {
+        WriteFigure("emotion", "emotion_0020", """
+            { "name": "Emotion_0020", "tag": "emotion",
+              "figure": { "svg": "bad\u0000.svg" }, "figure-style": { "style-name": "figure" } }
+            """, withSvg: false);
+
+        FigureCatalog catalog = FigureCatalog.Load(figures);
+
+        Assert.Equal(new[] { "Balloon_0001", "Emotion_0019", "Emotion_0020" }, catalog.Figures.Select(figure => figure.Key));
+        FigureDefinition malformed = catalog.Find("Emotion_0020")!;
+        Assert.Null(malformed.SvgPath);
+        Assert.False(malformed.CanPlace);
+        Assert.True(catalog.Find("Emotion_0019")!.CanPlace);
+    }
+
+    [Fact]
+    public void Load_IgnoresAnSvgOnAnotherRoot()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        // A \\?\ path has a different root from the figures directory, just as another drive does.
+        string outside = Path.Combine(directory, "outside.svg");
+        File.WriteAllText(outside, """<svg xmlns="http://www.w3.org/2000/svg"/>""");
+        WriteFigure("emotion", "emotion_0021", new JsonObject
+        {
+            ["name"] = "Emotion_0021", ["tag"] = "emotion",
+            ["figure"] = new JsonObject { ["svg"] = @"\\?\" + outside },
+            ["figure-style"] = new JsonObject { ["style-name"] = "figure" },
+        }.ToJsonString(), withSvg: false);
+
+        FigureDefinition figure = FigureCatalog.Load(figures).Find("Emotion_0021")!;
+
+        Assert.Null(figure.SvgPath);
+        Assert.False(figure.CanPlace);
+    }
+
+    [Fact]
     public void AddFigure_ReproducesTheFigureSavedByRecotteStudio()
     {
         string samplePath = Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects", "009FullProject",

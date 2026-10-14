@@ -60,17 +60,10 @@ public sealed class FigureCatalog
             if (definition is null || !JsonAccess.TryGetString(definition, "name", out string key) || key.Length == 0) continue;
 
             JsonAccess.TryGetString(definition, "tag", out string tag);
-            string? svgPath = null, svgRelativePath = null;
-            if (definition["figure"] is JsonObject figure && JsonAccess.TryGetString(figure, "svg", out string svg))
-            {
-                string candidate = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, svg));
-                // The file item stores the path relative to the figures directory, so an SVG outside it cannot be referenced.
-                if (File.Exists(candidate) && !Path.GetRelativePath(root, candidate).StartsWith("..", StringComparison.Ordinal))
-                {
-                    svgPath = candidate;
-                    svgRelativePath = Path.GetRelativePath(root, candidate).Replace('\\', '/');
-                }
-            }
+            string? svgRelativePath = null;
+            string? svgPath = definition["figure"] is JsonObject figure && JsonAccess.TryGetString(figure, "svg", out string svg)
+                ? ResolveSvg(root, file, svg) : null;
+            if (svgPath is not null) svgRelativePath = Path.GetRelativePath(root, svgPath).Replace('\\', '/');
             figures.TryAdd(key, new(key, tag, DisplayName(definition, "ja"), DisplayName(definition, "en"),
                 definition["figure-style"] is JsonObject style && JsonAccess.TryGetString(style, "style-name", out string styleName)
                     ? styleName : null,
@@ -78,6 +71,19 @@ public sealed class FigureCatalog
         }
         return new(root, Array.AsReadOnly(figures.Values
             .OrderBy(figure => figure.Tag, StringComparer.Ordinal).ThenBy(figure => figure.Key, StringComparer.Ordinal).ToArray()));
+    }
+
+    // Returns null, like a missing SVG, when the path cannot be resolved (for example, it contains a NUL character).
+    private static string? ResolveSvg(string root, string file, string svg)
+    {
+        string candidate;
+        try { candidate = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, svg)); }
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException) { return null; }
+        // The file item stores the path relative to the figures directory, so an SVG outside it cannot be referenced.
+        // A path on another root (another drive, UNC, or \\?\) comes back absolute rather than starting with "..".
+        string relative = Path.GetRelativePath(root, candidate);
+        return File.Exists(candidate) && !Path.IsPathRooted(relative) && !relative.StartsWith("..", StringComparison.Ordinal)
+            ? candidate : null;
     }
 
     private static string? DisplayName(JsonObject definition, string language) =>
