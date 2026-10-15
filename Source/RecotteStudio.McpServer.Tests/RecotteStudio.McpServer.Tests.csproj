@@ -19,5 +19,6 @@
     <None Include="..\..\Documents\RecotteProjects\003OneVoice\003OneVoice.ccproj" Link="Fixtures\OneVoice.ccproj" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteProjects\004OneImage\Sample.png" Link="Fixtures\Sample.png" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteStudioCore\GenerationRules.md" Link="Fixtures\GenerationRules.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Documents\RecotteStudioCore\GenerationRules.md" Link="GenerationRules.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

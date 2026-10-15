@@ -101,6 +101,8 @@
                                                       Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
                                             <FontIcon Glyph="&#xE7BA;" FontSize="14" Visibility="{x:Bind RejectedVisibility}"
                                                       Foreground="{ThemeResource SystemFillColorCautionBrush}" />
+                                            <FontIcon Glyph="&#xE7BA;" FontSize="14" Visibility="{x:Bind WarningVisibility}"
+                                                      Foreground="{ThemeResource SystemFillColorCautionBrush}" />
                                         </Grid>
                                         <TextBlock Grid.Column="1" Text="{x:Bind Time}" VerticalAlignment="Top"
                                                    Margin="0,2,0,0" FontFamily="Consolas"

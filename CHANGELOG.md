@@ -9,9 +9,9 @@ Recotte Studio MCP の主な変更点を記録します。
 
 ### 追加
 
-- **LLM向け生成ガイドラインをMCPから取得できるようになりました。** `recotte_get_generation_rules` は、配布物と実行ファイルに同梱された `GenerationRules.md` を返します。MCPの初期指示および生成・編集ツールの説明から、制作前の取得を案内します。
+- **LLM向け生成ガイドラインをMCPから取得できるようになりました。** `recotte_get_generation_rules` は、実行ファイルと同じフォルダに配置された編集可能な `GenerationRules.md` を返します。MCPの初期指示および生成・編集ツールの説明から、制作前の取得を案内します。
 - `GenerationRules.md` に音声と字幕の役割、実際のテロップ枠の考慮、静止画のズーム・パン／パラパラアニメ、効果の使い分け、保存と検証の規則を追加しました。
-- 配布ZIPに `GenerationRules.md` を同梱するようにしました。
+- 配布ZIPに `GenerationRules.md` を別ファイルとして同梱し、利用者が変更できるようにしました。ツールの呼び出しごとに再読込し、ファイルがない場合は警告ログのみ記録して通常動作を継続します。
 
 - **静止画から動画素材を作れるようになりました。** `recotte_create_video_from_image` を追加しました。画像（PNG、JPEG、BMP、GIF）にズームイン・ズームアウトや上下左右へのパンを付けた `.mp4` を ffmpeg で作ります。解像度とフレームレートはプロジェクトに合わせ、Recotte Studio で読み込めたサンプル動画と同じ形式（H.264 Constrained Baseline、AAC）で書き出します。作った動画は `addVideoObject` で配置できます。対応するのは 1920×1080 のプロジェクトです。詳しくは[画像から動画素材を作る](Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。
 - **複数の静止画からパラパラアニメを作れるようになりました。** `recotte_create_flipbook_video` を追加しました。`frames` に並べた画像を順に表示する `.mp4` を作ります。画像ごとに表示時間を指定でき（既定は 1 秒に 8 枚）、同じ画像を何度でも使えます。`loops` で全体を繰り返します。各画像はプロジェクトのフレーム単位で正確に切り替わり、透明な部分は背景色で埋めます。結果には各画像が表示される時刻を返します。

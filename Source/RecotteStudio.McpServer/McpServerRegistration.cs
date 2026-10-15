@@ -8,8 +8,8 @@ public static class McpServerRegistration
 {
     /// <summary>Instructions sent in the MCP initialization response.</summary>
     public const string ServerInstructions =
-        "Before generating or editing a Recotte Studio project, call recotte_get_generation_rules and follow the returned guidance. " +
-        "The tool returns Markdown bundled with this server; it does not require a project path. " +
+        "Before generating or editing a Recotte Studio project, call recotte_get_generation_rules for optional user-editable guidance. " +
+        "If the file is missing, the tool logs a warning and returns available=false; continue with the built-in tool constraints. " +
         "All .ccproj creation and editing must use the recotte_studio MCP tools. To create a new project, always call " +
         "recotte_create_project. Do not create, patch, or hand-write .ccproj JSON because manual JSON can omit Recotte " +
         "Studio-required metadata and break compatibility. Use recotte_create_project_from_template only for an intentional, " +

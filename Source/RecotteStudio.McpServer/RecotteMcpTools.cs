@@ -15,11 +15,16 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
     private const string Editing = "Atomically applies supported RecotteStudio.Core operations and saves the result to a different .ccproj file. The source project is never modified. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance;
     private const string Overwriting = "Atomically applies supported RecotteStudio.Core operations and safely overwrites the loaded source .ccproj using RecotteStudio.Core Save(). A mandatory backup and external-change detection are used. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance;
 
-    [McpServerTool(Name = "recotte_get_generation_rules"), Description("Returns the complete bundled GenerationRules.md in Markdown. Call this before creating or editing a Recotte Studio project. Includes speech and telop rules, layout, still-image-to-video workflows, safe save and validation requirements. This read-only tool needs no project path and never accesses the user workspace.")]
+    [McpServerTool(Name = "recotte_get_generation_rules"), Description("Reads the optional user-editable GenerationRules.md next to the MCP server executable and returns its current Markdown. Call before creating or editing a project. If the file is missing, the server logs a warning and returns available=false with empty content; continue normal work using the built-in tool constraints. No project path is needed.")]
     public McpToolResult<object> GetGenerationRules() =>
-        activity.Track("recotte_get_generation_rules", null, () => new McpToolResult<object>(true, "success", null, null,
-            new { format = "markdown", fileName = "GenerationRules.md", content = GenerationRulesProvider.Markdown },
-            Array.Empty<McpDiagnosticDto>()));
+        activity.Track("recotte_get_generation_rules", null, () =>
+        {
+            string? markdown = GenerationRulesProvider.Read(activity);
+            return new McpToolResult<object>(true, "success", null, null,
+                new { available = markdown is not null, format = "markdown", fileName = GenerationRulesProvider.FileName,
+                    content = markdown ?? string.Empty },
+                Array.Empty<McpDiagnosticDto>());
+        });
 
     [McpServerTool(Name = "recotte_list_effects"), Description("Lists installed effects, text effects, and transitions without executing Lua or modifying projects. kind is effects, text, or transitions. editable marks the two supported fades; other definitions are listed only. Filters by tag and Japanese/English name or internal key. Metadata includes literal defaultDuration and propertyKeys; complex Lua expressions are not evaluated.")]
     public McpToolResult<object> ListEffects(string? kind = null, string? tag = null, string? nameContains = null, int limit = 100) =>

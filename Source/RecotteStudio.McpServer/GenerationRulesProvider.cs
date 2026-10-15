@@ -1,26 +1,32 @@
-using System.Reflection;
 using System.Text;
 
 namespace RecotteStudio.McpServer;
 
 /// <summary>
-/// Reads the guidance embedded at build time. The same Markdown is also included as a loose release file
-/// for users; the MCP tool intentionally never depends on the workspace or executable location.
+/// Reads the user-editable GenerationRules.md next to the executable on every request.
+/// Guidance is optional: a missing or unreadable file never prevents MCP operations.
 /// </summary>
 public static class GenerationRulesProvider
 {
-    private const string ResourceName = "RecotteStudio.McpServer.GenerationRules.md";
-    private static readonly Lazy<string> Content = new(Load);
+    public const string FileName = "GenerationRules.md";
 
-    /// <summary>Returns the generation guidance as Markdown.</summary>
-    public static string Markdown => Content.Value;
-
-    private static string Load()
+    /// <summary>Reads current Markdown; missing or unreadable guidance is logged as a warning and returns null.</summary>
+    public static string? Read(ActivityLog activity, string? directory = null)
     {
-        Assembly assembly = typeof(GenerationRulesProvider).Assembly;
-        using Stream stream = assembly.GetManifestResourceStream(ResourceName)
-            ?? throw new InvalidOperationException($"Embedded generation rules resource is missing: {ResourceName}");
-        using StreamReader reader = new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-        return reader.ReadToEnd();
+        ArgumentNullException.ThrowIfNull(activity);
+        string path = Path.Combine(directory ?? AppContext.BaseDirectory, FileName);
+        try
+        {
+            if (File.Exists(path))
+                return File.ReadAllText(path, Encoding.UTF8);
+
+            activity.Record(ActivityKind.Warning, "生成ルールが見つかりません", path);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            activity.Record(ActivityKind.Warning, "生成ルールを読み込めません", $"{path} — {exception.Message}");
+        }
+
+        return null;
     }
 }
