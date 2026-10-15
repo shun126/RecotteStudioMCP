@@ -78,6 +78,44 @@ public sealed class AssetInspectionTests : IDisposable
         Assert.Null(document.GetSummary().MissingAssetCount);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void InspectAssets_RejectsRootedRelativePathButStillChecksAbsolutePath(bool absolutePathExists)
+    {
+        string existing = Path.Combine(directory, "Existing.svg");
+        File.WriteAllText(existing, "<svg/>");
+        string project = SaveImageProject(new JsonObject
+        {
+            ["loc"] = 0, ["ik"] = FigureKey, ["rpath"] = existing,
+            ["apath"] = new Uri(absolutePathExists ? existing : Path.Combine(directory, "Absent.svg")).AbsoluteUri,
+        });
+
+        AssetReference asset = RecotteProject.Load(project).InspectAssets().Assets.Single(item => item.Key == FigureKey);
+
+        Assert.Null(asset.ResolvedRelativePath);
+        Assert.False(asset.RelativePathExists);
+        Assert.Equal(absolutePathExists, asset.AbsolutePathExists);
+        Assert.Equal(absolutePathExists ? AssetReferenceStatus.Found : AssetReferenceStatus.Unresolved, asset.Status);
+    }
+
+    [Fact]
+    public void InspectAssets_ResolvesParentRelativePath()
+    {
+        string project = SaveImageProject(new JsonObject
+        {
+            ["loc"] = 1, ["ik"] = FigureKey, ["rpath"] = "../Picture.png",
+        });
+        string figures = Path.Combine(directory, "figures");
+        Directory.CreateDirectory(figures);
+
+        AssetReference asset = RecotteProject.Load(project).InspectAssets(figures).Assets.Single(item => item.Key == FigureKey);
+
+        Assert.Equal(AssetReferenceStatus.Found, asset.Status);
+        Assert.True(asset.RelativePathExists);
+        Assert.Equal(Path.Combine(directory, "Picture.png"), asset.ResolvedRelativePath);
+    }
+
     [Fact]
     public void InspectAssets_LeavesUnverifiedLocationUnresolved()
     {
