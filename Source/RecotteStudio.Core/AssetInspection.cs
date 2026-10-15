@@ -30,7 +30,7 @@ public sealed record AssetReferencingObject(int LayerIndex, int ObjectIndex, int
 
 /// <summary>
 /// Describes one registered file item and where its stored paths resolve. ResolvedRelativePath is built from RelativePath and
-/// the base directory when both are known; ResolvedAbsolutePath is the local path of AbsolutePath when it is a file URI.
+/// the base directory when both are known; ResolvedAbsolutePath is the local path of AbsolutePath for local, non-UNC file URIs.
 /// </summary>
 public sealed record AssetReference(
     int Index,
@@ -55,7 +55,8 @@ public sealed partial class RecotteProjectDocument
     /// Resolves the stored paths of every registered file item without changing the project. Only verified loc values are
     /// resolved: 0 against the project directory and 1 against <paramref name="figuresDirectory"/>. Other relative paths, and
     /// project-relative paths of a document that has no source path, are reported unresolved rather than guessed.
-    /// Rooted rpath values are not resolved; parent-relative paths are allowed. Stored absolute paths are checked independently.
+    /// Rooted rpath values are not resolved; parent-relative paths are allowed. Local file URIs are checked independently;
+    /// remote/UNC file URIs are left unresolved without probing them.
     /// </summary>
     /// <param name="figuresDirectory">The Recotte Studio figures directory. Relative directories are resolved against the current working directory;
     /// null leaves loc 1 relative paths unresolved.</param>
