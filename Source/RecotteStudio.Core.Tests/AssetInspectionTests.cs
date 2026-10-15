@@ -48,8 +48,10 @@ public sealed class AssetInspectionTests : IDisposable
         Assert.Equal(1, document.GetSummary().MissingAssetCount);
     }
 
-    [Fact]
-    public void InspectAssets_ResolvesFigureOnlyAgainstTheGivenFiguresDirectory()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void InspectAssets_ResolvesFigureOnlyAgainstTheGivenFiguresDirectory(bool useRelativeDirectory)
     {
         string figures = Path.Combine(directory, "figures");
         Directory.CreateDirectory(Path.Combine(figures, "emotion"));
@@ -61,11 +63,14 @@ public sealed class AssetInspectionTests : IDisposable
         });
         RecotteProjectDocument document = RecotteProject.Load(project);
 
-        AssetReference resolved = document.InspectAssets(figures).Assets.Single(asset => asset.Key == FigureKey);
+        string figuresArgument = useRelativeDirectory ? Path.GetRelativePath(Environment.CurrentDirectory, figures) : figures;
+        AssetReference resolved = document.InspectAssets(figuresArgument).Assets.Single(asset => asset.Key == FigureKey);
         AssetReference unresolved = document.InspectAssets().Assets.Single(asset => asset.Key == FigureKey);
 
         Assert.Equal(AssetLocationKind.Figures, resolved.LocationKind);
         Assert.Equal(AssetReferenceStatus.Found, resolved.Status);
+        Assert.True(resolved.RelativePathExists);
+        Assert.False(resolved.AbsolutePathExists);
         Assert.Equal(Path.Combine(figures, "emotion", "emotion_0019.svg"), resolved.ResolvedRelativePath);
         Assert.Empty(resolved.ReferencedBy);
         Assert.Equal(AssetReferenceStatus.Unresolved, unresolved.Status);

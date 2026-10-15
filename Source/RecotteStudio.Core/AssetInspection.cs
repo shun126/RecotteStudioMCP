@@ -56,7 +56,8 @@ public sealed partial class RecotteProjectDocument
     /// resolved: 0 against the project directory and 1 against <paramref name="figuresDirectory"/>. Other relative paths, and
     /// project-relative paths of a document that has no source path, are reported unresolved rather than guessed.
     /// </summary>
-    /// <param name="figuresDirectory">The Recotte Studio figures directory, or null to leave loc 1 relative paths unresolved.</param>
+    /// <param name="figuresDirectory">The Recotte Studio figures directory. Relative directories are resolved against the current working directory;
+    /// null leaves loc 1 relative paths unresolved.</param>
     public AssetInspection InspectAssets(string? figuresDirectory = null)
     {
         AssetReferencingObject[] referencing = Layers.SelectMany(layer => layer.Objects)
@@ -96,7 +97,7 @@ public sealed partial class RecotteProjectDocument
 
     private static string? TryCombine(string baseDirectory, string relativePath)
     {
-        try { return Path.GetFullPath(relativePath, baseDirectory); }
+        try { return Path.GetFullPath(relativePath, Path.GetFullPath(baseDirectory)); }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or IOException) { return null; }
     }
 
