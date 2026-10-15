@@ -228,6 +228,9 @@ public sealed class FileItemView
     /// <summary>Gets the registered file key.</summary>
     public string? Key => JsonAccess.TryGetString(node, "ik", out string value) ? value : null;
 
+    /// <summary>Gets the serialized base-directory kind of <see cref="RelativePath"/> when it is an integer.</summary>
+    public int? Location => JsonAccess.TryGetInt32(node, "loc", out int value) ? value : null;
+
     /// <summary>Gets the serialized relative asset path.</summary>
     public string? RelativePath => JsonAccess.TryGetString(node, "rpath", out string value) ? value : null;
 
