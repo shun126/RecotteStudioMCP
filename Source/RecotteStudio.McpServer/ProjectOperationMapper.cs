@@ -5,22 +5,24 @@ namespace RecotteStudio.McpServer;
 public sealed record OperationMapResult(bool Success, IReadOnlyList<ProjectOperation> Operations,
     string? ErrorCode, string? Message);
 
-public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog = null)
+public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog = null, WorkspacePathPolicy? paths = null)
 {
     public const decimal DefaultFigureSize = 128m;
     private readonly FigureCatalogProvider figureCatalog = figureCatalog ?? new();
+    private readonly WorkspacePathPolicy paths = paths ?? new(new McpServerOptions((string?)null));
 
     public static readonly IReadOnlyList<string> SupportedTypes = new[]
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
-        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer",
+        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
     {
         if (values is null) return Failure("MCP_OPERATIONS_REQUIRED", "Operations are required.");
         List<ProjectOperation> mapped = new(values.Count);
+        Dictionary<string, RecotteProjectDocument> donors = new(StringComparer.OrdinalIgnoreCase);
         for (int index = 0; index < values.Count; index++)
         {
             ProjectOperationDto value = values[index];
@@ -40,10 +42,11 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "addAnnotationText" => new AddAnnotationTextOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addFigureObject" => Figure(value),
                     "addVideoLayer" => new AddVideoLayerOperation(value.LayerName),
+                    "importCharacter" => new ImportCharacterOperation(Donor(value.DonorProjectPath, donors), Required(value.SpeakerKey, "speakerKey"), Time(value.Start, "start"), Time(value.End, "end"), value.LayerName),
                     _ => throw new ArgumentException($"Unsupported operation '{value.Type}'. Supported operations: {string.Join(", ", SupportedTypes)}."),
                 });
             }
-            catch (ArgumentException exception) { return Failure("MCP_OPERATION_INVALID", $"Operation {index}: {exception.Message}"); }
+            catch (ArgumentException exception) { return Failure(exception is CodedArgumentException coded ? coded.Code : "MCP_OPERATION_INVALID", $"Operation {index}: {exception.Message}"); }
         }
         return new(true, mapped, null, null);
     }
@@ -61,6 +64,25 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
         if (value.X is not decimal x || value.Y is not decimal y) throw new ArgumentException("x and y are required.");
         decimal width = value.Width ?? DefaultFigureSize;
         return new(Layer(value.Layer), figure, Time(value.Start, "start"), Time(value.End, "end"), x, y, width, value.Height ?? width);
+    }
+
+    // The donor is read whole and copied into the output, so it must pass the same workspace check as any input project.
+    // A batch that imports several characters from one donor loads it once.
+    private RecotteProjectDocument Donor(string? path, Dictionary<string, RecotteProjectDocument> donors)
+    {
+        PathPolicyResult donor = paths.ValidateInput(path);
+        if (!donor.Success) throw new CodedArgumentException(donor.ErrorCode!, $"donorProjectPath: {donor.Message}");
+        if (donors.TryGetValue(donor.FullPath!, out RecotteProjectDocument? loaded)) return loaded;
+        try { loaded = RecotteProject.Load(donor.FullPath!); }
+        catch (RecotteProjectLoadException exception)
+        { throw new CodedArgumentException("MCP_PROJECT_LOAD_FAILED", $"donorProjectPath: {exception.Message}"); }
+        donors[donor.FullPath!] = loaded;
+        return loaded;
+    }
+
+    private sealed class CodedArgumentException(string code, string message) : ArgumentException(message)
+    {
+        public string Code { get; } = code;
     }
 
     public LayerReference MapLayer(LayerTargetDto? value) => Layer(value);

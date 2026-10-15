@@ -29,9 +29,12 @@ public sealed record AssetAddResult(EditResult EditResult, TimelineObjectId? Obj
     public IReadOnlyList<ProjectChange> Changes => EditResult.Changes;
 }
 
-/// <summary>Requests import of one registered character from another project.</summary>
+/// <summary>
+/// Requests import of one registered character from another project. The imported layer keeps the donor layer's name
+/// unless <paramref name="LayerName"/> is given.
+/// </summary>
 public sealed record ImportCharacterRequest(RecotteProjectDocument Donor, string SpeakerKey,
-    ProjectTime StartTime, ProjectTime EndTime);
+    ProjectTime StartTime, ProjectTime EndTime, string? LayerName = null);
 
 /// <summary>Contains the result of importing a character registration and layer.</summary>
 public sealed record CharacterImportResult(EditResult EditResult, SpeakerLayerId? LayerId,
@@ -207,7 +210,11 @@ public sealed partial class ProjectEditor
         return new(EditResult.Succeeded(made), objectId, fileKey);
     }
 
-    /// <summary>Imports one character registration and its character-only Speaker layer from a donor document.</summary>
+    /// <summary>
+    /// Imports one character registration and its character-only Speaker layer from a donor document. The donor's telop
+    /// frames replace the target's, because Recotte Studio fits them around every character's position, so the donor must
+    /// contain every speaker and every telop frame the target already uses.
+    /// </summary>
     public CharacterImportResult ImportCharacter(ImportCharacterRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -249,15 +256,42 @@ public sealed partial class ProjectEditor
             .Where(item => JsonAccess.TryGetString(item, "type", out string type) && type == "Speaker Character").ToArray();
         if (characters.Length != 1) return CharacterFailed("RC4602", "The donor Speaker layer must contain exactly one character object.");
         JsonObject character = characters[0];
+
+        int reusableIndex = FindReusableSpeakerLayer(targetLayers);
+        string donorLayerName = JsonAccess.TryGetString(importedLayer, "name", out string donorName) ? donorName : string.Empty;
+        string layerName = request.LayerName ?? donorLayerName;
+        if (string.IsNullOrWhiteSpace(layerName))
+            return CharacterFailed("RC4607", "The imported layer needs a name; pass a layer name.");
+        if (targetLayers.Select((node, index) => (node, index)).Any(pair => pair.index != reusableIndex &&
+                pair.node is JsonObject layer && JsonAccess.TryGetString(layer, "name", out string name) && name == layerName))
+            return CharacterFailed("RC4607", $"A layer named '{layerName}' already exists; pass a different layer name.");
+        if (donorRoot["telop-frames"] is JsonArray)
+        {
+            HashSet<string> donorFrames = TelopFrameView.ReadAll(donorRoot).Select(frame => frame.Name).ToHashSet(StringComparer.Ordinal);
+            string? missingFrame = TargetSpeakerLayers(targetLayers, reusableIndex)
+                .Select(item => JsonAccess.GetPropertyString(item.Layer, "TelopFrame"))
+                .FirstOrDefault(frame => !string.IsNullOrEmpty(frame) && !donorFrames.Contains(frame));
+            if (missingFrame is not null)
+                return CharacterFailed("RC4606", $"The target uses telop frame '{missingFrame}', which the donor does not define.");
+        }
+
         importedObjects.Clear();
         character["start-time"] = request.StartTime.TotalSeconds;
         character["end-time"] = request.EndTime.TotalSeconds;
         importedObjects.Add(character);
+        importedLayer["name"] = layerName;
+        // Recotte Studio writes this layer's generated voices into LinkFolder, which still names the donor's folder.
+        SetPropertyValue(importedLayer, "LinkFolder", string.Empty);
+        // TelopTargetLayer names a layer: keep it only when it resolves to the same character's layer in this project.
+        string? telopTarget = JsonAccess.GetPropertyString(importedLayer, "TelopTargetLayer");
+        if (!string.IsNullOrEmpty(telopTarget))
+            SetPropertyValue(importedLayer, "TelopTargetLayer", telopTarget == donorLayerName ? layerName
+                : TargetLayerOfDonorLayer(donorLayers, targetLayers, reusableIndex, telopTarget) ?? string.Empty);
 
         EditResult? durationError = ApplyDuration(request.EndTime.TotalSeconds);
         if (durationError is not null) return new(durationError, null, null, null);
 
-        int targetIndex = FindReusableSpeakerLayer(targetLayers);
+        int targetIndex = reusableIndex;
         if (targetIndex >= 0)
             targetLayers[targetIndex] = importedLayer;
         else
@@ -270,15 +304,52 @@ public sealed partial class ProjectEditor
         }
         targetSpeakers.Add(donorSpeaker.DeepClone());
 
-        if (donorRoot["telop-frames"] is JsonArray donorFrames)
-            root["telop-frames"] = donorFrames.DeepClone();
+        if (donorRoot["telop-frames"] is JsonArray donorTelopFrames)
+            root["telop-frames"] = donorTelopFrames.DeepClone();
 
         int objectKey = JsonAccess.TryGetInt32(character, "objkey", out int keyValue) ? keyValue : 0;
         TimelineObjectId objectId = new(targetIndex, objectKey);
-        ProjectChange change = new("ImportCharacter", $"speaker:{request.SpeakerKey}", null, request.SpeakerKey,
-            $"$.layers[{targetIndex}]");
-        changes.Add(change);
-        return new(EditResult.Succeeded(new[] { change }), new SpeakerLayerId(targetIndex), objectId, request.SpeakerKey);
+        List<ProjectChange> made = new()
+        {
+            new("ImportCharacter", $"speaker:{request.SpeakerKey}", null, request.SpeakerKey, $"$.layers[{targetIndex}]"),
+        };
+        // A layer imported earlier may have lost its TelopTargetLayer because this layer was not here yet.
+        foreach ((JsonObject layer, int index) in TargetSpeakerLayers(targetLayers, targetIndex))
+        {
+            JsonObject? donorLayer = DonorLayerOfSpeaker(donorLayers, JsonAccess.GetPropertyString(layer, "Speaker"));
+            if (donorLayer is null || JsonAccess.GetPropertyString(donorLayer, "TelopTargetLayer") != donorLayerName ||
+                !string.IsNullOrEmpty(JsonAccess.GetPropertyString(layer, "TelopTargetLayer"))) continue;
+            SetPropertyValue(layer, "TelopTargetLayer", layerName);
+            made.Add(new("LinkTelopTargetLayer", $"layer:{index}", string.Empty, layerName,
+                $"$.layers[{index}].properties.TelopTargetLayer.p-value"));
+        }
+        changes.AddRange(made);
+        return new(EditResult.Succeeded(made), new SpeakerLayerId(targetIndex), objectId, request.SpeakerKey);
+    }
+
+    // Speaker layers of the target other than the one at excludedIndex (the layer being replaced or just imported).
+    private static IEnumerable<(JsonObject Layer, int Index)> TargetSpeakerLayers(JsonArray layers, int excludedIndex) =>
+        layers.Select((node, index) => (Layer: node as JsonObject, Index: index))
+            .Where(item => item.Index != excludedIndex && item.Layer is not null &&
+                JsonAccess.TryGetString(item.Layer, "type", out string type) && type == "Speaker")
+            .Select(item => (item.Layer!, item.Index));
+
+    private static JsonObject? DonorLayerOfSpeaker(JsonArray donorLayers, string? speakerKey) =>
+        string.IsNullOrEmpty(speakerKey) ? null : donorLayers.OfType<JsonObject>().FirstOrDefault(layer =>
+            JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker" &&
+            JsonAccess.GetPropertyString(layer, "Speaker") == speakerKey);
+
+    // Maps a donor layer name to the name of the target layer holding the same character, if it was imported.
+    private static string? TargetLayerOfDonorLayer(JsonArray donorLayers, JsonArray targetLayers, int excludedIndex, string donorLayerName)
+    {
+        string? speakerKey = donorLayers.OfType<JsonObject>().Where(layer =>
+                JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker" &&
+                JsonAccess.TryGetString(layer, "name", out string name) && name == donorLayerName)
+            .Select(layer => JsonAccess.GetPropertyString(layer, "Speaker")).FirstOrDefault();
+        if (string.IsNullOrEmpty(speakerKey)) return null;
+        return TargetSpeakerLayers(targetLayers, excludedIndex)
+            .Where(item => JsonAccess.GetPropertyString(item.Layer, "Speaker") == speakerKey)
+            .Select(item => JsonAccess.TryGetString(item.Layer, "name", out string name) ? name : null).FirstOrDefault();
     }
 
     private AssetAddResult AddAsset(int layerIndex, string assetPath, string projectPath, string displayName,

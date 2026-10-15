@@ -85,6 +85,71 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public void ListCharactersReportsSpeakerKeysAndLayers()
+    {
+        string donor = Path.Combine(root, "donor.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+
+        McpToolResult<object> result = service.ListCharacters(donor);
+
+        Assert.True(result.Success);
+        JsonElement characters = JsonSerializer.SerializeToElement(result.Data).GetProperty("characters");
+        Assert.Equal(new[] { "2D-スーツ男性", "2D-スーツ女性" },
+            characters.EnumerateArray().Select(item => item.GetProperty("speakerKey").GetString()));
+        Assert.Equal(new[] { 1, 2 }, characters.EnumerateArray().Select(item => item.GetProperty("layerIndex").GetInt32()));
+        Assert.Equal("下枠", characters[0].GetProperty("telopFrame").GetString());
+        Assert.Empty(JsonSerializer.SerializeToElement(service.ListCharacters(project).Data).GetProperty("characters").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task CreateProjectCanImportCharactersAndGiveThemDialogue()
+    {
+        string donor = Path.Combine(root, "donor.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+        string output = Path.Combine(root, "対談.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("対談", output, false, new[]
+        {
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ女性", Start: 0m, End: 6m,
+                LayerName: "聞き手"),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "話者1"), Text: "こんにちは", Start: 1m, End: 3m),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "聞き手"), Text: "よろしく", Start: 3m, End: 5m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement operations = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch").GetProperty("OperationResults");
+        Assert.Equal(new[] { 1, 2 }, new[] { operations[0], operations[1] }.Select(item => item.GetProperty("CreatedLayerIndex").GetInt32()));
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.True(created.Validate().IsValid);
+        Assert.Equal(new[] { "2D-スーツ男性", "2D-スーツ女性" }, created.Speakers.Select(speaker => speaker.Key));
+        Assert.Equal(new[] { "話者1", "聞き手" }, created.Layers.OfType<SpeakerLayerView>().Select(layer => layer.Name));
+        Assert.All(created.Layers.OfType<SpeakerLayerView>(), layer =>
+            Assert.Equal(new[] { "Speaker Character", "Speaker Voice" }, layer.Objects.Select(item => item.Type)));
+    }
+
+    [Fact]
+    public void ImportCharacterRejectsADonorOutsideTheWorkspace()
+    {
+        string outside = Directory.CreateTempSubdirectory("recotte-donor-").FullName;
+        try
+        {
+            string donor = Path.Combine(outside, "donor.ccproj");
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+            WorkspacePathPolicy policy = new(new(root));
+            RecotteToolService guarded = new(policy, new ProjectOperationMapper(paths: policy), new());
+
+            McpToolResult<object> result = guarded.PreviewOperations(project, new[]
+            {
+                new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+            });
+
+            Assert.False(result.Success);
+            Assert.Equal("MCP_PATH_OUTSIDE_WORKSPACE", result.ErrorCode);
+        }
+        finally { Directory.Delete(outside, true); }
+    }
+
+    [Fact]
     public async Task CreateProjectCanAddVideoLayerAndPlaceVideoOnIt()
     {
         string video = Path.Combine(root, "Sample.mp4");

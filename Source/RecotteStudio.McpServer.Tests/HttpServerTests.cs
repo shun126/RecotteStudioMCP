@@ -54,6 +54,7 @@ public sealed class HttpServerTests
                 text.Text.Contains("GenerationRules.md", StringComparison.Ordinal));
             Assert.Contains(tools, tool => tool.Name == "recotte_preview_operations_and_save");
             Assert.Contains(tools, tool => tool.Name == "recotte_list_subtitle_cues");
+            Assert.Contains(tools, tool => tool.Name == "recotte_list_characters");
             Assert.Contains(tools, tool => tool.Name == "recotte_export_subtitles");
             Assert.Contains(tools, tool => tool.Name == "recotte_create_video_from_image");
             Assert.Contains(tools, tool => tool.Name == "recotte_create_flipbook_video");
