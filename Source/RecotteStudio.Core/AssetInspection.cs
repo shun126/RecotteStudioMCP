@@ -55,6 +55,7 @@ public sealed partial class RecotteProjectDocument
     /// Resolves the stored paths of every registered file item without changing the project. Only verified loc values are
     /// resolved: 0 against the project directory and 1 against <paramref name="figuresDirectory"/>. Other relative paths, and
     /// project-relative paths of a document that has no source path, are reported unresolved rather than guessed.
+    /// Rooted rpath values are not resolved; parent-relative paths are allowed. Stored absolute paths are checked independently.
     /// </summary>
     /// <param name="figuresDirectory">The Recotte Studio figures directory. Relative directories are resolved against the current working directory;
     /// null leaves loc 1 relative paths unresolved.</param>
@@ -97,7 +98,11 @@ public sealed partial class RecotteProjectDocument
 
     private static string? TryCombine(string baseDirectory, string relativePath)
     {
-        try { return Path.GetFullPath(relativePath, Path.GetFullPath(baseDirectory)); }
+        try
+        {
+            if (Path.IsPathRooted(relativePath)) return null;
+            return Path.GetFullPath(relativePath, Path.GetFullPath(baseDirectory));
+        }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or IOException) { return null; }
     }
 
