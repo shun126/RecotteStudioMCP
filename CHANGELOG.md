@@ -5,6 +5,15 @@ Recotte Studio MCP の主な変更点を記録します。
 
 ## [未リリース]
 
+### 追加
+
+- **プロジェクトが参照する素材ファイルを確認できるようになりました。** `recotte_inspect_assets` は、これまで常に `MCP_ASSET_INSPECTION_UNSUPPORTED` を返していましたが、登録済みの画像・動画・音声・スタンプ SVG ごとに、使っているタイムラインのオブジェクトと、保存された相対パス・絶対パスにファイルがあるかを返します。状態は `Found`（どちらかのパスにある）、`Missing`（どちらにもない）、`Unresolved`（パスを解決できない）です。`loc` 0 はプロジェクトのフォルダ、`loc` 1 は Recotte Studio の figures フォルダを基準に解決し、未確認の `loc` は推測せず `Unresolved` とします。登録されていないファイルキーを参照するオブジェクトは `danglingReferences` に返します。
+- RecotteStudio.Core に `RecotteProjectDocument.InspectAssets` と `FileItemView.Location` を追加しました。
+
+### 修正
+
+- `recotte_inspect_project` の `missingAssetCount` が、スタンプの SVG（`loc` 1）をプロジェクトのフォルダ基準で探し、存在するスタンプを不足として数えていた問題を修正しました。相対パスか絶対パスのどちらかにあれば存在とみなし、解決できないファイルがある場合は `null` を返します。
+
 ## [0.5.4] - 2026-10-15
 
 ### 追加
