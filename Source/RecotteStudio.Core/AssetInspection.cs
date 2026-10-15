@@ -84,8 +84,7 @@ public sealed partial class RecotteProjectDocument
             _ => null,
         };
         string? relative = item.RelativePath is not null && baseDirectory is not null ? TryCombine(baseDirectory, item.RelativePath) : null;
-        string? absolute = item.AbsolutePath is not null && Uri.TryCreate(item.AbsolutePath, UriKind.Absolute, out Uri? uri) && uri.IsFile
-            ? uri.LocalPath : null;
+        string? absolute = TryResolveLocalFileUri(item.AbsolutePath);
         bool relativeExists = relative is not null && File.Exists(relative);
         bool absoluteExists = absolute is not null && File.Exists(absolute);
         bool unresolved = (item.RelativePath is not null && relative is null) || (item.AbsolutePath is not null && absolute is null) ||
@@ -104,6 +103,19 @@ public sealed partial class RecotteProjectDocument
             return Path.GetFullPath(relativePath, Path.GetFullPath(baseDirectory));
         }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or IOException) { return null; }
+    }
+
+    // Avoid resolving UNC file URIs: probing them can initiate SMB traffic on Windows.
+    private static string? TryResolveLocalFileUri(string? value)
+    {
+        if (value is null || !Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) ||
+            !uri.IsFile || !uri.IsLoopback || uri.IsUnc)
+            return null;
+
+        string localPath = uri.LocalPath;
+        // Some four-slash file URI forms encode a network path without a non-local URI host.
+        return localPath.StartsWith(@"\\", StringComparison.Ordinal) ||
+            localPath.StartsWith("//", StringComparison.Ordinal) ? null : localPath;
     }
 
     // Matches the ordinal comparison the editor uses when pruning an unreferenced file item.
