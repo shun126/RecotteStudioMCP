@@ -99,6 +99,43 @@ public sealed class AssetInspectionTests : IDisposable
         Assert.Equal(absolutePathExists ? AssetReferenceStatus.Found : AssetReferenceStatus.Unresolved, asset.Status);
     }
 
+    [Theory]
+    [InlineData("file://remote.invalid/share/image.png")]
+    [InlineData("file:////remote.invalid/share/image.png")]
+    public void InspectAssets_RejectsRemoteFileUris(string remoteFileUri)
+    {
+        string project = SaveImageProject(new JsonObject
+        {
+            ["loc"] = 0, ["ik"] = FigureKey, ["apath"] = remoteFileUri,
+        });
+        RecotteProjectDocument document = RecotteProject.Load(project);
+
+        AssetReference asset = document.InspectAssets().Assets.Single(item => item.Key == FigureKey);
+
+        Assert.Equal(remoteFileUri, asset.AbsolutePath);
+        Assert.Null(asset.ResolvedAbsolutePath);
+        Assert.False(asset.AbsolutePathExists);
+        Assert.Equal(AssetReferenceStatus.Unresolved, asset.Status);
+        Assert.Null(document.GetSummary().MissingAssetCount);
+    }
+
+    [Fact]
+    public void InspectAssets_StillFindsLocalAbsoluteFileUri()
+    {
+        string existing = Path.Combine(directory, "Existing.svg");
+        File.WriteAllText(existing, "<svg/>");
+        string project = SaveImageProject(new JsonObject
+        {
+            ["loc"] = 0, ["ik"] = FigureKey, ["apath"] = new Uri(existing).AbsoluteUri,
+        });
+
+        AssetReference asset = RecotteProject.Load(project).InspectAssets().Assets.Single(item => item.Key == FigureKey);
+
+        Assert.Equal(existing, asset.ResolvedAbsolutePath);
+        Assert.True(asset.AbsolutePathExists);
+        Assert.Equal(AssetReferenceStatus.Found, asset.Status);
+    }
+
     [Fact]
     public void InspectAssets_ResolvesParentRelativePath()
     {
