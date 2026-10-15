@@ -52,6 +52,8 @@ public sealed partial class RecotteProjectDocument
     public IReadOnlyList<SpeakerView> Speakers => Array.AsReadOnly((root["speakers"] is JsonArray speakers
         ? speakers.Select((item, index) => item is JsonObject jsonObject ? new SpeakerView(jsonObject, index) : null).OfType<SpeakerView>().ToArray()
         : Array.Empty<SpeakerView>()));
+    /// <summary>Gets an immutable snapshot of the telop frames dialogue can be drawn in.</summary>
+    public IReadOnlyList<TelopFrameView> TelopFrames => Array.AsReadOnly(TelopFrameView.ReadAll(root).ToArray());
     /// <summary>Gets immutable diagnostics produced while loading.</summary>
     public IReadOnlyList<ProjectDiagnostic> LoadDiagnostics { get; }
     /// <summary>Gets the revision, incremented once for each successful edit transaction.</summary>

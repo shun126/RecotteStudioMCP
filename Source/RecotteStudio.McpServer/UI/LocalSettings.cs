@@ -10,6 +10,7 @@ internal static class LocalSettings
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RecotteStudioMCP");
     private static readonly string TokenPath = Path.Combine(DirectoryPath, "access-token.dat");
     private static readonly string WorkspacePath = Path.Combine(DirectoryPath, "workspace.json");
+    private static readonly string FfmpegPath = Path.Combine(DirectoryPath, "ffmpeg.json");
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("RecotteStudioMCP HTTP token v1");
 
     public static string? LoadWorkspace()
@@ -22,6 +23,18 @@ internal static class LocalSettings
     {
         Directory.CreateDirectory(DirectoryPath);
         WriteAtomically(WorkspacePath, JsonSerializer.Serialize(path));
+    }
+
+    public static string? LoadFfmpegPath()
+    {
+        if (!File.Exists(FfmpegPath)) return null;
+        return JsonSerializer.Deserialize<string?>(File.ReadAllText(FfmpegPath));
+    }
+
+    public static void SaveFfmpegPath(string? path)
+    {
+        Directory.CreateDirectory(DirectoryPath);
+        WriteAtomically(FfmpegPath, JsonSerializer.Serialize(path));
     }
 
     public static string LoadOrCreateToken()

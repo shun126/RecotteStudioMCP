@@ -85,6 +85,42 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task FullScreenImageUnderDialogueReportsNoTelopCoverageWarning()
+    {
+        string image = Path.Combine(root, "Background.png");
+        // Signature plus an IHDR chunk header declaring 1920x1080; Core reads nothing beyond it.
+        File.WriteAllBytes(image, new byte[]
+        {
+            137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 7, 128, 0, 0, 4, 56,
+        });
+        string output = Path.Combine(root, "背景付き.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("背景付き", output, false, new[]
+        {
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(LayerIndex: 1), Text: "こんにちは", Start: 0m, End: 2m),
+            new ProjectOperationDto("addImageObject", Layer: new(LayerIndex: 2), Start: 0m, End: 2m, AssetPath: image,
+                ProjectPath: output, DisplayName: "Background.png"),
+        }, default);
+
+        Assert.True(result.Success);
+        Assert.Equal(2, RecotteProject.Load(output).Layers.Sum(layer => layer.Objects.Count));
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC2401");
+        Assert.DoesNotContain(service.ValidateProject(output).Diagnostics, diagnostic => diagnostic.Code == "RC2401");
+    }
+
+    [Fact]
+    public void CapabilitiesDescribeTelopLayout()
+    {
+        JsonElement layout = JsonSerializer.SerializeToElement(service.GetCapabilities(project).Data).GetProperty("layout");
+
+        Assert.Equal(1080, layout.GetProperty("screenHeight").GetInt32());
+        JsonElement lower = layout.GetProperty("telopFrames").EnumerateArray()
+            .Single(frame => frame.GetProperty("Name").GetString() == "LowerFrame");
+        Assert.Equal(800m, lower.GetProperty("y").GetDecimal());
+        Assert.Equal(200m, lower.GetProperty("height").GetDecimal());
+        Assert.Equal("LowerFrame", layout.GetProperty("speakerLayers")[0].GetProperty("telopFrame").GetString());
+    }
+
+    [Fact]
     public async Task CreateProjectRejectsBlankNameWithoutCreatingOutput()
     {
         string output = Path.Combine(root, "invalid.ccproj");
@@ -193,11 +229,13 @@ public sealed class ToolServiceTests : IDisposable
         string[] files = Directory.GetFiles(Path.Combine(sourceRoot, "RecotteStudio.McpServer"), "*.cs")
             .Concat(Directory.GetFiles(Path.Combine(sourceRoot, "RecotteStudio.Core"), "*.cs")).ToArray();
         string source = string.Join('\n', files.Select(File.ReadAllText));
+        // Only the optional ffmpeg integration may start a process, and never as part of loading or saving a project.
+        string saving = string.Join('\n', files.Where(file => Path.GetFileName(file) != "FfmpegProcess.cs").Select(File.ReadAllText));
 
-        Assert.DoesNotContain("System.Diagnostics.Process", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("Process.Start", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("UseShellExecute", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("ShellExecute", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("System.Diagnostics.Process", saving, StringComparison.Ordinal);
+        Assert.DoesNotContain("Process.Start", saving, StringComparison.Ordinal);
+        Assert.DoesNotContain("UseShellExecute", saving, StringComparison.Ordinal);
+        Assert.DoesNotContain("ShellExecute", saving, StringComparison.Ordinal);
         Assert.DoesNotContain("Recotte Studio.exe", source, StringComparison.OrdinalIgnoreCase);
     }
 }

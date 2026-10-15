@@ -47,6 +47,10 @@ public sealed class HttpServerTests
             var tools = await client.ListToolsAsync();
             Assert.Contains(tools, tool => tool.Name == "recotte_inspect_project");
             Assert.Contains(tools, tool => tool.Name == "recotte_preview_operations_and_save");
+            Assert.Contains(tools, tool => tool.Name == "recotte_list_subtitle_cues");
+            Assert.Contains(tools, tool => tool.Name == "recotte_export_subtitles");
+            Assert.Contains(tools, tool => tool.Name == "recotte_create_video_from_image");
+            Assert.Contains(tools, tool => tool.Name == "recotte_create_flipbook_video");
             var result = await client.CallToolAsync("recotte_inspect_project",
                 new Dictionary<string, object?> { ["projectPath"] = project });
             Assert.NotEqual(true, result.IsError);

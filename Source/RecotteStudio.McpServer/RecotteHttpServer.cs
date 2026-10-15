@@ -27,9 +27,11 @@ public sealed class RecotteHttpServer : IAsyncDisposable
     public Uri Endpoint { get; private set; } = null!;
 
     public static async Task<RecotteHttpServer> StartAsync(string? workspaceRoot, string token,
-        int port = DefaultPort, CancellationToken cancellationToken = default, ActivityLog? activity = null)
+        int port = DefaultPort, CancellationToken cancellationToken = default, ActivityLog? activity = null,
+        FfmpegLocator? ffmpeg = null)
     {
         activity ??= new();
+        ffmpeg ??= new();
         if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("An access token is required.", nameof(token));
         if (port is < 0 or > 65535) throw new ArgumentOutOfRangeException(nameof(port));
         McpServerOptions options = McpServerOptions.Create(workspaceRoot);
@@ -39,8 +41,11 @@ public sealed class RecotteHttpServer : IAsyncDisposable
         builder.Logging.ClearProviders();
         builder.Services.AddSingleton(options);
         builder.Services.AddSingleton(activity);
+        builder.Services.AddSingleton(ffmpeg);
+        builder.Services.AddSingleton<IFfmpegRunner, FfmpegProcess>();
         builder.Services.AddSingleton<WorkspacePathPolicy>();
         builder.Services.AddSingleton<OutputPathLockManager>();
+        builder.Services.AddSingleton(new FigureCatalogProvider());
         builder.Services.AddSingleton<ProjectOperationMapper>();
         builder.Services.AddSingleton<RecotteToolService>();
         builder.Services.AddRecotteMcpServer();

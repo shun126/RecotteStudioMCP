@@ -25,5 +25,6 @@
     <EmbeddedResource Include="..\..\Documents\RecotteProjects\004OneImage\004OneImage.ccproj" Link="Templates\004OneImage.ccproj" LogicalName="RecotteStudio.Core.Templates.Image.ccproj" />
     <EmbeddedResource Include="..\..\Documents\RecotteProjects\005OneVideo\005OneVideo.ccproj" Link="Templates\005OneVideo.ccproj" LogicalName="RecotteStudio.Core.Templates.Video.ccproj" />
     <EmbeddedResource Include="..\..\Documents\RecotteProjects\010OneAnnotationText\010OneAnnotationText.ccproj" Link="Templates\010OneAnnotationText.ccproj" LogicalName="RecotteStudio.Core.Templates.AnnotationText.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\009FullProject\009FullProject.ccproj" Link="Templates\009FullProject.ccproj" LogicalName="RecotteStudio.Core.Templates.Figure.ccproj" />
   </ItemGroup>
 </Project>

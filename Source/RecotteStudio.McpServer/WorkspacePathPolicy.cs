@@ -13,18 +13,21 @@ public sealed class WorkspacePathPolicy
             root = ResolveExistingPath(Path.TrimEndingDirectorySeparator(Path.GetFullPath(options.WorkspaceRoot)));
     }
 
-    public PathPolicyResult ValidateInput(string? path) => Validate(path, true);
-    public PathPolicyResult ValidateOutput(string? path) => Validate(path, false);
+    public PathPolicyResult ValidateInput(string? path) => Validate(path, true, ProjectExtension);
+    public PathPolicyResult ValidateInput(string? path, params string[] extensions) => Validate(path, true, extensions);
+    public PathPolicyResult ValidateOutput(string? path, string extension = ProjectExtension) => Validate(path, false, extension);
 
-    private PathPolicyResult Validate(string? path, bool input)
+    private const string ProjectExtension = ".ccproj";
+
+    private PathPolicyResult Validate(string? path, bool input, params string[] extensions)
     {
-        if (string.IsNullOrWhiteSpace(path)) return Failure("MCP_PATH_REQUIRED", "A project path is required.");
+        if (string.IsNullOrWhiteSpace(path)) return Failure("MCP_PATH_REQUIRED", "A path is required.");
         string full;
         try { full = Path.GetFullPath(path); }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
         { return Failure("MCP_PATH_INVALID", "The requested path is invalid."); }
-        if (!string.Equals(Path.GetExtension(full), ".ccproj", StringComparison.OrdinalIgnoreCase))
-            return Failure("MCP_PATH_EXTENSION", "Only .ccproj files are allowed.");
+        if (!extensions.Contains(Path.GetExtension(full), StringComparer.OrdinalIgnoreCase))
+            return Failure("MCP_PATH_EXTENSION", $"Only {string.Join(", ", extensions)} files are allowed.");
 
         string? directory = Path.GetDirectoryName(full);
         if (directory is null || !Directory.Exists(directory))
@@ -34,7 +37,7 @@ public sealed class WorkspacePathPolicy
         if (File.Exists(full)) resolved = ResolveExistingPath(full);
         if (root is not null && !IsWithinRoot(resolved, root))
             return Failure("MCP_PATH_OUTSIDE_WORKSPACE", "The requested path is outside the configured workspace.");
-        if (input && !File.Exists(resolved)) return Failure("MCP_PATH_FILE_NOT_FOUND", "The project file does not exist.");
+        if (input && !File.Exists(resolved)) return Failure("MCP_PATH_FILE_NOT_FOUND", "The file does not exist.");
         return new(true, resolved, null, null);
     }
 

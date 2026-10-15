@@ -15,9 +15,12 @@ public sealed partial class MainWindow : Window
     private bool closing;
     private const int MaxActivityItems = 200;
     private readonly ActivityLog activity = new();
+    // Shared with every server instance, so changing the ffmpeg path takes effect without restarting the server.
+    private readonly FfmpegLocator ffmpeg = new();
 
     internal string? WorkspaceRoot { get; private set; }
     internal string? AccessToken => token;
+    internal FfmpegLocator Ffmpeg => ffmpeg;
     internal Uri? ServerEndpoint => server?.Endpoint;
 
     internal ObservableCollection<ActivityItem> Activity { get; } = new();
@@ -65,6 +68,7 @@ public sealed partial class MainWindow : Window
         try
         {
             WorkspaceRoot = LocalSettings.LoadWorkspace();
+            ffmpeg.ConfiguredPath = LocalSettings.LoadFfmpegPath();
             token = LocalSettings.LoadOrCreateToken();
             RefreshPage();
             await RestartServerAsync();
@@ -79,6 +83,20 @@ public sealed partial class MainWindow : Window
         WorkspaceRoot = requested is null ? null : Path.GetFullPath(requested);
         LocalSettings.SaveWorkspace(WorkspaceRoot);
         await RestartServerAsync();
+    }
+
+    /// <summary>Checks and saves the ffmpeg path; null searches PATH. A path that is not ffmpeg is rejected unsaved.</summary>
+    internal async Task<FfmpegProbeResult> ApplyFfmpegPathAsync(string? requested)
+    {
+        string? configured = requested is null ? null : Path.GetFullPath(requested);
+        if (configured is not null && FfmpegLocator.ValidateConfiguredPath(configured) is string problem)
+            throw new FileNotFoundException(problem);
+        FfmpegProbeResult probe = configured is null ? new(true, null, null) : await FfmpegLocator.ProbeAsync(configured);
+        if (!probe.Success) throw new InvalidOperationException(probe.Message);
+        LocalSettings.SaveFfmpegPath(configured);
+        ffmpeg.ConfiguredPath = configured;
+        activity.Record(ActivityKind.Info, "ffmpeg の設定を変更しました", configured ?? "PATH から検索");
+        return probe;
     }
 
     internal async Task RegenerateTokenAsync()
@@ -102,7 +120,7 @@ public sealed partial class MainWindow : Window
                 RefreshPage();
             }
             SetStatus(InfoBarSeverity.Informational, "起動中", "MCPサーバーを開始しています。");
-            server = await RecotteHttpServer.StartAsync(WorkspaceRoot, token!, activity: activity);
+            server = await RecotteHttpServer.StartAsync(WorkspaceRoot, token!, activity: activity, ffmpeg: ffmpeg);
             activity.Record(ActivityKind.Info, "サーバーを開始しました", server.Endpoint.ToString());
             SetStatus(InfoBarSeverity.Success, "稼働中", "このウィンドウを閉じると接続を停止します。");
             RefreshPage();

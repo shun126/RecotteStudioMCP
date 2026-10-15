@@ -14,6 +14,10 @@ public sealed record AddVideoAssetRequest(int LayerIndex, string AssetPath, stri
 /// <summary>Requests placement of an editor note as a text box on an annotation layer.</summary>
 public sealed record AddAnnotationTextRequest(int LayerIndex, string Text, ProjectTime StartTime, ProjectTime EndTime);
 
+/// <summary>Requests placement of an installed stamp at a screen rectangle given in project pixels.</summary>
+public sealed record AddFigureRequest(int LayerIndex, FigureDefinition Figure, ProjectTime StartTime, ProjectTime EndTime,
+    decimal X, decimal Y, decimal Width, decimal Height);
+
 /// <summary>Contains the result of registering and placing an external asset.</summary>
 public sealed record AssetAddResult(EditResult EditResult, TimelineObjectId? ObjectId, string? FileItemKey)
 {
@@ -109,6 +113,98 @@ public sealed partial class ProjectEditor
             $"$.layers[{request.LayerIndex}].layer-objects[{objects.Count - 1}]"));
         changes.AddRange(made);
         return EditResult.Succeeded(made);
+    }
+
+    /// <summary>
+    /// Places an installed SVG stamp on an annotation layer, registering its SVG as a figures-relative file item unless
+    /// the project already references it.
+    /// </summary>
+    public AssetAddResult AddFigure(AddFigureRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        FigureDefinition figure = request.Figure;
+        if (!figure.CanPlace)
+            return AssetFailed("RC4801", $"Figure '{figure.Key}' cannot be placed: only SVG figures using the plain 'figure' style are verified.");
+        if (request.StartTime.TotalSeconds >= request.EndTime.TotalSeconds)
+            return AssetFailed("RC4802", "The figure time range is invalid.");
+        if (request.Width <= 0 || request.Height <= 0)
+            return AssetFailed("RC4802", "The figure width and height must be positive.");
+
+        var layerPair = Layers().FirstOrDefault(item => item.index == request.LayerIndex);
+        if (layerPair.layer is null || !JsonAccess.TryGetString(layerPair.layer, "type", out string type) ||
+            type != "Annot" || IsLockedAdvanced(layerPair.layer) || layerPair.layer["layer-objects"] is not JsonArray objects)
+            return AssetFailed("RC4803", $"Layer {request.LayerIndex} is not an unlocked Annot layer.");
+        if (root["file-items"] is not JsonArray fileItems) return AssetFailed("RC4804", "The project has no file-item registry.");
+
+        JsonObject? template;
+        try
+        {
+            template = ProjectTemplateResources.LoadRoot("RecotteStudio.Core.Templates.Figure.ccproj")["layers"] is JsonArray templateLayers
+                ? templateLayers.OfType<JsonObject>()
+                    .SelectMany(layer => (layer["layer-objects"] as JsonArray)?.OfType<JsonObject>() ?? Array.Empty<JsonObject>())
+                    .SingleOrDefault(item => JsonAccess.TryGetString(item, "type", out string itemType) && itemType == "Figure" &&
+                        !string.IsNullOrEmpty(JsonAccess.GetPropertyString(item, "File")))
+                : null;
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or RecotteProjectLoadException)
+        { return AssetFailed("RC4804", exception.Message); }
+        if (template is null) return AssetFailed("RC4804", "The verified figure template is unavailable.");
+
+        int objectKey;
+        try { objectKey = allocator.Allocate(AllObjectKeys()); }
+        catch (Exception exception) when (exception is OverflowException or InvalidOperationException)
+        { return AssetFailed("RC4805", exception.Message); }
+
+        // Recotte Studio stores a stamp's SVG with loc 1 and a path relative to its figures directory.
+        JsonObject? registered = fileItems.OfType<JsonObject>().FirstOrDefault(item =>
+            JsonAccess.TryGetInt32(item, "loc", out int location) && location == 1 &&
+            JsonAccess.TryGetString(item, "rpath", out string relative) &&
+            string.Equals(relative, figure.SvgRelativePath, StringComparison.OrdinalIgnoreCase) &&
+            JsonAccess.TryGetString(item, "ik", out _));
+        string fileKey;
+        if (registered is not null) JsonAccess.TryGetString(registered, "ik", out fileKey);
+        else
+        {
+            HashSet<string> existingFileKeys = fileItems.OfType<JsonObject>()
+                .Where(item => JsonAccess.TryGetString(item, "ik", out _))
+                .Select(item => { JsonAccess.TryGetString(item, "ik", out string value); return value; })
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            try { fileKey = fileItemKeyAllocator.Allocate(existingFileKeys); }
+            catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+            { return AssetFailed("RC4805", exception.Message); }
+            if (fileKey.Length != 64 || fileKey.Any(characterValue => !Uri.IsHexDigit(characterValue)) || existingFileKeys.Contains(fileKey))
+                return AssetFailed("RC4805", "The file-item key allocator returned an invalid or duplicate key.");
+        }
+
+        EditResult? durationError = ApplyDuration(request.EndTime.TotalSeconds);
+        if (durationError is not null) return new(durationError, null, null);
+
+        List<ProjectChange> made = new();
+        if (registered is null)
+        {
+            fileItems.Add(new JsonObject
+            {
+                ["loc"] = 1, ["ik"] = fileKey, ["rpath"] = figure.SvgRelativePath,
+                ["apath"] = "file://" + figure.SvgPath!.Replace('\\', '/'),
+            });
+            made.Add(new("RegisterFileItem", $"file:{fileKey}", null, figure.SvgRelativePath, $"$.file-items[{fileItems.Count - 1}]"));
+        }
+
+        JsonObject added = (JsonObject)template.DeepClone();
+        added["objkey"] = objectKey;
+        added["start-time"] = request.StartTime.TotalSeconds;
+        added["end-time"] = request.EndTime.TotalSeconds;
+        if (added.ContainsKey("selected")) added["selected"] = false;
+        SetPropertyValue(added, "Bounds", new JsonArray(request.X, request.Y, request.Width, request.Height));
+        SetPropertyValue(added, "File", fileKey);
+        SetPropertyValue(added, "FigureKey", figure.Key);
+        SetPropertyValue(added, "FigureName", figure.DisplayNameJa ?? figure.DisplayNameEn ?? figure.Key);
+        objects.Add(added);
+        TimelineObjectId objectId = new(request.LayerIndex, objectKey);
+        made.Add(new("AddFigure", objectId.ToString(), null, figure.Key,
+            $"$.layers[{request.LayerIndex}].layer-objects[{objects.Count - 1}]"));
+        changes.AddRange(made);
+        return new(EditResult.Succeeded(made), objectId, fileKey);
     }
 
     /// <summary>Imports one character registration and its character-only Speaker layer from a donor document.</summary>

@@ -28,6 +28,8 @@ public sealed partial class SettingsPage : Page
     {
         if (owner is null) return;
         WorkspaceBox.Text = owner.WorkspaceRoot ?? string.Empty;
+        FfmpegBox.Text = owner.Ffmpeg.ConfiguredPath ?? string.Empty;
+        _ = ShowFfmpegStatusAsync(owner.Ffmpeg.ConfiguredPath);
         if (owner.AccessToken is string token)
         {
             CodexBox.Text = ConnectionSnippets.Codex(token);
@@ -56,6 +58,53 @@ public sealed partial class SettingsPage : Page
         WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(owner));
         var folder = await picker.PickSingleFolderAsync();
         if (folder is not null) WorkspaceBox.Text = folder.Path;
+    }
+
+    private async void ApplyFfmpeg_Click(object sender, RoutedEventArgs e)
+    {
+        if (owner is null) return;
+        ApplyFfmpegButton.IsEnabled = false;
+        try
+        {
+            string? requested = RequestedFfmpegPath();
+            await owner.ApplyFfmpegPathAsync(requested);
+            FfmpegBox.Text = owner.Ffmpeg.ConfiguredPath ?? string.Empty;
+            await ShowFfmpegStatusAsync(owner.Ffmpeg.ConfiguredPath);
+        }
+        catch (Exception exception) { FfmpegStatusText.Text = exception.Message; }
+        finally { ApplyFfmpegButton.IsEnabled = true; }
+    }
+
+    private async void CheckFfmpeg_Click(object sender, RoutedEventArgs e)
+    {
+        CheckFfmpegButton.IsEnabled = false;
+        try { await ShowFfmpegStatusAsync(RequestedFfmpegPath()); }
+        finally { CheckFfmpegButton.IsEnabled = true; }
+    }
+
+    private async void BrowseFfmpeg_Click(object sender, RoutedEventArgs e)
+    {
+        if (owner is null) return;
+        FileOpenPicker picker = new();
+        picker.FileTypeFilter.Add(".exe");
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(owner));
+        var file = await picker.PickSingleFileAsync();
+        if (file is not null) FfmpegBox.Text = file.Path;
+    }
+
+    private string? RequestedFfmpegPath() => string.IsNullOrWhiteSpace(FfmpegBox.Text) ? null : FfmpegBox.Text.Trim().Trim('"');
+
+    // Reports the ffmpeg that the given setting would use, without saving it.
+    private async Task ShowFfmpegStatusAsync(string? configuredPath)
+    {
+        FfmpegStatusText.Text = "確認しています…";
+        FfmpegResolution resolution = new FfmpegLocator(configuredPath).Resolve();
+        if (!resolution.Found) { FfmpegStatusText.Text = resolution.Message; return; }
+        FfmpegProbeResult probe = await FfmpegLocator.ProbeAsync(resolution.ExecutablePath!);
+        string source = resolution.Source == FfmpegSource.Configured ? "指定したパス" : "PATH から検出";
+        FfmpegStatusText.Text = probe.Success
+            ? $"ffmpeg {probe.Version} を使用できます（{source}: {resolution.ExecutablePath}）"
+            : $"{probe.Message}（{source}: {resolution.ExecutablePath}）";
     }
 
     private async void RegenerateToken_Click(object sender, RoutedEventArgs e)

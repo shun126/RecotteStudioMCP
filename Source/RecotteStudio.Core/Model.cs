@@ -145,6 +145,28 @@ public sealed class VideoLayerView : LayerView
 public sealed class SpeakerLayerView : LayerView
 {
     internal SpeakerLayerView(JsonObject node, int index) : base(node, index) { }
+
+    /// <summary>Gets the name of the telop frame new dialogue on this layer is drawn in.</summary>
+    public string? TelopFrame => JsonAccess.GetPropertyString(JsonNode, "TelopFrame");
+}
+
+/// <summary>Describes the screen region, in project pixels, where Recotte Studio draws dialogue for a telop frame.</summary>
+public sealed record TelopFrameView(string Name, string? DisplayName, decimal X, decimal Y, decimal Width, decimal Height)
+{
+    internal static IReadOnlyList<TelopFrameView> ReadAll(JsonObject root)
+    {
+        List<TelopFrameView> frames = new();
+        if (root["telop-frames"] is not JsonArray items) return frames;
+        foreach (JsonObject item in items.OfType<JsonObject>())
+        {
+            if (item["FrameName"] is not JsonObject frameName || !JsonAccess.TryGetString(frameName, "p-value", out string name) ||
+                !JsonAccess.TryGetBounds(item, out decimal x, out decimal y, out decimal width, out decimal height)) continue;
+            string? displayName = item["DisplayName"] is JsonObject display &&
+                JsonAccess.TryGetString(display, "p-value", out string text) ? text : null;
+            frames.Add(new(name, displayName, x, y, width, height));
+        }
+        return frames;
+    }
 }
 
 /// <summary>Represents an annotation layer.</summary>
