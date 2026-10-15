@@ -12,6 +12,7 @@ Codes, rather than English messages, are the stable machine-readable contract. E
 | New-project creation | RC2301-RC2307 | required root/settings, GUID, name, directory, layers, styles, time, or template sanitization failure |
 | Unknown retained structure | RC3001, RC3002 | unknown layer/object preserved |
 | Version compatibility | RC3101, RC3102 | unknown or read-only version |
+| Layer creation | RC4001-RC4002 | RC4001: the project has no layers array or the verified Video layer template is unavailable; RC4002: the requested layer name is blank or already used by another layer |
 | Editing/duration | RC4101-RC4102, RC4201-RC4204, RC4207-RC4208, RC4301, RC4401-RC4405 | unsupported edit, lock, duration, missing or incompatible clone template, or key allocation; RC4208 is a warning that an audio-backed Speaker Voice's text changed and its audio must be regenerated in Recotte Studio |
 | Figure (stamp) placement | RC4801-RC4805 | figure shape not verified for placement (only SVG figures with the plain `figure` style are), invalid time range or size, target is not an unlocked Annot layer, template or file-item registry unavailable, or key allocation |
 | Save planning/validation | RC5101-RC5107 | capability, edit state, validity, path, overwrite, or required safety option |

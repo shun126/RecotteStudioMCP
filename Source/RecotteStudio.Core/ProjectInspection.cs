@@ -85,6 +85,8 @@ public sealed record ProjectCapabilities(
     bool CanOverwrite)
 {
     public bool CanEditFadeEffects { get; init; }
+    /// <summary>Gets whether an empty Video layer can be added; CanAddLayer stays false because other layer types are unverified.</summary>
+    public bool CanAddVideoLayer { get; init; }
 }
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
@@ -163,7 +165,10 @@ public sealed partial class RecotteProjectDocument
         false, false, false, false,
         ProjectCompatibility.CanSaveCopy,
         ProjectCompatibility.CanOverwrite)
-    { CanEditFadeEffects = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported };
+    {
+        CanEditFadeEffects = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
+        CanAddVideoLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
+    };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>
     private bool HasTextOnlySpeakerVoiceTemplate => root["layers"] is JsonArray layers && layers.OfType<JsonObject>()

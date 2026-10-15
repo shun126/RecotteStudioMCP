@@ -50,6 +50,8 @@ internal static class ProjectCreationValidator
             "does not identify the requested project directory", "RC2305");
     }
 
+    // A new project has exactly Video, Speaker, and Annot. Once edited it may hold more layers of those types, kept in
+    // that order (an added Video layer goes after the last Video layer), so the check is on the order of the type groups.
     private static void ValidateInitialLayers(JsonArray layers, bool requireEmpty, List<ProjectDiagnostic> diagnostics)
     {
         string[] expected = ["Video", "Speaker", "Annot"];
@@ -58,16 +60,33 @@ internal static class ProjectCreationValidator
             diagnostics.Add(Error("RC2306", "The required Video, Speaker, and Annot layers are missing.", "$.layers"));
             return;
         }
-        for (int index = 0; index < expected.Length; index++)
+        int group = 0;
+        for (int index = 0; index < layers.Count; index++)
         {
             string path = $"$.layers[{index}]";
-            if (layers[index] is not JsonObject layer || !JsonAccess.TryGetString(layer, "type", out string type) || type != expected[index])
-                diagnostics.Add(Error("RC2306", $"Layer {index} must be '{expected[index]}'.", $"{path}.type"));
-            else if (layer["layer-objects"] is not JsonArray objects)
+            if (layers[index] is not JsonObject layer || !JsonAccess.TryGetString(layer, "type", out string type))
+            {
+                diagnostics.Add(Error("RC2306", $"Layer {index} must be '{expected[group]}'.", $"{path}.type"));
+                continue;
+            }
+            // Stay in the current group or move on to the next one; layer 0 must start the Video group.
+            if (type != expected[group])
+            {
+                if (index > 0 && group + 1 < expected.Length && type == expected[group + 1]) group++;
+                else
+                {
+                    diagnostics.Add(Error("RC2306", $"Layer {index} must be '{expected[group]}'" +
+                        (group + 1 < expected.Length ? $" or '{expected[group + 1]}'." : "."), $"{path}.type"));
+                    continue;
+                }
+            }
+            if (layer["layer-objects"] is not JsonArray objects)
                 diagnostics.Add(Error("RC2306", "layer-objects must be an array.", $"{path}.layer-objects"));
             else if (requireEmpty && objects.Count != 0)
                 diagnostics.Add(Error("RC2306", "A new empty project layer must not contain objects.", $"{path}.layer-objects"));
         }
+        if (group != expected.Length - 1)
+            diagnostics.Add(Error("RC2306", "The required Video, Speaker, and Annot layers are missing.", "$.layers"));
     }
 
     internal static string DirectoryUri(string directory) =>

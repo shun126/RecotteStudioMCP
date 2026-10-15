@@ -67,6 +67,17 @@ EditResult note = edit.Editor.AddAnnotationText(new AddAnnotationTextRequest(
     2, "編集メモ：ここからBGMを明るくする", new ProjectTime(5m), new ProjectTime(9m)));
 ```
 
+Add an empty Video layer with `AddVideoLayer` (batch: `AddVideoLayerOperation`) when two videos must play at the same time. It clones the second Video layer of `013TwoVideos`, inserts it directly after the last Video layer as Recotte Studio does, and names it `映像・音声N` with the lowest unused number unless a name is given; a blank or already used name fails with `RC4002`. Every later layer's index grows by one, so later operations in the same batch should refer to layers by name. The batch result reports `CreatedLayerIndex`. `Capabilities.CanAddVideoLayer` reports availability; `CanAddLayer` stays false because other layer types are not verified.
+
+```csharp
+ProjectBatchResult layered = document.ApplyOperations(
+[
+    new AddVideoLayerOperation("ワイプ"),
+    new AddVideoAssetOperation(new LayerNameReference("ワイプ"), "Wipe.mp4", "Project.ccproj", "wipe",
+        new ProjectTime(2m), new ProjectTime(6m)),
+]);
+```
+
 ## Atomic batch editing
 
 Installed effect discovery and Image/Video fade add, update, and removal are available through `EffectCatalog`,

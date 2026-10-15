@@ -18,6 +18,7 @@ public enum ProjectOperationKind
     AddFadeEffect,
     UpdateFadeEffect,
     RemoveFadeEffect,
+    AddVideoLayer,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -87,6 +88,12 @@ public sealed record AddFigureOperation(LayerReference Layer, FigureDefinition F
     public override ProjectOperationKind Kind => ProjectOperationKind.AddFigure;
 }
 
+/// <summary>Adds an empty Video layer after the last Video layer; later layers' indexes grow by one.</summary>
+public sealed record AddVideoLayerOperation(string? Name = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddVideoLayer;
+}
+
 /// <summary>Configures allocators and duration handling used by a document-level batch.</summary>
 public sealed record ProjectBatchOptions
 {
@@ -104,7 +111,11 @@ public sealed record ProjectOperationResult(
     TimelineObjectId? CreatedObjectId,
     string? CreatedFileItemKey,
     IReadOnlyList<ProjectChange> Changes,
-    IReadOnlyList<ProjectDiagnostic> Diagnostics);
+    IReadOnlyList<ProjectDiagnostic> Diagnostics)
+{
+    /// <summary>Gets the index a layer-adding operation inserted its layer at, as of the end of that operation.</summary>
+    public int? CreatedLayerIndex { get; init; }
+}
 
 /// <summary>Contains the complete structured result of an atomic batch.</summary>
 public sealed record ProjectBatchResult(
@@ -130,7 +141,7 @@ public sealed record ProjectBatchResult(
 public sealed record ProjectBatchPreview(ProjectBatchResult BatchResult, ProjectTime? EstimatedDuration, bool CanSaveCopy);
 
 internal sealed record OperationExecutionResult(EditResult EditResult, string? Target,
-    TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null);
+    TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null, int? CreatedLayerIndex = null);
 
 public sealed partial class ProjectEditSession
 {
@@ -155,7 +166,7 @@ public sealed partial class ProjectEditSession
             OperationExecutionResult executed = Editor.ApplyOperation(operation);
             EditResult edit = executed.EditResult;
             results.Add(new(index, operation.Kind, edit.Success, executed.Target, executed.CreatedObjectId,
-                executed.CreatedFileItemKey, edit.Changes, edit.Diagnostics));
+                executed.CreatedFileItemKey, edit.Changes, edit.Diagnostics) { CreatedLayerIndex = executed.CreatedLayerIndex });
             diagnostics.AddRange(edit.Diagnostics);
             if (!edit.Success)
             {
@@ -297,6 +308,7 @@ public sealed partial class ProjectEditor
                     int.TryParse(change.Target, out int key) ? new(layerIndex, key) : null;
                 return new(edit, $"layer:{layerIndex}", created);
             }),
+            AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name))),
             AddFigureOperation value => WithLayer(value.Layer, layerIndex =>
             {
                 AssetAddResult asset = AddFigure(new(layerIndex, value.Figure, value.StartTime, value.EndTime,
@@ -343,6 +355,9 @@ public sealed partial class ProjectEditor
         if (matches.Length > 1) return LookupFailure("RC6002", "The referenced timeline object is ambiguous.", reference.ToString());
         return action(matches[0]);
     }
+
+    private static OperationExecutionResult LayerAdded(LayerAddResult layer) => new(layer.EditResult,
+        layer.LayerIndex is int index ? $"layer:{index}" : null, CreatedLayerIndex: layer.LayerIndex);
 
     private static OperationExecutionResult LookupFailure(string code, string message, string? target) =>
         new(EditResult.Failed(code, message), target);

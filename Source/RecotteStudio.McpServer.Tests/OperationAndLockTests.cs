@@ -31,6 +31,20 @@ public sealed class OperationAndLockTests
     }
 
     [Fact]
+    public void MapperMapsVideoLayerWithOptionalName()
+    {
+        OperationMapResult result = new ProjectOperationMapper().Map(new[]
+        {
+            new ProjectOperationDto("addVideoLayer"),
+            new ProjectOperationDto("addVideoLayer", LayerName: "ワイプ"),
+        });
+
+        Assert.True(result.Success);
+        Assert.Equal(new string?[] { null, "ワイプ" },
+            result.Operations.Select(operation => Assert.IsType<AddVideoLayerOperation>(operation).Name));
+    }
+
+    [Fact]
     public async Task SameOutputPathIsSerialized()
     {
         OutputPathLockManager manager = new();

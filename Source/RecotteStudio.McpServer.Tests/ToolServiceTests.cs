@@ -85,6 +85,30 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectCanAddVideoLayerAndPlaceVideoOnIt()
+    {
+        string video = Path.Combine(root, "Sample.mp4");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.mp4"), video);
+        string output = Path.Combine(root, "二画面.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("二画面", output, false, new[]
+        {
+            new ProjectOperationDto("addVideoLayer", LayerName: "ワイプ"),
+            new ProjectOperationDto("addVideoObject", Layer: new(Name: "ワイプ"), AssetPath: video, ProjectPath: output,
+                DisplayName: "wipe", Start: 0m, End: 2m),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "話者1"), Text: "こんにちは", Start: 0m, End: 2m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement operations = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch").GetProperty("OperationResults");
+        Assert.Equal(1, operations[0].GetProperty("CreatedLayerIndex").GetInt32());
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "Video", "Video", "Speaker", "Annot" }, created.Layers.Select(layer => layer.Type));
+        Assert.Equal("ワイプ", created.Layers[1].Name);
+        Assert.Equal("Video", Assert.Single(created.Layers[1].Objects).Type);
+        Assert.Equal("Speaker Voice", Assert.Single(created.Layers[2].Objects).Type);
+    }
+
+    [Fact]
     public async Task FullScreenImageUnderDialogueReportsNoTelopCoverageWarning()
     {
         string image = Path.Combine(root, "Background.png");
