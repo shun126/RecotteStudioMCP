@@ -16,6 +16,7 @@ public sealed class ActivityItem(ActivityEntry entry)
     public Visibility SuccessVisibility => Show(ActivityKind.Success);
     public Visibility FailureVisibility => Show(ActivityKind.Failure);
     public Visibility RejectedVisibility => Show(ActivityKind.Rejected);
+    public Visibility WarningVisibility => Show(ActivityKind.Warning);
 
     private Visibility Show(ActivityKind kind) => entry.Kind == kind ? Visibility.Visible : Visibility.Collapsed;
 

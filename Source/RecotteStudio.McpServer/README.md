@@ -1,5 +1,7 @@
 # RecotteStudio.McpServer
 
+`recotte_get_generation_rules` は、実行ファイルと同じフォルダにある編集可能な `GenerationRules.md` を呼び出しのたびに読み込み、Markdownで返します。ワークスペースの場所には依存しません。ファイルがなくてもサーバーは停止せず、アクティビティに警告を記録して `available=false` と空の本文を返します。MCP初期指示と生成・編集ツールの説明から取得を案内します。リリースZIPにもファイルを収録します。
+
 エフェクトの一覧取得と画像・動画へのフェード追加・変更・削除に対応しています。[使用例と検証状況](../../Documents/RecotteStudioCore/Effects.md)を参照してください。
 
 台詞を SubRip 字幕（.srt）として書き出せます。`recotte_list_subtitle_cues` で台詞を一覧し、翻訳したテキストを `recotte_export_subtitles` に渡すと、英語や中国語などの字幕を作成できます。[仕組みとエラーコード](../../Documents/RecotteStudioCore/Subtitles.md)を参照してください。

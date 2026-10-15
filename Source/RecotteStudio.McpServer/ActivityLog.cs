@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace RecotteStudio.McpServer;
 
 /// <summary>Classifies one activity entry for display.</summary>
-public enum ActivityKind { Info, Success, Failure, Rejected }
+public enum ActivityKind { Info, Success, Failure, Rejected, Warning }
 
 /// <summary>Describes one finished server event: a tool call, a rejected request, or a lifecycle change.</summary>
 public sealed record ActivityEntry(DateTimeOffset Time, ActivityKind Kind, string Title, string? Detail, TimeSpan? Duration);

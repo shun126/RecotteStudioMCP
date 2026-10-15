@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <Version>0.5.3</Version>
+    <Version>0.5.4</Version>
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -39,6 +39,9 @@
   <ItemGroup>
     <!-- ウィンドウとタスクバーのアイコンは実行時にファイルから読み込む -->
     <Content Include="Assets\AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Keep the user-editable rules alongside the executable, including single-file deployments. -->
+    <None Include="..\..\Documents\RecotteStudioCore\GenerationRules.md" Link="GenerationRules.md"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RecotteStudio.Core\RecotteStudio.Core.csproj" />

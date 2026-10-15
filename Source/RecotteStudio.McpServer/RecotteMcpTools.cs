@@ -6,13 +6,25 @@ namespace RecotteStudio.McpServer;
 [McpServerToolType]
 public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog activity)
 {
+    private const string GenerationGuidance = " Before creating or editing a Recotte Studio project, call recotte_get_generation_rules and follow its guidance; the project and installed tools may have additional constraints.";
     private const string ReadOnly = "Reads one .ccproj through RecotteStudio.Core without changing or creating files.";
     private const string Removal = " removeTimelineObject removes any unlocked timeline object, prunes a file-item registration only when it becomes unused, and never deletes asset files from disk.";
     private const string Dialogue = " addTextOnlySpeakerVoice places a dialogue line as text only: Recotte Studio synthesizes the speech and draws the telop, so supply no audio and put no dialogue text into images or videos. updateSpeakerText also works on a clip that already has audio: the audio is kept, the clip is listed in audioRegenerationRequired with an RC4208 warning, and you must tell the user to regenerate the audio for those clips in Recotte Studio.";
     private const string Figure = " addFigureObject places an installed stamp on an Annot layer: figureKey comes from recotte_list_figures, x and y are the top-left corner in screen pixels, and width (default 128) and height (default: width) set its size.";
     private const string OperationTypes = " Supported operation types are updateSpeakerText, moveTimelineObject, addTextOnlySpeakerVoice, removeTimelineObject, addImageObject, addVideoObject, addAnnotationText, addFigureObject, addFadeEffect, updateFadeEffect, and removeFadeEffect. Fades support unlocked Image and Video clips: effectKey is Alpha Fade or Alpha Fade Out, duration is positive seconds within the clip; placement is at its start or end. updateFadeEffect and removeFadeEffect require effectIndex from recotte_list_object_effects (the index in the full sub-objects array; removal shifts subsequent indices). Curve editing is unsupported. addAnnotationText places an editor hint text box on an Annot layer." + Figure + Dialogue;
-    private const string Editing = "Atomically applies supported RecotteStudio.Core operations and saves the result to a different .ccproj file. The source project is never modified. Recotte Studio is not launched." + OperationTypes + Removal;
-    private const string Overwriting = "Atomically applies supported RecotteStudio.Core operations and safely overwrites the loaded source .ccproj using RecotteStudio.Core Save(). A mandatory backup and external-change detection are used. Recotte Studio is not launched." + OperationTypes + Removal;
+    private const string Editing = "Atomically applies supported RecotteStudio.Core operations and saves the result to a different .ccproj file. The source project is never modified. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance;
+    private const string Overwriting = "Atomically applies supported RecotteStudio.Core operations and safely overwrites the loaded source .ccproj using RecotteStudio.Core Save(). A mandatory backup and external-change detection are used. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance;
+
+    [McpServerTool(Name = "recotte_get_generation_rules"), Description("Reads the optional user-editable GenerationRules.md next to the MCP server executable and returns its current Markdown. Call before creating or editing a project. If the file is missing, the server logs a warning and returns available=false with empty content; continue normal work using the built-in tool constraints. No project path is needed.")]
+    public McpToolResult<object> GetGenerationRules() =>
+        activity.Track("recotte_get_generation_rules", null, () =>
+        {
+            string? markdown = GenerationRulesProvider.Read(activity);
+            return new McpToolResult<object>(true, "success", null, null,
+                new { available = markdown is not null, format = "markdown", fileName = GenerationRulesProvider.FileName,
+                    content = markdown ?? string.Empty },
+                Array.Empty<McpDiagnosticDto>());
+        });
 
     [McpServerTool(Name = "recotte_list_effects"), Description("Lists installed effects, text effects, and transitions without executing Lua or modifying projects. kind is effects, text, or transitions. editable marks the two supported fades; other definitions are listed only. Filters by tag and Japanese/English name or internal key. Metadata includes literal defaultDuration and propertyKeys; complex Lua expressions are not evaluated.")]
     public McpToolResult<object> ListEffects(string? kind = null, string? tag = null, string? nameContains = null, int limit = 100) =>
@@ -73,11 +85,11 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
     [McpServerTool(Name = "recotte_inspect_assets"), Description(ReadOnly + " Returns unsupported unless RecotteStudio.Core exposes safe asset inspection; it never infers ccproj references.")]
     public McpToolResult<object> InspectAssets(string projectPath) => activity.Track("recotte_inspect_assets", projectPath, () => service.InspectAssets(projectPath));
 
-    [McpServerTool(Name = "recotte_preview_operations"), Description("Atomically previews supported RecotteStudio.Core operations without changing the source, revision, or filesystem. Character creation is unsupported." + OperationTypes + Removal)]
+    [McpServerTool(Name = "recotte_preview_operations"), Description("Atomically previews supported RecotteStudio.Core operations without changing the source, revision, or filesystem. Character creation is unsupported." + OperationTypes + Removal + GenerationGuidance)]
     public McpToolResult<object> PreviewOperations(string projectPath, IReadOnlyList<ProjectOperationDto> operations) =>
         activity.Track("recotte_preview_operations", projectPath, () => service.PreviewOperations(projectPath, operations));
 
-    [McpServerTool(Name = "recotte_preview_operations_and_save"), Description("Atomically previews supported operations and Core's SaveCopy plan without creating or changing files. Character creation is unsupported." + OperationTypes + Removal)]
+    [McpServerTool(Name = "recotte_preview_operations_and_save"), Description("Atomically previews supported operations and Core's SaveCopy plan without creating or changing files. Character creation is unsupported." + OperationTypes + Removal + GenerationGuidance)]
     public McpToolResult<object> PreviewOperationsAndSave(string projectPath, string outputPath, bool allowOverwrite,
         IReadOnlyList<ProjectOperationDto> operations) => activity.Track("recotte_preview_operations_and_save", projectPath, () => service.PreviewOperationsAndSave(projectPath, outputPath, allowOverwrite, operations));
 
@@ -86,7 +98,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
         IReadOnlyList<ProjectOperationDto> operations, CancellationToken cancellationToken) =>
         activity.TrackAsync("recotte_apply_operations_and_save_copy", projectPath, () => service.ApplyOperationsAndSaveCopyAsync(projectPath, outputPath, allowOverwrite, operations, cancellationToken));
 
-    [McpServerTool(Name = "recotte_preview_operations_and_overwrite"), Description("Previews supported operations and RecotteStudio.Core's safe overwrite plan without changing any file. Mandatory backup, validation, and external-change checks are reported. Recotte Studio is not launched." + OperationTypes + Removal)]
+    [McpServerTool(Name = "recotte_preview_operations_and_overwrite"), Description("Previews supported operations and RecotteStudio.Core's safe overwrite plan without changing any file. Mandatory backup, validation, and external-change checks are reported. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance)]
     public McpToolResult<object> PreviewOperationsAndOverwrite(string projectPath,
         IReadOnlyList<ProjectOperationDto> operations) => activity.Track("recotte_preview_operations_and_overwrite", projectPath, () => service.PreviewOperationsAndOverwrite(projectPath, operations));
 
@@ -106,7 +118,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
         IReadOnlyList<ProjectOperationDto> operations, CancellationToken cancellationToken) =>
         activity.TrackAsync("recotte_create_project_from_template", templatePath, () => service.CreateProjectFromTemplateAsync(templatePath, outputPath, allowOverwrite, operations, cancellationToken));
 
-    [McpServerTool(Name = "recotte_create_project"), Description("Creates a validated Recotte Studio 1.8.5.0 project from Core's built-in template, atomically applies supported operations, and publishes it only after a verified SaveCopy." + OperationTypes + Removal)]
+    [McpServerTool(Name = "recotte_create_project"), Description("Creates a validated Recotte Studio 1.8.5.0 project from Core's built-in template, atomically applies supported operations, and publishes it only after a verified SaveCopy." + OperationTypes + Removal + GenerationGuidance)]
     public Task<McpToolResult<object>> CreateProject(string projectName, string outputPath, bool allowOverwrite,
         IReadOnlyList<ProjectOperationDto> operations, CancellationToken cancellationToken) =>
         activity.TrackAsync("recotte_create_project", outputPath, () => service.CreateProjectAsync(projectName, outputPath, allowOverwrite, operations, cancellationToken));

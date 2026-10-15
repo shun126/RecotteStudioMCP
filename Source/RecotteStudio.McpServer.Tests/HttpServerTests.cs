@@ -45,7 +45,13 @@ public sealed class HttpServerTests
             });
             await using McpClient client = await McpClient.CreateAsync(transport);
             var tools = await client.ListToolsAsync();
+            Assert.Contains(tools, tool => tool.Name == "recotte_get_generation_rules");
             Assert.Contains(tools, tool => tool.Name == "recotte_inspect_project");
+            var guidance = await client.CallToolAsync("recotte_get_generation_rules");
+            Assert.NotEqual(true, guidance.IsError);
+            Assert.Contains(guidance.Content, block => block is TextContentBlock text &&
+                text.Text.Contains("recotte_create_video_from_image", StringComparison.Ordinal) &&
+                text.Text.Contains("GenerationRules.md", StringComparison.Ordinal));
             Assert.Contains(tools, tool => tool.Name == "recotte_preview_operations_and_save");
             Assert.Contains(tools, tool => tool.Name == "recotte_list_subtitle_cues");
             Assert.Contains(tools, tool => tool.Name == "recotte_export_subtitles");

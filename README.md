@@ -58,6 +58,12 @@ walk1.png から walk4.png を 1 秒に 8 枚のパラパラアニメにして�
 
 この機能には [ffmpeg](https://ffmpeg.org/) が必要です。ffmpeg は同梱していないため、`winget install Gyan.FFmpeg` などでインストールし、設定画面の「ffmpeg」で `ffmpeg.exe` を指定してください。PATH に ffmpeg がある場合は指定不要です。詳しくは[画像から動画素材を作る](Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。
 
+## LLM向け動画制作ルール
+
+RecotteStudioMCP は、動画制作のガイドラインを `recotte_get_generation_rules` で提供します。Codex や Claude Code などのMCPクライアントには、プロジェクトを生成・編集する前にこのツールを呼び出すよう、初期指示とツールの説明で案内します。ルールには読み上げ音声を別途生成しないこと、字幕を画像に描き込まないこと、字幕枠の扱い、静止画を動画素材にする機能の使いどころなどが含まれます。
+
+配布ZIPには、実行ファイルと同じフォルダに **編集可能な `GenerationRules.md`** を収録しています。MCPツールは呼び出すたびにこのファイルを読み直すため、利用者は再起動や再ビルドをせずにルールを変更できます。ファイルが存在しない場合はアプリのアクティビティに警告を記録しますが、MCPサーバーやプロジェクト操作は継続し、取得ツールは `available=false` と空の `content` を返します。LLMは必ずツールを呼ぶとは限らないため、制作前に「`recotte_get_generation_rules` を読んでから作って」と指定することもできます。
+
 ## できること
 
 - プロジェクトの調査: レイヤー、タイムライン、台詞、画面と字幕枠の配置を確認し、プロジェクトを検証します。
