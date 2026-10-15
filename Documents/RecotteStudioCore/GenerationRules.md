@@ -4,6 +4,8 @@
 
 ## 基本方針
 
+- 制作開始時に `recotte_get_generation_rules` でこの文書を取得し、生成・編集時の判断に使う。
+
 - Recotte Studio 本体が担う台詞のテロップ表示、対応する読み上げソフトとの音声連携、キャラクターの口パク・目パチを活用し、LLM が不要な素材を作らない。
 - **Recotte Studio 本体の製品機能と、RecotteStudioMCP から操作できる機能を混同しない。** 本体が対応するキーフレーム・各種エフェクト・トランジション・動画書き出しを、MCP で直接実行できるとは限らない。
 - 既存プロジェクトを編集する前に `recotte_inspect_project`、`recotte_get_capabilities`、必要に応じて `recotte_list_layers` と `recotte_list_timeline` で画面・字幕枠・話者・レイヤー・編集可否を確認する。取得した情報を推測より優先する。

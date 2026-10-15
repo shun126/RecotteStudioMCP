@@ -8,13 +8,15 @@ public static class McpServerRegistration
 {
     /// <summary>Instructions sent in the MCP initialization response.</summary>
     public const string ServerInstructions =
+        "Before generating or editing a Recotte Studio project, call recotte_get_generation_rules and follow the returned guidance. " +
+        "The tool returns Markdown bundled with this server; it does not require a project path. " +
         "All .ccproj creation and editing must use the recotte_studio MCP tools. To create a new project, always call " +
         "recotte_create_project. Do not create, patch, or hand-write .ccproj JSON because manual JSON can omit Recotte " +
         "Studio-required metadata and break compatibility. Use recotte_create_project_from_template only for an intentional, " +
         "verified existing template. If the required Recotte tool is unavailable, stop and report that the MCP server must be " +
         "restored; never fall back to filesystem or shell-based JSON creation. " +
         "Dialogue is text on a Speaker layer, placed with addTextOnlySpeakerVoice or recotte_add_text_sequence_and_save_copy: " +
-        "Recotte Studio synthesizes the speech from that text and draws it on screen as a telop itself. So never generate " +
+        "Recotte Studio works with a configured speech synthesis engine and draws the telop itself. So never generate " +
         "audio, run TTS tools, or create .wav files, do not report missing audio as a problem or as remaining work, and never " +
         "draw dialogue into an image or video, where it would appear twice. " + TelopLayout;
 

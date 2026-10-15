@@ -5,6 +5,18 @@ Recotte Studio MCP の主な変更点を記録します。
 
 ## [未リリース]
 
+## [0.5.4] - 2026-10-15
+
+### 追加
+
+- **LLM向け生成ガイドラインをMCPから取得できるようになりました。** `recotte_get_generation_rules` は、配布物と実行ファイルに同梱された `GenerationRules.md` を返します。MCPの初期指示および生成・編集ツールの説明から、制作前の取得を案内します。
+- `GenerationRules.md` に音声と字幕の役割、実際のテロップ枠の考慮、静止画のズーム・パン／パラパラアニメ、効果の使い分け、保存と検証の規則を追加しました。
+- 配布ZIPに `GenerationRules.md` を同梱するようにしました。
+
+### 変更
+
+- サーバーのバージョンを `0.5.4` に更新しました。
+
 ### 追加
 
 - **静止画から動画素材を作れるようになりました。** `recotte_create_video_from_image` を追加しました。画像（PNG、JPEG、BMP、GIF）にズームイン・ズームアウトや上下左右へのパンを付けた `.mp4` を ffmpeg で作ります。解像度とフレームレートはプロジェクトに合わせ、Recotte Studio で読み込めたサンプル動画と同じ形式（H.264 Constrained Baseline、AAC）で書き出します。作った動画は `addVideoObject` で配置できます。対応するのは 1920×1080 のプロジェクトです。詳しくは[画像から動画素材を作る](Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。

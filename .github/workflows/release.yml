@@ -55,6 +55,8 @@ jobs:
         run: |
           Copy-Item README.md, LICENSE artifacts/publish/
           Copy-Item Source/RecotteStudio.McpServer/README.md artifacts/publish/McpServer-README.md
+          Copy-Item Documents/RecotteStudioCore/GenerationRules.md artifacts/publish/GenerationRules.md
+          if (-not (Test-Path artifacts/publish/GenerationRules.md)) { throw "GenerationRules.md must be in the release archive." }
           Compress-Archive -Path artifacts/publish/* `
             -DestinationPath "artifacts/RecotteStudioMCP-${{ steps.version.outputs.version }}-win-x64.zip"
 
