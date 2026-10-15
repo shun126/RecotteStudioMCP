@@ -15,6 +15,7 @@ Recotte Studio MCP の主な変更点を記録します。
   - ドナーの音声フォルダを指す `LinkFolder` は空にし、テロップの表示先レイヤー（`TelopTargetLayer`）は取り込んだキャラクター同士で付け直します。
   - ドナーのパスも作業フォルダの制限を受けます。
 - `recotte_list_characters` を追加しました。プロジェクトのキャラクターを `speakerKey`、名前、モデル、話者レイヤーとともに一覧します。`importCharacter` のドナーを調べるときに使います。
+- **注釈レイヤーを追加できるようになりました。** 操作 `addAnnotationLayer` を追加しました（#14）。空の注釈レイヤーを最後の注釈レイヤーの直後に追加するため、そこに置いた画像・注釈テキスト・スタンプは既存のすべてのレイヤーより手前に描画されます。既定の名前は `注釈2` のように番号付きで、`layerName` で指定することもできます。名前の扱いと結果の `createdLayerIndex` は `addVideoLayer` と同じです。Capabilities に `canAddAnnotationLayer` を追加しました。
 - 形式解析用のサンプル `011TwoVoices`、`012TwoImages`、`013TwoVideos` を追加しました。
 
 ### 修正

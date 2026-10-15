@@ -20,6 +20,7 @@ public enum ProjectOperationKind
     RemoveFadeEffect,
     AddVideoLayer,
     ImportCharacter,
+    AddAnnotationLayer,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -93,6 +94,12 @@ public sealed record AddFigureOperation(LayerReference Layer, FigureDefinition F
 public sealed record AddVideoLayerOperation(string? Name = null) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.AddVideoLayer;
+}
+
+/// <summary>Adds an empty Annot layer after the last Annot layer; later layers' indexes grow by one.</summary>
+public sealed record AddAnnotationLayerOperation(string? Name = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddAnnotationLayer;
 }
 
 /// <summary>
@@ -320,6 +327,7 @@ public sealed partial class ProjectEditor
                 return new(edit, $"layer:{layerIndex}", created);
             }),
             AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name))),
+            AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name))),
             ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
                 value.StartTime, value.EndTime, value.LayerName))),
             AddFigureOperation value => WithLayer(value.Layer, layerIndex =>

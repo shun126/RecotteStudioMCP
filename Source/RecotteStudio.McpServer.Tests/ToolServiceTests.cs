@@ -85,6 +85,32 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectCanAddAnnotationLayerAndPlaceNotesOnIt()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+        string output = Path.Combine(root, "前景付き.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("前景付き", output, false, new[]
+        {
+            new ProjectOperationDto("addAnnotationLayer", LayerName: "前景"),
+            new ProjectOperationDto("addImageObject", Layer: new(Name: "前景"), AssetPath: image, ProjectPath: output,
+                DisplayName: "Sample.png", Start: 0m, End: 2m),
+            new ProjectOperationDto("addAnnotationText", Layer: new(Name: "前景"), Text: "編集メモ", Start: 0m, End: 2m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement operations = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch").GetProperty("OperationResults");
+        Assert.Equal(3, operations[0].GetProperty("CreatedLayerIndex").GetInt32());
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "注釈1", "前景" }, created.Layers.OfType<AnnotationLayerView>().Select(layer => layer.Name));
+        Assert.Equal(new[] { "Image", "Figure" }, created.Layers[3].Objects.Select(item => item.Type));
+        JsonElement layers = JsonSerializer.SerializeToElement(service.ListLayers(output).Data).GetProperty("layers");
+        Assert.Equal("前景", layers[3].GetProperty("Name").GetString());
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanAddAnnotationLayer").GetBoolean());
+    }
+
+    [Fact]
     public void ListCharactersReportsSpeakerKeysAndLayers()
     {
         string donor = Path.Combine(root, "donor.ccproj");
