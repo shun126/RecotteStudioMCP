@@ -89,16 +89,12 @@ public sealed class SpeakerLayerTests : IDisposable
     public void AddSpeakerLayer_RejectsAProjectWithoutTheTelopFrameTheLayerUses()
     {
         JsonObject root = JsonNode.Parse(File.ReadAllText(Sample("006OneCharacter")))!.AsObject();
-        JsonArray frames = root["telop-frames"]!.AsArray();
-        int lower = frames.Select((item, index) => (item, index)).Single(pair => pair.item is JsonObject frame &&
-            (string?)frame["FrameName"]!["p-value"] == "LowerFrame").index;
-        frames.RemoveAt(lower);
-        // Recotte Studio writes the string "properties" before every frame object.
-        if (frames[lower - 1] is JsonValue marker && (string?)marker == "properties") frames.RemoveAt(lower - 1);
+        RemoveFrame(root, "LowerFrame");
         root["layers"]![1]!["properties"]!["TelopFrame"]!["p-value"] = "UpperFrame";
         string path = Path.Combine(directory, "NoLowerFrame.ccproj");
         File.WriteAllText(path, root.ToJsonString());
-        using ProjectEditSession session = RecotteProject.Load(path).BeginEdit();
+        RecotteProjectDocument document = RecotteProject.Load(path);
+        using ProjectEditSession session = document.BeginEdit();
 
         LayerAddResult result = session.Editor.AddSpeakerLayer(new());
 
@@ -106,6 +102,30 @@ public sealed class SpeakerLayerTests : IDisposable
         Assert.Equal("RC4004", Assert.Single(result.Diagnostics).Code);
         Assert.Contains("LowerFrame", Assert.Single(result.Diagnostics).Message, StringComparison.Ordinal);
         Assert.Empty(session.Changes);
+        // The capability says so up front rather than offering an operation that cannot succeed.
+        Assert.False(document.Capabilities.CanAddSpeakerLayer);
+        Assert.True(RecotteProject.Load(Sample("006OneCharacter")).Capabilities.CanAddSpeakerLayer);
+    }
+
+    [Fact]
+    public void AddSpeakerLayer_IsNoLongerOfferedOnceImportedFramesLackTheOneItUses()
+    {
+        JsonObject donorRoot = JsonNode.Parse(File.ReadAllText(Sample("011TwoVoices")))!.AsObject();
+        RemoveFrame(donorRoot, "LowerFrame");
+        string donorPath = Path.Combine(directory, "Donor.ccproj");
+        File.WriteAllText(donorPath, donorRoot.ToJsonString());
+        RecotteProjectDocument document = RecotteProject.Create(new("Frames", directory));
+        Assert.True(document.Capabilities.CanAddSpeakerLayer);
+
+        // importCharacter replaces the project's telop frames with the donor's, which have no LowerFrame.
+        Assert.True(document.ApplyOperations(new[]
+        {
+            new ImportCharacterOperation(RecotteProject.Load(donorPath), Man, new(0m), new(10m)),
+        }).Success);
+
+        Assert.False(document.Capabilities.CanAddSpeakerLayer);
+        Assert.Equal("RC4004", Assert.Single(document.ApplyOperations(new[] { new AddSpeakerLayerOperation() }).Diagnostics,
+            diagnostic => diagnostic.Severity == DiagnosticSeverity.Error).Code);
     }
 
     [Fact]
@@ -125,6 +145,16 @@ public sealed class SpeakerLayerTests : IDisposable
         document.SaveCopy(output);
         Assert.True(RecotteProject.Load(output).Validate().IsValid);
         return JsonNode.Parse(File.ReadAllText(output))!["layers"]!.AsArray();
+    }
+
+    private static void RemoveFrame(JsonObject root, string name)
+    {
+        JsonArray frames = root["telop-frames"]!.AsArray();
+        int removed = frames.Select((item, index) => (item, index)).Single(pair => pair.item is JsonObject frame &&
+            (string?)frame["FrameName"]!["p-value"] == name).index;
+        frames.RemoveAt(removed);
+        // Recotte Studio writes the string "properties" before every frame object.
+        if (frames[removed - 1] is JsonValue marker && (string?)marker == "properties") frames.RemoveAt(removed - 1);
     }
 
     private static JsonObject Layer(string path, int index) =>

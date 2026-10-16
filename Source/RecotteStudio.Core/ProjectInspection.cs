@@ -91,7 +91,7 @@ public sealed record ProjectCapabilities(
     public bool CanAddAnnotationLayer { get; init; }
     /// <summary>Gets whether a layer can be moved to another position in the drawing order.</summary>
     public bool CanMoveLayer { get; init; }
-    /// <summary>Gets whether a Speaker layer without a character can be added.</summary>
+    /// <summary>Gets whether a Speaker layer without a character can be added, which needs the text style and telop frame it uses.</summary>
     public bool CanAddSpeakerLayer { get; init; }
     /// <summary>Gets whether a Speaker Voice can be moved to another Speaker layer, so that layer's speaker says it.</summary>
     public bool CanMoveSpeakerVoiceToLayer { get; init; }
@@ -177,7 +177,8 @@ public sealed partial class RecotteProjectDocument
         CanEditFadeEffects = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanAddVideoLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
         CanAddAnnotationLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
-        CanAddSpeakerLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
+        CanAddSpeakerLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported &&
+            ProjectEditor.CanAddSpeakerLayerTo(root),
         CanMoveLayer = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanMoveSpeakerVoiceToLayer = profile.CanEditSpeakerVoice,
     };

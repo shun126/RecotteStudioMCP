@@ -126,7 +126,7 @@ public sealed partial class ProjectEditor
         if (template is null) return LayerFailed("RC4001", $"The verified {type} layer template is unavailable.");
 
         // A Speaker layer draws its lines with its DefaultTextStyle and TelopFrame, so both must exist in this project.
-        if (type == "Speaker" && MissingSpeakerLayerDefinition(template) is string missing)
+        if (type == "Speaker" && MissingSpeakerLayerDefinition(root, template) is string missing)
             return LayerFailed("RC4004", $"The project does not define {missing}, which a new Speaker layer uses.");
 
         JsonObject added = (JsonObject)template.DeepClone();
@@ -210,7 +210,20 @@ public sealed partial class ProjectEditor
 
     private static LayerMoveResult LayerMoveFailed(string code, string message) => new(EditResult.Failed(code, message), null, null);
 
-    private string? MissingSpeakerLayerDefinition(JsonObject layer)
+    /// <summary>Gets whether a Speaker layer cloned from the verified template would find its text style and telop frame in the project.</summary>
+    internal static bool CanAddSpeakerLayerTo(JsonObject root)
+    {
+        try
+        {
+            return ProjectTemplateResources.LoadRoot(SpeakerLayerTemplateResource)["layers"] is JsonArray templateLayers &&
+                templateLayers.OfType<JsonObject>().LastOrDefault(layer =>
+                    JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker") is JsonObject template &&
+                MissingSpeakerLayerDefinition(root, template) is null;
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or RecotteProjectLoadException) { return false; }
+    }
+
+    private static string? MissingSpeakerLayerDefinition(JsonObject root, JsonObject layer)
     {
         string? style = JsonAccess.GetPropertyString(layer, "DefaultTextStyle");
         bool styleDefined = root["text-styles"] is JsonArray styles && styles.OfType<JsonObject>()

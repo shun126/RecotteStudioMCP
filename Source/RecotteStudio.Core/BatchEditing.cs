@@ -208,15 +208,16 @@ public sealed partial class ProjectEditSession
             ProjectOperation operation = operations[index];
             OperationExecutionResult executed = Editor.ApplyOperation(operation);
             EditResult edit = executed.EditResult;
-            // Align original voice text with the evolving layout without changing the rollback snapshot.
-            JsonArray baselineLayers = (JsonArray)audioBaseline["layers"]!;
+            // Align original voice text with the evolving layout without changing the rollback snapshot. A malformed project
+            // may have no layers array; only a layer inserted or moved proves there is one.
+            JsonArray? baselineLayers = audioBaseline["layers"] as JsonArray;
             Func<int, int>? remap = null;
-            if (edit.Success && executed.InsertedLayerIndex is int insertedIndex)
+            if (edit.Success && executed.InsertedLayerIndex is int insertedIndex && baselineLayers is not null)
             {
                 baselineLayers.Insert(insertedIndex, new JsonObject());
                 remap = LayerInsertionMetadata.Insertion(insertedIndex);
             }
-            else if (edit.Success && executed.MovedLayer is (int fromLayer, int toLayer))
+            else if (edit.Success && executed.MovedLayer is (int fromLayer, int toLayer) && baselineLayers is not null)
             {
                 JsonNode? movedBaseline = baselineLayers[fromLayer];
                 baselineLayers.RemoveAt(fromLayer);
