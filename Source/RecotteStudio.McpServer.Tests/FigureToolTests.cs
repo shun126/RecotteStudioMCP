@@ -66,6 +66,30 @@ public sealed class FigureToolTests : IDisposable
         Assert.Contains("[100,50,128,128]", File.ReadAllText(output).Replace(" ", "").Replace("\r\n", "").Replace("\t", ""));
     }
 
+    [Fact]
+    public async Task InspectAssetsResolvesPlacedFigureAgainstFiguresDirectory()
+    {
+        string output = Path.Combine(root, "assets.ccproj");
+        Assert.True((await service.CreateProjectAsync("assets", output, false, new[]
+        {
+            new ProjectOperationDto("addFigureObject", Layer: new(LayerIndex: 2), Start: 0m, End: 2m,
+                FigureKey: "Emotion_0019", X: 100m, Y: 50m),
+        }, default)).Success);
+
+        McpToolResult<object> result = service.InspectAssets(output);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement data = JsonSerializer.SerializeToElement(result.Data);
+        Assert.Equal((1, 1, 0, 0), (data.GetProperty("assetCount").GetInt32(), data.GetProperty("foundCount").GetInt32(),
+            data.GetProperty("missingCount").GetInt32(), data.GetProperty("unresolvedCount").GetInt32()));
+        JsonElement asset = Assert.Single(data.GetProperty("assets").EnumerateArray());
+        Assert.Equal("Figures", asset.GetProperty("locationKind").GetString());
+        Assert.Equal("Found", asset.GetProperty("status").GetString());
+        Assert.Equal(Path.Combine(root, "figures", "emotion", "emotion_0019.svg"), asset.GetProperty("ResolvedRelativePath").GetString());
+        Assert.Equal("Figure", Assert.Single(asset.GetProperty("referencedBy").EnumerateArray()).GetProperty("objectType").GetString());
+        Assert.Empty(data.GetProperty("danglingReferences").EnumerateArray());
+    }
+
     [Theory]
     [InlineData("Unknown_0001", 100, "recotte_list_figures")]
     [InlineData("Emotion_0019", null, "x and y are required")]
