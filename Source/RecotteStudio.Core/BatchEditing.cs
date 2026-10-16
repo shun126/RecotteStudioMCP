@@ -113,7 +113,7 @@ public sealed record ProjectOperationResult(
     IReadOnlyList<ProjectChange> Changes,
     IReadOnlyList<ProjectDiagnostic> Diagnostics)
 {
-    /// <summary>Gets the index a layer-adding operation inserted its layer at, as of the end of that operation.</summary>
+    /// <summary>Gets the added layer's index in the final batch state.</summary>
     public int? CreatedLayerIndex { get; init; }
 }
 
@@ -157,6 +157,7 @@ public sealed partial class ProjectEditSession
 
         batchApplied = true;
         JsonObject before = (JsonObject)workingRoot.DeepClone();
+        JsonObject audioBaseline = (JsonObject)before.DeepClone();
         List<ProjectOperationResult> results = new();
         List<ProjectDiagnostic> diagnostics = new();
 
@@ -165,6 +166,27 @@ public sealed partial class ProjectEditSession
             ProjectOperation operation = operations[index];
             OperationExecutionResult executed = Editor.ApplyOperation(operation);
             EditResult edit = executed.EditResult;
+            if (edit.Success && executed.CreatedLayerIndex is int insertedIndex)
+            {
+                // Align original voice text with the evolving layout without changing the rollback snapshot.
+                ((JsonArray)audioBaseline["layers"]!).Insert(insertedIndex, new JsonObject());
+                for (int prior = 0; prior < results.Count; prior++)
+                {
+                    ProjectOperationResult result = results[prior];
+                    results[prior] = result with
+                    {
+                        Target = LayerInsertionMetadata.Target(result.Target, insertedIndex),
+                        CreatedObjectId = result.CreatedObjectId is TimelineObjectId id
+                            ? id with { LayerIndex = LayerInsertionMetadata.Index(id.LayerIndex, insertedIndex) } : null,
+                        CreatedLayerIndex = result.CreatedLayerIndex is int layer
+                            ? LayerInsertionMetadata.Index(layer, insertedIndex) : null,
+                        Changes = result.Changes.Select(change => LayerInsertionMetadata.Change(change, insertedIndex)).ToArray(),
+                        Diagnostics = result.Diagnostics.Select(diagnostic => LayerInsertionMetadata.Diagnostic(diagnostic, insertedIndex)).ToArray(),
+                    };
+                }
+                for (int prior = 0; prior < diagnostics.Count; prior++)
+                    diagnostics[prior] = LayerInsertionMetadata.Diagnostic(diagnostics[prior], insertedIndex);
+            }
             results.Add(new(index, operation.Kind, edit.Success, executed.Target, executed.CreatedObjectId,
                 executed.CreatedFileItemKey, edit.Changes, edit.Diagnostics) { CreatedLayerIndex = executed.CreatedLayerIndex });
             diagnostics.AddRange(edit.Diagnostics);
@@ -188,7 +210,7 @@ public sealed partial class ProjectEditSession
         }
 
         (IReadOnlyList<TimelineObjectId> audioRegenerationRequired, IReadOnlyList<ProjectDiagnostic> finalDiagnostics) =
-            FinalizeAudioRegeneration(before, workingRoot, results, diagnostics);
+            FinalizeAudioRegeneration(audioBaseline, workingRoot, results, diagnostics);
         return new(true, operations.Count, null, results.ToArray(), Changes.ToArray(),
             finalDiagnostics, validation, true, false, false)
         {
