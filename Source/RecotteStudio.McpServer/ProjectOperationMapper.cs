@@ -75,7 +75,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
         if (!donor.Success) throw new CodedArgumentException(donor.ErrorCode!, $"donorProjectPath: {donor.Message}");
         if (donors.TryGetValue(donor.FullPath!, out RecotteProjectDocument? loaded)) return loaded;
         try { loaded = RecotteProject.Load(donor.FullPath!); }
-        catch (RecotteProjectLoadException exception)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or RecotteProjectLoadException)
         { throw new CodedArgumentException("MCP_PROJECT_LOAD_FAILED", $"donorProjectPath: {exception.Message}"); }
         donors[donor.FullPath!] = loaded;
         return loaded;
