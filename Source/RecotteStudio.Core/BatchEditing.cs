@@ -19,6 +19,8 @@ public enum ProjectOperationKind
     UpdateFadeEffect,
     RemoveFadeEffect,
     AddVideoLayer,
+    ImportCharacter,
+    AddAnnotationLayer,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -92,6 +94,22 @@ public sealed record AddFigureOperation(LayerReference Layer, FigureDefinition F
 public sealed record AddVideoLayerOperation(string? Name = null) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.AddVideoLayer;
+}
+
+/// <summary>Adds an empty Annot layer after the last Annot layer; later layers' indexes grow by one.</summary>
+public sealed record AddAnnotationLayerOperation(string? Name = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddAnnotationLayer;
+}
+
+/// <summary>
+/// Imports a character and its Speaker layer from a donor project, reusing the target's empty Speaker layer or inserting
+/// before the first Annot layer; an inserted layer makes every later layer's index grow by one.
+/// </summary>
+public sealed record ImportCharacterOperation(RecotteProjectDocument Donor, string SpeakerKey, ProjectTime StartTime,
+    ProjectTime EndTime, string? LayerName = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.ImportCharacter;
 }
 
 /// <summary>Configures allocators and duration handling used by a document-level batch.</summary>
@@ -331,6 +349,9 @@ public sealed partial class ProjectEditor
                 return new(edit, $"layer:{layerIndex}", created);
             }),
             AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name))),
+            AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name))),
+            ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
+                value.StartTime, value.EndTime, value.LayerName))),
             AddFigureOperation value => WithLayer(value.Layer, layerIndex =>
             {
                 AssetAddResult asset = AddFigure(new(layerIndex, value.Figure, value.StartTime, value.EndTime,
@@ -380,6 +401,10 @@ public sealed partial class ProjectEditor
 
     private static OperationExecutionResult LayerAdded(LayerAddResult layer) => new(layer.EditResult,
         layer.LayerIndex is int index ? $"layer:{index}" : null, CreatedLayerIndex: layer.LayerIndex);
+
+    private static OperationExecutionResult CharacterImported(CharacterImportResult character) => new(character.EditResult,
+        character.LayerId is { } layer ? $"layer:{layer.LayerIndex}" : null, character.ObjectId,
+        CreatedLayerIndex: character.LayerId?.LayerIndex);
 
     private static OperationExecutionResult LookupFailure(string code, string message, string? target) =>
         new(EditResult.Failed(code, message), target);

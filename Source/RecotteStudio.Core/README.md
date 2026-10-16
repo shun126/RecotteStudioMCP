@@ -41,6 +41,17 @@ creation checks after reloading its temporary file and publishes the destination
 
 A donor project is required only when importing a specific character. It supplies the opaque speaker registration, actions, character object, and layer properties that cannot be reconstructed safely from an `.rsp` path alone. Speaker Voice and audio file items are never imported.
 
+`ImportCharacter` (batch: `ImportCharacterOperation`) fills the target's empty Speaker layer or inserts a layer before the first Annot layer. The donor's telop frames replace the target's because Recotte Studio fits them around every character's position, so the donor must contain every speaker already registered in the target, the same text styles, and every telop frame the target's Speaker layers use (`RC4606`). The imported layer keeps the donor layer's name unless `LayerName` is given; a name used by another layer fails with `RC4607`. `LinkFolder` is cleared so that generated voices are not written into the donor's folder, and `TelopTargetLayer`, which names a layer, is pointed at the target layer holding the same character, or cleared when that character is not imported. A later import links back a layer imported earlier whose donor counterpart targeted it.
+
+```csharp
+RecotteProjectDocument donor = RecotteProject.Load("Cast.ccproj");
+ProjectBatchResult cast = document.ApplyOperations(
+[
+    new ImportCharacterOperation(donor, "2D-スーツ男性", new ProjectTime(0m), new ProjectTime(60m)),
+    new ImportCharacterOperation(donor, "2D-スーツ女性", new ProjectTime(0m), new ProjectTime(60m), "聞き手"),
+]);
+```
+
 Paths passed to file APIs are made absolute before I/O. `Load(Stream)` and `TryLoad(Stream)` do not own, close, or dispose the supplied stream. A stream-loaded document has no `SourcePath`, so `Save()` is rejected.
 
 Transactional editing isolates changes until complete validation succeeds:
@@ -67,7 +78,9 @@ EditResult note = edit.Editor.AddAnnotationText(new AddAnnotationTextRequest(
     2, "編集メモ：ここからBGMを明るくする", new ProjectTime(5m), new ProjectTime(9m)));
 ```
 
-Add an empty Video layer with `AddVideoLayer` (batch: `AddVideoLayerOperation`) when two videos must play at the same time. It clones the second Video layer of `013TwoVideos`, inserts it directly after the last Video layer as Recotte Studio does, and names it `映像・音声N` with the lowest unused number unless a name is given; a blank or already used name fails with `RC4002`. Every later layer's index grows by one, so later operations in the same batch should refer to layers by name. The batch result reports `CreatedLayerIndex`. `Capabilities.CanAddVideoLayer` reports availability; `CanAddLayer` stays false because other layer types are not verified.
+Add an empty Video layer with `AddVideoLayer` (batch: `AddVideoLayerOperation`) when two videos must play at the same time. It clones the second Video layer of `013TwoVideos`, inserts it directly after the last Video layer as Recotte Studio does, and names it `映像・音声N` with the lowest unused number unless a name is given; a blank or already used name fails with `RC4002`. Every later layer's index grows by one, so later operations in the same batch should refer to layers by name. The batch result reports `CreatedLayerIndex`. `Capabilities.CanAddVideoLayer` reports availability; `CanAddLayer` stays false because not every layer type is verified.
+
+`AddAnnotationLayer` (batch: `AddAnnotationLayerOperation`) works the same way for an empty Annot layer: it clones the second Annot layer of `012TwoImages`, inserts it after the last Annot layer so that its images, annotation text, and stamps draw above every existing layer, and names it `注釈N` unless a name is given. `Capabilities.CanAddAnnotationLayer` reports availability.
 
 ```csharp
 ProjectBatchResult layered = document.ApplyOperations(
@@ -179,7 +192,7 @@ All public views and diagnostic collections are immutable snapshots; mutable `Js
 
 `RecotteProjectDocument`, `ProjectEditSession`, and their views are not thread-safe. Do not concurrently use one instance. The SDK enforces one active edit session and refuses Save/SaveCopy while it is active; it does not claim general thread safety through partial locking.
 
-Asset registration supports only PNG images and MP4 videos. When a PNG image is added, its `CropBounds` uses the original image width and height. File-item keys are opaque random 256-bit identifiers, not content hashes; this rule remains provisional until verified by opening and re-saving generated projects in Recotte Studio. Not supported: audio voice generation, general character creation without a verified donor, `voice-hash` generation, arbitrary file types, `.rsp` parsing, keyframe authoring, `additional-actions`, version migration, or forced unsupported-version saves. The SDK does not infer unknown Recotte Studio structures. The existing donor-based character import remains a separate constrained API and is not a batch operation.
+Asset registration supports only PNG images and MP4 videos. When a PNG image is added, its `CropBounds` uses the original image width and height. File-item keys are opaque random 256-bit identifiers, not content hashes; this rule remains provisional until verified by opening and re-saving generated projects in Recotte Studio. Not supported: audio voice generation, general character creation without a verified donor, `voice-hash` generation, arbitrary file types, `.rsp` parsing, keyframe authoring, `additional-actions`, version migration, or forced unsupported-version saves. The SDK does not infer unknown Recotte Studio structures.
 
 Diagnostic codes are the machine-readable contract; do not parse message text. See [Diagnostics](../../Documents/RecotteStudioCore/Diagnostics.md).
 

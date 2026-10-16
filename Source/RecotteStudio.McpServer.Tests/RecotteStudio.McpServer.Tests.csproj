@@ -17,6 +17,7 @@
   <ItemGroup>
     <None Include="..\..\Documents\RecotteProjects\001EmptyProject\001EmptyProject.ccproj" Link="Fixtures\Empty.ccproj" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteProjects\003OneVoice\003OneVoice.ccproj" Link="Fixtures\OneVoice.ccproj" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\Documents\RecotteProjects\011TwoVoices\011TwoVoices.ccproj" Link="Fixtures\TwoVoices.ccproj" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteProjects\004OneImage\Sample.png" Link="Fixtures\Sample.png" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteProjects\005OneVideo\Sample.mp4" Link="Fixtures\Sample.mp4" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\Documents\RecotteStudioCore\GenerationRules.md" Link="Fixtures\GenerationRules.md" CopyToOutputDirectory="PreserveNewest" />

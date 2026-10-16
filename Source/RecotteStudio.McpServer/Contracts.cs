@@ -10,7 +10,8 @@ public sealed record ProjectOperationDto(string Type, TimelineObjectTargetDto? T
     string? Text = null, decimal? Start = null, decimal? End = null, string? AssetPath = null,
     string? ProjectPath = null, string? DisplayName = null, string? FigureKey = null,
     decimal? X = null, decimal? Y = null, decimal? Width = null, decimal? Height = null,
-    string? EffectKey = null, int? EffectIndex = null, decimal? Duration = null, string? LayerName = null);
+    string? EffectKey = null, int? EffectIndex = null, decimal? Duration = null, string? LayerName = null,
+    string? DonorProjectPath = null, string? SpeakerKey = null);
 public sealed record TextSequenceItemDto(string Text, decimal? Duration = null);
 public sealed record SubtitleTextDto(int LayerIndex, int ObjectKey, string Text);
 public sealed record FlipbookFrameDto(string ImagePath, decimal? Duration = null);

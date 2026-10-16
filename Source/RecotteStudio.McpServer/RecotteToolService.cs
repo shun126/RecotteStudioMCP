@@ -87,6 +87,19 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         }).ToArray(),
     }));
 
+    public McpToolResult<object> ListCharacters(string projectPath) => WithDocument(projectPath, (_, document) => Ok(new
+    {
+        characters = document.Speakers.Select(speaker =>
+        {
+            SpeakerLayerView? layer = document.Layers.OfType<SpeakerLayerView>().FirstOrDefault(item => item.SpeakerKey == speaker.Key);
+            return new
+            {
+                speakerKey = speaker.Key, speaker.Name, model = speaker.File,
+                layerIndex = layer?.Index, layerName = layer?.Name, telopFrame = layer?.TelopFrame,
+            };
+        }).ToArray(),
+    }));
+
     public McpToolResult<object> ListTimeline(string projectPath, string? layerName = null, string? objectType = null,
         decimal? start = null, decimal? end = null) => WithDocument(projectPath, (_, document) =>
     {

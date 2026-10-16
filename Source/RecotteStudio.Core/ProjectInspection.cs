@@ -87,6 +87,8 @@ public sealed record ProjectCapabilities(
     public bool CanEditFadeEffects { get; init; }
     /// <summary>Gets whether an empty Video layer can be added; CanAddLayer stays false because other layer types are unverified.</summary>
     public bool CanAddVideoLayer { get; init; }
+    /// <summary>Gets whether an empty Annot layer can be added.</summary>
+    public bool CanAddAnnotationLayer { get; init; }
 }
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
@@ -168,6 +170,7 @@ public sealed partial class RecotteProjectDocument
     {
         CanEditFadeEffects = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanAddVideoLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
+        CanAddAnnotationLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
     };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>

@@ -148,6 +148,9 @@ public sealed class SpeakerLayerView : LayerView
 
     /// <summary>Gets the name of the telop frame new dialogue on this layer is drawn in.</summary>
     public string? TelopFrame => JsonAccess.GetPropertyString(JsonNode, "TelopFrame");
+
+    /// <summary>Gets the key of the registered speaker whose character this layer holds, or null when it has none.</summary>
+    public string? SpeakerKey => JsonAccess.GetPropertyString(JsonNode, "Speaker") is { Length: > 0 } key ? key : null;
 }
 
 /// <summary>Describes the screen region, in project pixels, where Recotte Studio draws dialogue for a telop frame.</summary>

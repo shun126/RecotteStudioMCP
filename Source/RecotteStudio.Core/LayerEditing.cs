@@ -5,6 +5,9 @@ namespace RecotteStudio.Core;
 /// <summary>Requests a new empty Video layer; a null or omitted name selects the next free default name.</summary>
 public sealed record AddVideoLayerRequest(string? Name = null);
 
+/// <summary>Requests a new empty Annot layer; a null or omitted name selects the next free default name.</summary>
+public sealed record AddAnnotationLayerRequest(string? Name = null);
+
 /// <summary>Contains the result of adding a layer.</summary>
 public sealed record LayerAddResult(EditResult EditResult, int? LayerIndex, string? Name)
 {
@@ -19,8 +22,7 @@ public sealed record LayerAddResult(EditResult EditResult, int? LayerIndex, stri
 public sealed partial class ProjectEditor
 {
     internal const string VideoLayerTemplateResource = "RecotteStudio.Core.Templates.VideoLayer.ccproj";
-    // Recotte Studio names Video layers 映像・音声1, 映像・音声2, ... (001EmptyProject, 013TwoVideos).
-    private const string DefaultVideoLayerPrefix = "映像・音声";
+    internal const string AnnotationLayerTemplateResource = "RecotteStudio.Core.Templates.AnnotationLayer.ccproj";
 
     /// <summary>
     /// Adds an empty Video layer directly after the last Video layer, where Recotte Studio places one (013TwoVideos), so
@@ -29,47 +31,67 @@ public sealed partial class ProjectEditor
     public LayerAddResult AddVideoLayer(AddVideoLayerRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        // Recotte Studio names Video layers 映像・音声1, 映像・音声2, ... (001EmptyProject, 013TwoVideos).
+        return AddLayer("Video", "映像・音声", VideoLayerTemplateResource, request.Name, "AddVideoLayer");
+    }
+
+    /// <summary>
+    /// Adds an empty Annot layer directly after the last Annot layer, where Recotte Studio places one (012TwoImages), so
+    /// its images, notes, and stamps draw above every existing layer. Every later layer's index grows by one.
+    /// </summary>
+    public LayerAddResult AddAnnotationLayer(AddAnnotationLayerRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        // Recotte Studio names Annot layers 注釈1, 注釈2, ... (001EmptyProject, 012TwoImages).
+        return AddLayer("Annot", "注釈", AnnotationLayerTemplateResource, request.Name, "AddAnnotationLayer");
+    }
+
+    // Clones the last layer of the given type from a sample in which Recotte Studio added it, empties it, and inserts it
+    // after the target's last layer of that type, or at the end when the target has none.
+    private LayerAddResult AddLayer(string type, string defaultPrefix, string templateResource, string? requestedName, string operation)
+    {
         if (root["layers"] is not JsonArray layers) return LayerFailed("RC4001", "The project has no layers array.");
         HashSet<string> names = Layers()
             .Where(item => JsonAccess.TryGetString(item.layer, "name", out _))
             .Select(item => { JsonAccess.TryGetString(item.layer, "name", out string value); return value; })
             .ToHashSet(StringComparer.Ordinal);
         string name;
-        if (request.Name is null)
+        if (requestedName is null)
         {
             int number = 1;
-            while (names.Contains(DefaultVideoLayerPrefix + number)) number++;
-            name = DefaultVideoLayerPrefix + number;
+            while (names.Contains(defaultPrefix + number)) number++;
+            name = defaultPrefix + number;
         }
-        else if (string.IsNullOrWhiteSpace(request.Name))
+        else if (string.IsNullOrWhiteSpace(requestedName))
             return LayerFailed("RC4002", "The layer name must not be blank.");
-        else if (names.Contains(request.Name))
-            return LayerFailed("RC4002", $"A layer named '{request.Name}' already exists; layer names must be unique.");
-        else name = request.Name;
+        else if (names.Contains(requestedName))
+            return LayerFailed("RC4002", $"A layer named '{requestedName}' already exists; layer names must be unique.");
+        else name = requestedName;
 
         JsonObject? template;
         try
         {
-            template = ProjectTemplateResources.LoadRoot(VideoLayerTemplateResource)["layers"] is JsonArray templateLayers
+            template = ProjectTemplateResources.LoadRoot(templateResource)["layers"] is JsonArray templateLayers
                 ? templateLayers.OfType<JsonObject>()
-                    .LastOrDefault(layer => JsonAccess.TryGetString(layer, "type", out string type) && type == "Video")
+                    .LastOrDefault(layer => JsonAccess.TryGetString(layer, "type", out string layerType) && layerType == type)
                 : null;
         }
         catch (Exception exception) when (exception is InvalidOperationException or RecotteProjectLoadException)
         { return LayerFailed("RC4001", exception.Message); }
-        if (template is null) return LayerFailed("RC4001", "The verified Video layer template is unavailable.");
+        if (template is null) return LayerFailed("RC4001", $"The verified {type} layer template is unavailable.");
 
         JsonObject added = (JsonObject)template.DeepClone();
         added["name"] = name;
         added["selected"] = false;
         added["layer-objects"] = new JsonArray();
 
-        int index = Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string type) && type == "Video")
-            .Select(item => item.index + 1).DefaultIfEmpty(0).Max();
+        int[] sameType = Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string layerType) && layerType == type)
+            .Select(item => item.index).ToArray();
+        int index = sameType.Length > 0 ? sameType.Max() + 1 : type == "Video" ? 0 : layers.Count;
         layers.Insert(index, added);
         for (int prior = 0; prior < changes.Count; prior++)
             changes[prior] = LayerInsertionMetadata.Change(changes[prior], index);
-        ProjectChange change = new("AddVideoLayer", $"layer:{index}", null, name, $"$.layers[{index}]");
+        ProjectChange change = new(operation, $"layer:{index}", null, name, $"$.layers[{index}]");
         changes.Add(change);
         return new(EditResult.Succeeded(new[] { change }), index, name);
     }

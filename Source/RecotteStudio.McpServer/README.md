@@ -6,6 +6,8 @@
 
 台詞を SubRip 字幕（.srt）として書き出せます。`recotte_list_subtitle_cues` で台詞を一覧し、翻訳したテキストを `recotte_export_subtitles` に渡すと、英語や中国語などの字幕を作成できます。[仕組みとエラーコード](../../Documents/RecotteStudioCore/Subtitles.md)を参照してください。
 
+キャラクターは、Recotte Studio で保存した別のプロジェクト（ドナー）から操作 `importCharacter` で取り込めます。`recotte_list_characters` でドナーのキャラクターと `speakerKey` を確認してください。キャラクターを新しく作ることはできません。
+
 ffmpeg を指定すると、`recotte_create_video_from_image` で静止画にズームやパンを付けた動画素材（`.mp4`）を、`recotte_create_flipbook_video` で複数の静止画をつないだパラパラアニメを作れます。[仕様とエラーコード](../../Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。
 
 `RecotteStudio.McpServer` は、[RecotteStudio.Core](../RecotteStudio.Core/README.md) の機能を Streamable HTTP MCP ツールとして公開する WinUI 3 アプリです。ウィンドウを閉じるとサーバーは停止します。
