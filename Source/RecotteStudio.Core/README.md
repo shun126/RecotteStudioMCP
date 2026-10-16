@@ -78,7 +78,9 @@ EditResult note = edit.Editor.AddAnnotationText(new AddAnnotationTextRequest(
     2, "編集メモ：ここからBGMを明るくする", new ProjectTime(5m), new ProjectTime(9m)));
 ```
 
-Add an empty Video layer with `AddVideoLayer` (batch: `AddVideoLayerOperation`) when two videos must play at the same time. It clones the second Video layer of `013TwoVideos`, inserts it directly after the last Video layer as Recotte Studio does, and names it `映像・音声N` with the lowest unused number unless a name is given; a blank or already used name fails with `RC4002`. Every later layer's index grows by one, so later operations in the same batch should refer to layers by name. The batch result reports `CreatedLayerIndex`. `Capabilities.CanAddVideoLayer` reports availability; `CanAddLayer` stays false because other layer types are not verified.
+Add an empty Video layer with `AddVideoLayer` (batch: `AddVideoLayerOperation`) when two videos must play at the same time. It clones the second Video layer of `013TwoVideos`, inserts it directly after the last Video layer as Recotte Studio does, and names it `映像・音声N` with the lowest unused number unless a name is given; a blank or already used name fails with `RC4002`. Every later layer's index grows by one, so later operations in the same batch should refer to layers by name. The batch result reports `CreatedLayerIndex`. `Capabilities.CanAddVideoLayer` reports availability; `CanAddLayer` stays false because not every layer type is verified.
+
+`AddAnnotationLayer` (batch: `AddAnnotationLayerOperation`) works the same way for an empty Annot layer: it clones the second Annot layer of `012TwoImages`, inserts it after the last Annot layer so that its images, annotation text, and stamps draw above every existing layer, and names it `注釈N` unless a name is given. `Capabilities.CanAddAnnotationLayer` reports availability.
 
 ```csharp
 ProjectBatchResult layered = document.ApplyOperations(
