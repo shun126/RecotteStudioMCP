@@ -23,6 +23,27 @@ public sealed class BatchEditingTests
     }
 
     [Fact]
+    public void ApplyOperations_ReportsALayersPropertyThatIsNotAnArrayInsteadOfThrowing()
+    {
+        string directory = Directory.CreateTempSubdirectory("RecotteBatchEditingTests-").FullName;
+        try
+        {
+            System.Text.Json.Nodes.JsonObject root = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(OneText))!.AsObject();
+            root["layers"] = new System.Text.Json.Nodes.JsonObject();
+            string path = Path.Combine(directory, "Malformed.ccproj");
+            File.WriteAllText(path, root.ToJsonString());
+            RecotteProjectDocument document = RecotteProject.Load(path);
+
+            ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[] { new AddVideoLayerOperation() });
+
+            Assert.False(result.Success);
+            Assert.Equal("RC4001", Assert.Single(result.OperationResults[0].Diagnostics).Code);
+            Assert.Equal(0, document.Revision);
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
     public void ApplyOperations_CommitsAllOperationsInOrder()
     {
         RecotteProjectDocument document = RecotteProject.Load(OneText);

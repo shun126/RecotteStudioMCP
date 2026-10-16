@@ -89,6 +89,12 @@ public sealed record ProjectCapabilities(
     public bool CanAddVideoLayer { get; init; }
     /// <summary>Gets whether an empty Annot layer can be added.</summary>
     public bool CanAddAnnotationLayer { get; init; }
+    /// <summary>Gets whether a layer can be moved to another position in the drawing order.</summary>
+    public bool CanMoveLayer { get; init; }
+    /// <summary>Gets whether a Speaker layer without a character can be added, which needs the text style and telop frame it uses.</summary>
+    public bool CanAddSpeakerLayer { get; init; }
+    /// <summary>Gets whether a Speaker Voice can be moved to another Speaker layer, so that layer's speaker says it.</summary>
+    public bool CanMoveSpeakerVoiceToLayer { get; init; }
 }
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
@@ -171,6 +177,10 @@ public sealed partial class RecotteProjectDocument
         CanEditFadeEffects = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanAddVideoLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
         CanAddAnnotationLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
+        CanAddSpeakerLayer = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported &&
+            ProjectEditor.CanAddSpeakerLayerTo(root),
+        CanMoveLayer = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
+        CanMoveSpeakerVoiceToLayer = profile.CanEditSpeakerVoice,
     };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>
