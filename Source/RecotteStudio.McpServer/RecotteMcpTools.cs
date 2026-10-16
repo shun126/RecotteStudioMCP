@@ -88,7 +88,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
         activity.TrackAsync("recotte_create_flipbook_video", projectPath, () => service.CreateFlipbookVideoAsync(projectPath, frames,
             outputPath, allowOverwrite, frameDuration, loops, fit, background, cancellationToken));
 
-    [McpServerTool(Name = "recotte_inspect_assets"), Description(ReadOnly + " Returns unsupported unless RecotteStudio.Core exposes safe asset inspection; it never infers ccproj references.")]
+    [McpServerTool(Name = "recotte_inspect_assets"), Description(ReadOnly + " Lists every registered external file (images, videos, voices, figure SVGs) with the timeline objects that use it, and checks whether its stored relative and absolute paths exist. Status is Found, Missing, or Unresolved; a loc whose base directory is unverified is reported Unresolved, never guessed. danglingReferences lists objects whose File key is not registered.")]
     public McpToolResult<object> InspectAssets(string projectPath) => activity.Track("recotte_inspect_assets", projectPath, () => service.InspectAssets(projectPath));
 
     [McpServerTool(Name = "recotte_preview_operations"), Description("Atomically previews supported RecotteStudio.Core operations without changing the source, revision, or filesystem." + OperationTypes + Removal + GenerationGuidance)]

@@ -146,9 +146,33 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         },
     }));
 
-    public McpToolResult<object> InspectAssets(string projectPath) => WithDocument(projectPath, (_, document) =>
-        Fail("unsupported", "MCP_ASSET_INSPECTION_UNSUPPORTED",
-            "RecotteStudio.Core does not expose a safe asset-inspection API; no references were inferred.", document.LoadDiagnostics));
+    public McpToolResult<object> InspectAssets(string projectPath) => WithDocument(projectPath, (path, document) =>
+    {
+        AssetInspection inspection = document.InspectAssets(figureCatalog.Directory);
+        return Ok(new
+        {
+            projectPath = path,
+            figuresDirectory = figureCatalog.Directory,
+            assetCount = inspection.Assets.Count,
+            foundCount = inspection.Assets.Count(asset => asset.Status == AssetReferenceStatus.Found),
+            missingCount = inspection.Assets.Count(asset => asset.Status == AssetReferenceStatus.Missing),
+            unresolvedCount = inspection.Assets.Count(asset => asset.Status == AssetReferenceStatus.Unresolved),
+            unreferencedCount = inspection.Assets.Count(asset => asset.ReferencedBy.Count == 0),
+            assets = inspection.Assets.Select(asset => new
+            {
+                index = asset.Index, fileItemKey = asset.Key, location = asset.Location,
+                locationKind = asset.LocationKind.ToString(), status = asset.Status.ToString(),
+                asset.RelativePath, asset.ResolvedRelativePath, asset.RelativePathExists,
+                asset.AbsolutePath, asset.ResolvedAbsolutePath, asset.AbsolutePathExists,
+                referencedBy = asset.ReferencedBy.Select(AssetObject).ToArray(),
+            }).ToArray(),
+            danglingReferences = inspection.DanglingReferences.Select(reference => new
+            {
+                reference.FileItemKey, reference.LayerIndex, reference.ObjectIndex, reference.ObjectKey,
+                objectType = reference.ObjectType, reference.Name,
+            }).ToArray(),
+        }, document.LoadDiagnostics);
+    });
 
     public McpToolResult<object> ListSubtitleCues(string projectPath) => WithDocument(projectPath, (_, document) => Ok(new
     {
@@ -590,6 +614,8 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         objectKey = value.ObjectId?.ObjectKey, value.ObjectIndex, value.ObjectType, value.Name, value.Text,
         start = value.StartTime?.TotalSeconds, end = value.EndTime?.TotalSeconds, duration = value.Duration?.TotalSeconds,
         locked = value.IsLocked, hasAudio = value.HasAudio, value.Capabilities };
+    private static object AssetObject(AssetReferencingObject value) => new { value.LayerIndex, value.ObjectIndex, value.ObjectKey,
+        objectType = value.ObjectType, value.Name };
     private static ProjectTimeRange? Range(decimal? start, decimal? end) => start is null && end is null ? null :
         start is decimal a && end is decimal b ? new(new(a), new(b)) : throw new ArgumentException("start and end must be supplied together.");
     private static McpToolResult<object> Ok(object data, IEnumerable<ProjectDiagnostic>? diagnostics = null) =>

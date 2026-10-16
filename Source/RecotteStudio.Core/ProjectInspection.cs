@@ -361,26 +361,12 @@ public sealed partial class RecotteProjectDocument
         return Path.GetFileName(value);
     }
 
+    // Null when any file item cannot be resolved, so an unknown location is never counted as present or missing.
     private int? TryCountMissingAssets()
     {
         if (SourcePath is null) return null;
-        try
-        {
-            string directory = Path.GetDirectoryName(SourcePath)!;
-            int missing = 0;
-            foreach (FileItemView item in FileItems)
-            {
-                string? candidate = item.RelativePath is not null ? Path.GetFullPath(item.RelativePath, directory) : null;
-                if (candidate is null && item.AbsolutePath is not null && Uri.TryCreate(item.AbsolutePath, UriKind.Absolute, out Uri? uri) && uri.IsFile)
-                    candidate = uri.LocalPath;
-                if (candidate is null) return null;
-                if (!File.Exists(candidate)) missing++;
-            }
-            return missing;
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            return null;
-        }
+        IReadOnlyList<AssetReference> assets = InspectAssets().Assets;
+        return assets.Any(asset => asset.Status == AssetReferenceStatus.Unresolved)
+            ? null : assets.Count(asset => asset.Status == AssetReferenceStatus.Missing);
     }
 }
