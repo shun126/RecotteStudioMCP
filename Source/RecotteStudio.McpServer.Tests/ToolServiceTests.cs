@@ -239,6 +239,25 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public void FailedPreviewReportsTheFirstErrorDiagnosticAsItsErrorCode()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+
+        // Images go on annotation layers only, so placing one on the Video layer behind everything is rejected.
+        McpToolResult<object> result = service.PreviewOperations(project, new[]
+        {
+            new ProjectOperationDto("addImageObject", Layer: new(LayerIndex: 0), AssetPath: image, ProjectPath: project,
+                DisplayName: "Background.png", Start: 0m, End: 2m),
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("edit", result.Category);
+        Assert.Equal("RC4503", result.ErrorCode);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4503");
+    }
+
+    [Fact]
     public void CapabilitiesDescribeTelopLayout()
     {
         JsonElement layout = JsonSerializer.SerializeToElement(service.GetCapabilities(project).Data).GetProperty("layout");
