@@ -3,7 +3,7 @@
 Recotte Studio MCP の主な変更点を記録します。
 書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に、バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
-## [未リリース]
+## [0.6.0] - 2026-10-16
 
 ### 追加
 
@@ -29,6 +29,10 @@ Recotte Studio MCP の主な変更点を記録します。
 - 形式解析用のサンプル `011TwoVoices`、`012TwoImages`、`013TwoVideos` を追加しました。
 - **プロジェクトが参照する素材ファイルを確認できるようになりました。** `recotte_inspect_assets` は、これまで常に `MCP_ASSET_INSPECTION_UNSUPPORTED` を返していましたが、登録済みの画像・動画・音声・スタンプ SVG ごとに、使っているタイムラインのオブジェクトと、保存された相対パス・絶対パスにファイルがあるかを返します。状態は `Found`（どちらかのパスにある）、`Missing`（どちらにもない）、`Unresolved`（パスを解決できない）です。`loc` 0 はプロジェクトのフォルダ、`loc` 1 は Recotte Studio の figures フォルダを基準に解決し、未確認の `loc` は推測せず `Unresolved` とします。登録されていないファイルキーを参照するオブジェクトは `danglingReferences` に返します。
 - RecotteStudio.Core に `RecotteProjectDocument.InspectAssets` と `FileItemView.Location` を追加しました。
+
+### 変更
+
+- サーバーのバージョンを `0.6.0` に更新しました。
 
 ### 修正
 
