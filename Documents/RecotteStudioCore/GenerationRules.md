@@ -32,7 +32,7 @@ Recotte Studio は対応する入力文字読み上げソフト（例: VOICEPEAK
 - BGM・効果音・環境音など、台詞以外の音素材はこの禁止対象ではない。
 - 新規のテキストのみの `Speaker Voice` は `audio` を持たせず、`properties.File.p-value` は空文字列、`voice-hash` は `0` とする。音声用項目を `file-items` に追加しない。
 - 既に音声を持つ `Speaker Voice` の本文を変更した場合、古い音声は残る。`RC4208` / `audioRegenerationRequired` が示す対象は、Recotte Studio 上での音声再生成が必要と利用者へ伝える。
-- 話者は台詞ではなく話者レイヤーで決まる。1つの話者レイヤーに複数人の台詞がまとまっている場合は、話者ごとの話者レイヤーを用意し、`moveSpeakerVoiceToLayer` で台詞を振り分ける。対象は `layerIndex` と `objectKey` で指定し、すべての台詞を1回の操作でまとめて移す。移動後の番号は結果の `target` で確認する。音声付きの台詞を別の話者へ移した場合は、Recotte Studio で音声の再生成が必要と利用者へ伝える。
+- 話者は台詞ではなく話者レイヤーで決まり、1つの話者レイヤーに話者を混ぜることはできない。1つの話者レイヤーに複数人の台詞がまとまっている場合は、`addSpeakerLayer` で話者ごとの話者レイヤーを用意し（キャラクターは利用者が Recotte Studio で割り当てるか、`importCharacter` で取り込む）、`moveSpeakerVoiceToLayer` で台詞を振り分ける。対象は `layerIndex` と `objectKey` で指定し、すべての台詞を1回の操作でまとめて移す。移動後の番号は結果の `target` で確認する。音声付きの台詞を別の話者へ移した場合は、Recotte Studio で音声の再生成が必要と利用者へ伝える。
 
 ## 字幕・テロップと画面配置
 

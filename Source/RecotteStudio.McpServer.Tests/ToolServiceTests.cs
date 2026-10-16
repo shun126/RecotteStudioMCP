@@ -173,6 +173,25 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectCanGiveEachSpeakerItsOwnLayer()
+    {
+        string output = Path.Combine(root, "対話.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("対話", output, false, new[]
+        {
+            new ProjectOperationDto("addSpeakerLayer", LayerName: "聞き手"),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "話者1"), Text: "こんにちは", Start: 0m, End: 2m),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "聞き手"), Text: "どうも", Start: 2m, End: 4m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "映像・音声1", "話者1", "聞き手", "注釈1" }, created.Layers.Select(layer => layer.Name));
+        Assert.All(created.Layers.OfType<SpeakerLayerView>(), layer => Assert.Single(layer.Objects));
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanAddSpeakerLayer").GetBoolean());
+    }
+
+    [Fact]
     public async Task MoveSpeakerVoiceToLayerHandsALineToTheOtherSpeaker()
     {
         string source = Path.Combine(root, "二人.ccproj");

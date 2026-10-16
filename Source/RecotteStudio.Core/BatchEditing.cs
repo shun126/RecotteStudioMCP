@@ -22,6 +22,7 @@ public enum ProjectOperationKind
     ImportCharacter,
     AddAnnotationLayer,
     MoveSpeakerVoiceToLayer,
+    AddSpeakerLayer,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -111,6 +112,12 @@ public sealed record ImportCharacterOperation(RecotteProjectDocument Donor, stri
     ProjectTime EndTime, string? LayerName = null) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.ImportCharacter;
+}
+
+/// <summary>Adds a Speaker layer without a character after the last Speaker layer; later layers' indexes grow by one.</summary>
+public sealed record AddSpeakerLayerOperation(string? Name = null, int? Index = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddSpeakerLayer;
 }
 
 /// <summary>Moves a Speaker Voice to another Speaker layer, keeping its object key, text, and time range.</summary>
@@ -387,6 +394,7 @@ public sealed partial class ProjectEditor
                     MovedFrom: move.Success ? id : null, MovedTo: move.ObjectId);
             })),
             AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name, value.Index))),
+            AddSpeakerLayerOperation value => LayerAdded(AddSpeakerLayer(new(value.Name, value.Index))),
             AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name, value.Index))),
             ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
                 value.StartTime, value.EndTime, value.LayerName))),

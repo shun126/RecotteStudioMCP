@@ -15,7 +15,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
-        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "moveSpeakerVoiceToLayer",
+        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveSpeakerVoiceToLayer",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
@@ -44,6 +44,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "addFigureObject" => Figure(value),
                     "addVideoLayer" => new AddVideoLayerOperation(value.LayerName, value.InsertIndex),
                     "addAnnotationLayer" => new AddAnnotationLayerOperation(value.LayerName, value.InsertIndex),
+                    "addSpeakerLayer" => new AddSpeakerLayerOperation(value.LayerName, value.InsertIndex),
                     "importCharacter" => new ImportCharacterOperation(Donor(value.DonorProjectPath, donors), Required(value.SpeakerKey, "speakerKey"), Time(value.Start, "start"), Time(value.End, "end"), value.LayerName),
                     _ => throw new ArgumentException($"Unsupported operation '{value.Type}'. Supported operations: {string.Join(", ", SupportedTypes)}."),
                 });

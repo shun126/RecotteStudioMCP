@@ -16,6 +16,12 @@ public sealed record AddVideoLayerRequest(string? Name = null, int? Index = null
 /// </summary>
 public sealed record AddAnnotationLayerRequest(string? Name = null, int? Index = null);
 
+/// <summary>
+/// Requests a new Speaker layer without a character; a null or omitted name selects the next free default name. A null
+/// index places the layer after the last Speaker layer, and 0 to the layer count inserts it at that index.
+/// </summary>
+public sealed record AddSpeakerLayerRequest(string? Name = null, int? Index = null);
+
 /// <summary>Contains the result of adding a layer.</summary>
 public sealed record LayerAddResult(EditResult EditResult, int? LayerIndex, string? Name)
 {
@@ -31,6 +37,7 @@ public sealed partial class ProjectEditor
 {
     internal const string VideoLayerTemplateResource = "RecotteStudio.Core.Templates.VideoLayer.ccproj";
     internal const string AnnotationLayerTemplateResource = "RecotteStudio.Core.Templates.AnnotationLayer.ccproj";
+    internal const string SpeakerLayerTemplateResource = "RecotteStudio.Core.Templates.Empty.ccproj";
 
     /// <summary>
     /// Adds an empty Video layer, by default directly after the last Video layer, where Recotte Studio places one
@@ -52,6 +59,19 @@ public sealed partial class ProjectEditor
         ArgumentNullException.ThrowIfNull(request);
         // Recotte Studio names Annot layers 注釈1, 注釈2, ... (001EmptyProject, 012TwoImages).
         return AddLayer("Annot", "注釈", AnnotationLayerTemplateResource, request.Name, request.Index, "AddAnnotationLayer");
+    }
+
+    /// <summary>
+    /// Adds a Speaker layer without a character, as Recotte Studio writes the one of a new project (001EmptyProject), by
+    /// default directly after the last Speaker layer. A speaker belongs to its layer, so this is how one layer's lines are
+    /// split between speakers: assign the layer's character in Recotte Studio, or fill it with ImportCharacter, and move
+    /// lines to it with MoveSpeakerVoiceToLayer. Every later layer's index grows by one.
+    /// </summary>
+    public LayerAddResult AddSpeakerLayer(AddSpeakerLayerRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        // Recotte Studio names Speaker layers 話者1, 話者2, ... (001EmptyProject, 008TwoCharacters).
+        return AddLayer("Speaker", "話者", SpeakerLayerTemplateResource, request.Name, request.Index, "AddSpeakerLayer");
     }
 
     // Clones the last layer of the given type from a sample in which Recotte Studio added it, empties it, and inserts it at
@@ -91,6 +111,10 @@ public sealed partial class ProjectEditor
         { return LayerFailed("RC4001", exception.Message); }
         if (template is null) return LayerFailed("RC4001", $"The verified {type} layer template is unavailable.");
 
+        // A Speaker layer draws its lines with its DefaultTextStyle and TelopFrame, so both must exist in this project.
+        if (type == "Speaker" && MissingSpeakerLayerDefinition(template) is string missing)
+            return LayerFailed("RC4004", $"The project does not define {missing}, which a new Speaker layer uses.");
+
         JsonObject added = (JsonObject)template.DeepClone();
         added["name"] = name;
         added["selected"] = false;
@@ -98,13 +122,31 @@ public sealed partial class ProjectEditor
 
         int[] sameType = Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string layerType) && layerType == type)
             .Select(item => item.index).ToArray();
-        int index = requestedIndex ?? (sameType.Length > 0 ? sameType.Max() + 1 : type == "Video" ? 0 : layers.Count);
+        int index = requestedIndex ?? (sameType.Length > 0 ? sameType.Max() + 1 : type switch
+        {
+            "Video" => 0,
+            // Without a Speaker layer the new one goes right above the videos, where a new project keeps it.
+            "Speaker" => Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string layerType) && layerType == "Video")
+                .Select(item => item.index + 1).DefaultIfEmpty(0).Max(),
+            _ => layers.Count,
+        });
         layers.Insert(index, added);
         for (int prior = 0; prior < changes.Count; prior++)
             changes[prior] = LayerInsertionMetadata.Change(changes[prior], index);
         ProjectChange change = new(operation, $"layer:{index}", null, name, $"$.layers[{index}]");
         changes.Add(change);
         return new(EditResult.Succeeded(new[] { change }), index, name);
+    }
+
+    private string? MissingSpeakerLayerDefinition(JsonObject layer)
+    {
+        string? style = JsonAccess.GetPropertyString(layer, "DefaultTextStyle");
+        bool styleDefined = root["text-styles"] is JsonArray styles && styles.OfType<JsonObject>()
+            .Any(item => JsonAccess.TryGetString(item, "StyleName", out string name) && name == style);
+        if (!string.IsNullOrEmpty(style) && !styleDefined) return $"the text style '{style}'";
+        string? frame = JsonAccess.GetPropertyString(layer, "TelopFrame");
+        if (!string.IsNullOrEmpty(frame) && !TelopFrameView.ReadAll(root).Any(item => item.Name == frame)) return $"the telop frame '{frame}'";
+        return null;
     }
 
     private static LayerAddResult LayerFailed(string code, string message) => new(EditResult.Failed(code, message), null, null);
