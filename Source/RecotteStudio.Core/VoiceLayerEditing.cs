@@ -8,6 +8,9 @@ public sealed record MoveSpeakerVoiceToLayerRequest(TimelineObjectId ObjectId, S
 /// <summary>Contains the result of moving a Speaker Voice between Speaker layers.</summary>
 public sealed record SpeakerVoiceMoveResult(EditResult EditResult, TimelineObjectId? ObjectId)
 {
+    // Where the voice sat in the layers' object arrays before and after the move, for rebasing recorded locations.
+    internal VoiceRelocation? Relocation { get; init; }
+
     /// <summary>Gets whether the voice was moved.</summary>
     public bool Success => EditResult.Success;
     /// <summary>Gets the operation diagnostics.</summary>
@@ -22,7 +25,9 @@ public sealed partial class ProjectEditor
     /// Moves a Speaker Voice to another Speaker layer, so that layer's speaker says it. The speaker belongs to the layer
     /// (its Speaker property), not to the voice, so the voice keeps its object key, text, and time range; the text style and
     /// telop frame it takes from the source layer's defaults switch to the target layer's. An audio-backed voice keeps its
-    /// audio, which still has the source speaker's voice, so moving it to a different speaker carries an RC4208 warning.
+    /// audio, so moving it to a layer with a different speaker carries an RC4208 warning. The project does not record whose
+    /// voice the audio has, so the warning names only the source layer's speaker; within one batch, the batch result reports
+    /// one warning per voice from where it started.
     /// </summary>
     public SpeakerVoiceMoveResult MoveSpeakerVoiceToLayer(MoveSpeakerVoiceToLayerRequest request)
     {
@@ -68,7 +73,11 @@ public sealed partial class ProjectEditor
         targetObjects.Add(voice);
         if (key != originalKey) voice["objkey"] = key;
         TimelineObjectId moved = new(targetIndex, key);
-        string path = $"$.layers[{targetIndex}].layer-objects[{targetObjects.Count - 1}]";
+        VoiceRelocation relocation = new(request.ObjectId, objectIndex, moved, targetObjects.Count - 1);
+        // Changes staged earlier located the voice, and the objects behind it on the source layer, where they no longer are.
+        for (int prior = 0; prior < changes.Count; prior++)
+            changes[prior] = LayerInsertionMetadata.Change(changes[prior], relocation);
+        string path = $"$.layers[{targetIndex}].layer-objects[{relocation.ToIndex}]";
         List<ProjectChange> made = new();
         ProjectChange change = new("MoveSpeakerVoiceToLayer", moved.ToString(), request.ObjectId.ToString(), moved.ToString(), path);
         changes.Add(change);
@@ -86,12 +95,16 @@ public sealed partial class ProjectEditor
         string? fromSpeaker = JsonAccess.GetPropertyString(source, "Speaker");
         string? toSpeaker = JsonAccess.GetPropertyString(target, "Speaker");
         if (!HasAudioMarker(voice) || string.Equals(fromSpeaker, toSpeaker, StringComparison.Ordinal))
-            return new(EditResult.Succeeded(made), moved);
-        ProjectDiagnostic stale = new("RC4208", DiagnosticSeverity.Warning,
-            $"The audio-backed Speaker Voice with object key {key} was moved from layer '{LayerName(source)}' to layer " +
-            $"'{LayerName(target)}'. Its existing audio still has the voice of '{fromSpeaker}'; regenerate the audio for this clip in Recotte Studio.", path);
-        return new(new(true, new[] { stale }, made), moved);
+            return new(EditResult.Succeeded(made), moved) { Relocation = relocation };
+        return new(new(true, new[] { MovedAudioDiagnostic(key, source, target, path) }, made), moved) { Relocation = relocation };
     }
+
+    // The audio may have been made for a speaker before the source layer's, so the message states only where the voice came from.
+    internal static ProjectDiagnostic MovedAudioDiagnostic(int key, JsonObject source, JsonObject target, string path) =>
+        new("RC4208", DiagnosticSeverity.Warning,
+            $"The audio-backed Speaker Voice with object key {key} was moved from layer '{LayerName(source)}' to layer " +
+            $"'{LayerName(target)}'. It came from a layer whose speaker is '{JsonAccess.GetPropertyString(source, "Speaker")}', " +
+            $"so its existing audio may not have the voice of the speaker on layer '{LayerName(target)}'; regenerate the audio for this clip in Recotte Studio.", path);
 
     // A voice that uses its layer's default text style or telop frame follows the layer it is on; a voice given its own
     // style or frame keeps it.
@@ -120,3 +133,6 @@ public sealed partial class ProjectEditor
     private static string LayerName(JsonObject layer) => JsonAccess.TryGetString(layer, "name", out string name) ? name : string.Empty;
     private static SpeakerVoiceMoveResult MoveFailed(string code, string message) => new(EditResult.Failed(code, message), null);
 }
+
+// A Speaker Voice taken from index FromIndex of its layer's objects and appended to another layer's objects at ToIndex.
+internal sealed record VoiceRelocation(TimelineObjectId From, int FromIndex, TimelineObjectId To, int ToIndex);

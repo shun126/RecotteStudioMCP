@@ -41,6 +41,36 @@ internal static class LayerInsertionMetadata
         JsonPath = Path(change.JsonPath, map)!,
     };
 
+    // A Speaker Voice moved to the end of another layer's objects: locations of the voice follow it, and the objects behind
+    // it on its old layer close the gap it left.
+    private static string? Target(string? target, VoiceRelocation move) => target == move.From.ToString() ? move.To.ToString() : target;
+
+    private static string? Path(string? path, VoiceRelocation move) => path is null ? null :
+        Regex.Replace(path, @"^\$\.layers\[(\d+)\]\.layer-objects\[(\d+)\]", match =>
+        {
+            int layer = int.Parse(match.Groups[1].Value);
+            int index = int.Parse(match.Groups[2].Value);
+            if (layer != move.From.LayerIndex || index < move.FromIndex) return match.Value;
+            return index == move.FromIndex
+                ? $"$.layers[{move.To.LayerIndex}].layer-objects[{move.ToIndex}]"
+                : $"$.layers[{layer}].layer-objects[{index - 1}]";
+        });
+
+    internal static ProjectChange Change(ProjectChange change, VoiceRelocation move) => change with
+    {
+        Target = Target(change.Target, move)!,
+        JsonPath = Path(change.JsonPath, move)!,
+    };
+
+    internal static ProjectDiagnostic Diagnostic(ProjectDiagnostic diagnostic, VoiceRelocation move) => diagnostic with
+    {
+        JsonPath = Path(diagnostic.JsonPath, move),
+        Message = diagnostic.Code == "RC4208"
+            ? diagnostic.Message.Replace($"object key {move.From.ObjectKey} on layer {move.From.LayerIndex} was changed.",
+                $"object key {move.To.ObjectKey} on layer {move.To.LayerIndex} was changed.", StringComparison.Ordinal)
+            : diagnostic.Message,
+    };
+
     internal static ProjectDiagnostic Diagnostic(ProjectDiagnostic diagnostic, int inserted) => Diagnostic(diagnostic, Insertion(inserted));
 
     internal static ProjectDiagnostic Diagnostic(ProjectDiagnostic diagnostic, Func<int, int> map) => diagnostic with

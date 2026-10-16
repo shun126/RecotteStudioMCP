@@ -109,6 +109,74 @@ public sealed class SpeakerVoiceMoveTests : IDisposable
     }
 
     [Fact]
+    public void Move_RebasesTheLocationsOfEarlierChangesToTheMovedLineAndTheLinesBehindIt()
+    {
+        RecotteProjectDocument document = RecotteProject.Create(new("Rebase", directory));
+        RecotteProjectDocument donor = RecotteProject.Load(TwoVoices);
+
+        ProjectBatchResult batch = document.ApplyOperations(new ProjectOperation[]
+        {
+            new ImportCharacterOperation(donor, Man, new(0m), new(10m)),
+            new ImportCharacterOperation(donor, Woman, new(0m), new(10m)),
+            new AddTextOnlySpeakerVoiceOperation(new LayerNameReference("話者1"), "こんにちは", new(1m), new(2m)),
+            new AddTextOnlySpeakerVoiceOperation(new LayerNameReference("話者1"), "よろしく", new(3m), new(4m)),
+            // Keys are allocated maximum-plus-one after the characters' 1000, so the lines are 1001 and 1002. Taking the first
+            // away moves it to 話者2 and closes the gap it leaves in front of the second.
+            new MoveSpeakerVoiceToLayerOperation(new ObjectKeyReference(1001), new LayerNameReference("話者2")),
+        });
+
+        Assert.True(batch.Success);
+        JsonArray layers = SavedLayers(document);
+        foreach (ProjectOperationResult added in batch.OperationResults.Skip(2).Take(2))
+        {
+            TimelineObjectId id = Assert.IsType<TimelineObjectId>(added.CreatedObjectId);
+            Assert.All(added.Changes, change => Assert.Equal(id.ObjectKey, (int?)ObjectAt(layers, change.JsonPath)["objkey"]));
+        }
+        Assert.Equal(new TimelineObjectId(2, 1001), batch.OperationResults[2].CreatedObjectId);
+        Assert.Equal(batch.OperationResults.SelectMany(operation => operation.Changes), batch.Changes);
+    }
+
+    [Fact]
+    public void Move_TwiceReportsTheStaleAudioWhereTheLineEndsUp()
+    {
+        RecotteProjectDocument document = RecotteProject.Load(TwoVoices);
+
+        ProjectBatchResult batch = document.ApplyOperations(new ProjectOperation[]
+        {
+            new AddSpeakerLayerOperation(),
+            new MoveSpeakerVoiceToLayerOperation(new TimelineObjectIdReference(ManVoice), new LayerIndexReference(2)),
+            new MoveSpeakerVoiceToLayerOperation(new TimelineObjectIdReference(new(2, 1002)), new LayerIndexReference(3)),
+        });
+
+        Assert.True(batch.Success);
+        TimelineObjectId moved = new(3, 1002);
+        Assert.Equal(moved, Assert.Single(batch.AudioRegenerationRequired));
+        // One warning for the line, from the man's layer where its audio was made rather than the woman's it passed through.
+        ProjectDiagnostic warning = Assert.Single(batch.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+        Assert.Equal("$.layers[3].layer-objects[0]", warning.JsonPath);
+        Assert.Contains("'話者1' to layer '話者3'", warning.Message, StringComparison.Ordinal);
+        Assert.Contains($"speaker is '{Man}'", warning.Message, StringComparison.Ordinal);
+        Assert.Equal(1002, (int?)ObjectAt(SavedLayers(document), "$.layers[3].layer-objects[0]")["objkey"]);
+        // Each operation still reports the move it made.
+        Assert.Contains($"speaker is '{Woman}'", Assert.Single(batch.OperationResults[2].Diagnostics).Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Move_ByItselfNamesOnlyTheSpeakerOfTheLayerTheLineLeft()
+    {
+        RecotteProjectDocument document = RecotteProject.Load(TwoVoices);
+        using ProjectEditSession session = document.BeginEdit();
+
+        SpeakerVoiceMoveResult result = session.Editor.MoveSpeakerVoiceToLayer(new(ManVoice, new(2)));
+
+        Assert.True(result.Success);
+        ProjectDiagnostic warning = Assert.Single(result.Diagnostics);
+        Assert.Equal("RC4208", warning.Code);
+        Assert.Contains($"came from a layer whose speaker is '{Man}'", warning.Message, StringComparison.Ordinal);
+        Assert.Contains("may not have the voice of the speaker on layer '話者2'", warning.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Move_ReleasesSnapsThatTheTargetLayerCannotHonor()
     {
         JsonObject root = JsonNode.Parse(File.ReadAllText(TwoVoices))!.AsObject();
@@ -178,6 +246,17 @@ public sealed class SpeakerVoiceMoveTests : IDisposable
         document.SaveCopy(output);
         Assert.True(RecotteProject.Load(output).Validate().IsValid);
         return JsonNode.Parse(File.ReadAllText(output))!["layers"]!.AsArray();
+    }
+
+    // The timeline object a change's JSON path starts in.
+    private static JsonObject ObjectAt(JsonArray layers, string path)
+    {
+        System.Text.RegularExpressions.Match match = System.Text.RegularExpressions.Regex.Match(path, @"^\$\.layers\[(\d+)\]\.layer-objects\[(\d+)\]");
+        Assert.True(match.Success, path);
+        JsonArray objects = layers[int.Parse(match.Groups[1].Value)]!["layer-objects"]!.AsArray();
+        int index = int.Parse(match.Groups[2].Value);
+        Assert.InRange(index, 0, objects.Count - 1);
+        return objects[index]!.AsObject();
     }
 
     private static JsonObject[] Voices(JsonNode? layer) => layer!["layer-objects"]!.AsArray().OfType<JsonObject>()

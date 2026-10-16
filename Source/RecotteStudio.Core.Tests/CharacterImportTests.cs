@@ -121,25 +121,65 @@ public sealed class CharacterImportTests : IDisposable
             new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
         }).Success);
         // The same two characters, but without the 下枠 frame the man's layer now draws its telop in.
-        JsonObject root = JsonNode.Parse(File.ReadAllText(TwoVoices))!.AsObject();
-        JsonArray frames = root["telop-frames"]!.AsArray();
-        int lower = frames.Select((item, index) => (item, index)).Single(pair => pair.item is JsonObject frame &&
-            (string?)frame["FrameName"]!["p-value"] == "下枠").index;
-        frames.RemoveAt(lower);
-        // Recotte Studio writes the string "properties" before every frame object.
-        if (frames[lower - 1] is JsonValue marker && (string?)marker == "properties") frames.RemoveAt(lower - 1);
-        string donorPath = Path.Combine(directory, "Donor.ccproj");
-        File.WriteAllText(donorPath, root.ToJsonString());
-
         ProjectBatchResult batch = target.ApplyOperations(new[]
         {
-            new ImportCharacterOperation(RecotteProject.Load(donorPath), Woman, new(0m), new(10m)),
+            new ImportCharacterOperation(DonorWithoutFrame("下枠"), Woman, new(0m), new(10m)),
         });
 
         Assert.False(batch.Success);
         ProjectDiagnostic diagnostic = Assert.Single(batch.Diagnostics, item => item.Severity == DiagnosticSeverity.Error);
         Assert.Equal("RC4606", diagnostic.Code);
         Assert.Contains("下枠", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ImportCharacter_RejectsADonorWithoutATelopFrameALineUses()
+    {
+        RecotteProjectDocument created = RecotteProject.Create(new("LineFrames", directory));
+        Assert.True(created.ApplyOperations(new ProjectOperation[]
+        {
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
+            new AddTextOnlySpeakerVoiceOperation(new LayerNameReference("話者1"), "こんにちは", new(1m), new(2m)),
+        }).Success);
+        // The line draws its telop in UpperFrame instead of its layer's 下枠, as when the frame is changed for one clip.
+        string targetPath = Path.Combine(directory, "Target.ccproj");
+        created.SaveCopy(targetPath);
+        JsonObject root = JsonNode.Parse(File.ReadAllText(targetPath))!.AsObject();
+        root["layers"]![1]!["layer-objects"]!.AsArray().OfType<JsonObject>()
+            .Single(item => (string?)item["type"] == "Speaker Voice")["properties"]!["TelopFrame"]!["p-value"] = "UpperFrame";
+        File.WriteAllText(targetPath, root.ToJsonString());
+        RecotteProjectDocument target = RecotteProject.Load(targetPath);
+
+        ProjectBatchResult batch = target.ApplyOperations(new[]
+        {
+            new ImportCharacterOperation(DonorWithoutFrame("UpperFrame"), Woman, new(0m), new(10m)),
+        });
+
+        Assert.False(batch.Success);
+        ProjectDiagnostic diagnostic = Assert.Single(batch.Diagnostics, item => item.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("RC4606", diagnostic.Code);
+        Assert.Contains("UpperFrame", diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ImportCharacter_FillingAnEarlierSpeakerLayerOrdersTheSpeakersByLayer()
+    {
+        RecotteProjectDocument target = RecotteProject.Create(new("Order", directory));
+
+        ProjectBatchResult batch = target.ApplyOperations(new ProjectOperation[]
+        {
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
+            new AddSpeakerLayerOperation("前", 1),
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Woman, new(0m), new(10m)),
+        });
+
+        Assert.True(batch.Success);
+        Assert.Equal(1, batch.OperationResults[2].CreatedLayerIndex);
+        Assert.Contains(batch.OperationResults[2].Changes, change => change.Operation == "OrderSpeakers");
+        Assert.Equal(batch.OperationResults.SelectMany(operation => operation.Changes), batch.Changes);
+        JsonArray layers = SavedLayers(target);
+        Assert.Equal(new[] { Woman, Man }, new[] { Property(layers[1], "Speaker"), Property(layers[2], "Speaker") });
+        Assert.Equal(new[] { Woman, Man }, SavedSpeakers(target));
     }
 
     [Fact]
@@ -233,12 +273,32 @@ public sealed class CharacterImportTests : IDisposable
             change => Assert.StartsWith($"$.layers[{layerIndex}]", change.JsonPath));
     }
 
-    private JsonArray SavedLayers(RecotteProjectDocument document)
+    // 011TwoVoices without one of its telop frames.
+    private RecotteProjectDocument DonorWithoutFrame(string name)
+    {
+        JsonObject root = JsonNode.Parse(File.ReadAllText(TwoVoices))!.AsObject();
+        JsonArray frames = root["telop-frames"]!.AsArray();
+        int removed = frames.Select((item, index) => (item, index)).Single(pair => pair.item is JsonObject frame &&
+            (string?)frame["FrameName"]!["p-value"] == name).index;
+        frames.RemoveAt(removed);
+        // Recotte Studio writes the string "properties" before every frame object.
+        if (frames[removed - 1] is JsonValue marker && (string?)marker == "properties") frames.RemoveAt(removed - 1);
+        string donorPath = Path.Combine(directory, $"Donor{Guid.NewGuid():N}.ccproj");
+        File.WriteAllText(donorPath, root.ToJsonString());
+        return RecotteProject.Load(donorPath);
+    }
+
+    private JsonArray SavedLayers(RecotteProjectDocument document) => Saved(document)["layers"]!.AsArray();
+
+    private string?[] SavedSpeakers(RecotteProjectDocument document) =>
+        Saved(document)["speakers"]!.AsArray().Select(speaker => (string?)speaker!["key"]).ToArray();
+
+    private JsonObject Saved(RecotteProjectDocument document)
     {
         string output = Path.Combine(directory, $"{Guid.NewGuid():N}.ccproj");
         document.SaveCopy(output);
         Assert.True(RecotteProject.Load(output).Validate().IsValid);
-        return JsonNode.Parse(File.ReadAllText(output))!["layers"]!.AsArray();
+        return JsonNode.Parse(File.ReadAllText(output))!.AsObject();
     }
 
     private static string? Name(JsonNode? layer) => (string?)layer!["name"];

@@ -181,8 +181,7 @@ public sealed record ProjectBatchPreview(ProjectBatchResult BatchResult, Project
 
 internal sealed record OperationExecutionResult(EditResult EditResult, string? Target,
     TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null, int? CreatedLayerIndex = null,
-    int? InsertedLayerIndex = null, TimelineObjectId? MovedFrom = null, TimelineObjectId? MovedTo = null,
-    (int From, int To)? MovedLayer = null);
+    int? InsertedLayerIndex = null, VoiceRelocation? MovedVoice = null, (int From, int To)? MovedLayer = null);
 
 public sealed partial class ProjectEditSession
 {
@@ -242,10 +241,11 @@ public sealed partial class ProjectEditSession
                     diagnostics[prior] = LayerInsertionMetadata.Diagnostic(diagnostics[prior], remap);
                 origins = origins.ToDictionary(pair => Remap(pair.Key, remap), pair => Remap(pair.Value, remap));
             }
-            if (edit.Success && executed.MovedFrom is TimelineObjectId from && executed.MovedTo is TimelineObjectId to)
+            if (edit.Success && executed.MovedVoice is VoiceRelocation moved)
             {
+                (TimelineObjectId from, TimelineObjectId to) = (moved.From, moved.To);
                 origins[to] = origins.Remove(from, out TimelineObjectId origin) ? origin : from;
-                // Earlier results that named the voice now name where it ended up.
+                // Earlier results that named the voice now name where it ended up, and their locations follow it.
                 for (int prior = 0; prior < results.Count; prior++)
                 {
                     ProjectOperationResult result = results[prior];
@@ -253,8 +253,12 @@ public sealed partial class ProjectEditSession
                     {
                         Target = result.Target == from.ToString() ? to.ToString() : result.Target,
                         CreatedObjectId = result.CreatedObjectId == from ? to : result.CreatedObjectId,
+                        Changes = result.Changes.Select(change => LayerInsertionMetadata.Change(change, moved)).ToArray(),
+                        Diagnostics = result.Diagnostics.Select(diagnostic => LayerInsertionMetadata.Diagnostic(diagnostic, moved)).ToArray(),
                     };
                 }
+                for (int prior = 0; prior < diagnostics.Count; prior++)
+                    diagnostics[prior] = LayerInsertionMetadata.Diagnostic(diagnostics[prior], moved);
             }
             results.Add(new(index, operation.Kind, edit.Success, executed.Target, executed.CreatedObjectId,
                 executed.CreatedFileItemKey, edit.Changes, edit.Diagnostics) { CreatedLayerIndex = executed.CreatedLayerIndex });
@@ -304,13 +308,14 @@ public sealed partial class ProjectEditSession
             .ToHashSet(StringComparer.Ordinal);
 
         List<TimelineObjectId> targets = new();
+        List<ProjectDiagnostic> moved = new();
         foreach ((TimelineObjectId id, JsonObject afterLayer, JsonObject afterObject) in TimelineObjects(after))
         {
             if (!candidates.Contains(id.ToString()) || !ProjectEditor.HasAudioMarker(afterObject) ||
                 !TryGetSpeakerText(afterObject, out string afterText))
                 continue;
 
-            TimelineObjectId origin = origins.TryGetValue(id, out TimelineObjectId moved) ? moved : id;
+            TimelineObjectId origin = origins.TryGetValue(id, out TimelineObjectId start) ? start : id;
             (TimelineObjectId Id, JsonObject Layer, JsonObject Object) beforeItem = TimelineObjects(before)
                 .FirstOrDefault(item => item.Id == origin);
             if (beforeItem.Object is null || !ProjectEditor.HasAudioMarker(beforeItem.Object) ||
@@ -322,13 +327,20 @@ public sealed partial class ProjectEditSession
             if (sameText && sameSpeaker) continue;
 
             targets.Add(id);
+            // Each move warns from the layer it left, which after an earlier move in this batch is not where the audio
+            // was made, so a voice whose speaker changed gets one warning from where it started instead.
+            if (!sameSpeaker)
+                moved.Add(ProjectEditor.MovedAudioDiagnostic(id.ObjectKey, beforeItem.Layer, afterLayer,
+                    $"$.layers[{id.LayerIndex}].layer-objects[{((JsonArray)afterLayer["layer-objects"]!).IndexOf(afterObject)}]"));
         }
 
         HashSet<string> keptTargets = targets.Select(id => id.ToString()).ToHashSet(StringComparer.Ordinal);
         ProjectDiagnostic[] finalDiagnostics = diagnostics
             .Where(diagnostic => diagnostic.Code != StaleAudioDiagnosticCode)
-            .Concat(results.Where(result => result.Target is not null && keptTargets.Contains(result.Target))
+            .Concat(results.Where(result => result.Target is not null && keptTargets.Contains(result.Target) &&
+                    result.OperationType != ProjectOperationKind.MoveSpeakerVoiceToLayer)
                 .SelectMany(result => result.Diagnostics.Where(diagnostic => diagnostic.Code == StaleAudioDiagnosticCode)))
+            .Concat(moved)
             .Distinct()
             .ToArray();
         return (targets.ToArray(), finalDiagnostics);
@@ -408,8 +420,7 @@ public sealed partial class ProjectEditor
             MoveSpeakerVoiceToLayerOperation value => WithObject(value.Target, id => WithLayer(value.Layer, layerIndex =>
             {
                 SpeakerVoiceMoveResult move = MoveSpeakerVoiceToLayer(new(id, new(layerIndex)));
-                return new(move.EditResult, (move.ObjectId ?? id).ToString(),
-                    MovedFrom: move.Success ? id : null, MovedTo: move.ObjectId);
+                return new(move.EditResult, (move.ObjectId ?? id).ToString(), MovedVoice: move.Relocation);
             })),
             AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name, value.Index))),
             AddSpeakerLayerOperation value => LayerAdded(AddSpeakerLayer(new(value.Name, value.Index))),

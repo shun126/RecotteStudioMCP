@@ -270,8 +270,12 @@ public sealed partial class ProjectEditor
         if (donorRoot["telop-frames"] is JsonArray)
         {
             HashSet<string> donorFrames = TelopFrameView.ReadAll(donorRoot).Select(frame => frame.Name).ToHashSet(StringComparer.Ordinal);
+            // A line can draw its telop in a frame other than its layer's default, and that frame must survive the replacement too.
             string? missingFrame = TargetSpeakerLayers(targetLayers, reusableIndex)
-                .Select(item => JsonAccess.GetPropertyString(item.Layer, "TelopFrame"))
+                .SelectMany(item => (item.Layer["layer-objects"] as JsonArray ?? new JsonArray()).OfType<JsonObject>()
+                    .Where(voice => JsonAccess.TryGetString(voice, "type", out string type) && type == "Speaker Voice")
+                    .Select(voice => JsonAccess.GetPropertyString(voice, "TelopFrame"))
+                    .Prepend(JsonAccess.GetPropertyString(item.Layer, "TelopFrame")))
                 .FirstOrDefault(frame => !string.IsNullOrEmpty(frame) && !donorFrames.Contains(frame));
             if (missingFrame is not null)
                 return CharacterFailed("RC4606", $"The target uses telop frame '{missingFrame}', which the donor does not define.");
@@ -343,6 +347,8 @@ public sealed partial class ProjectEditor
                 $"$.layers[{index}].properties.TelopTargetLayer.p-value"));
         }
         changes.AddRange(made);
+        // The speaker was registered last, but the layer it filled may sit in front of other Speaker layers.
+        OrderSpeakersByLayers(made);
         return new(EditResult.Succeeded(made), new SpeakerLayerId(targetIndex), objectId, request.SpeakerKey)
         {
             InsertedLayer = reusableIndex < 0,
