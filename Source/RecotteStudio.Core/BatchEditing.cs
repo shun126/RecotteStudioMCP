@@ -159,7 +159,8 @@ public sealed record ProjectBatchResult(
 public sealed record ProjectBatchPreview(ProjectBatchResult BatchResult, ProjectTime? EstimatedDuration, bool CanSaveCopy);
 
 internal sealed record OperationExecutionResult(EditResult EditResult, string? Target,
-    TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null, int? CreatedLayerIndex = null);
+    TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null, int? CreatedLayerIndex = null,
+    int? InsertedLayerIndex = null);
 
 public sealed partial class ProjectEditSession
 {
@@ -184,7 +185,7 @@ public sealed partial class ProjectEditSession
             ProjectOperation operation = operations[index];
             OperationExecutionResult executed = Editor.ApplyOperation(operation);
             EditResult edit = executed.EditResult;
-            if (edit.Success && executed.CreatedLayerIndex is int insertedIndex)
+            if (edit.Success && executed.InsertedLayerIndex is int insertedIndex)
             {
                 // Align original voice text with the evolving layout without changing the rollback snapshot.
                 ((JsonArray)audioBaseline["layers"]!).Insert(insertedIndex, new JsonObject());
@@ -400,11 +401,14 @@ public sealed partial class ProjectEditor
     }
 
     private static OperationExecutionResult LayerAdded(LayerAddResult layer) => new(layer.EditResult,
-        layer.LayerIndex is int index ? $"layer:{index}" : null, CreatedLayerIndex: layer.LayerIndex);
+        layer.LayerIndex is int index ? $"layer:{index}" : null, CreatedLayerIndex: layer.LayerIndex,
+        InsertedLayerIndex: layer.LayerIndex);
 
+    // An import that fills the empty Speaker layer still reports it, but only an inserted layer shifts the layers after it.
     private static OperationExecutionResult CharacterImported(CharacterImportResult character) => new(character.EditResult,
         character.LayerId is { } layer ? $"layer:{layer.LayerIndex}" : null, character.ObjectId,
-        CreatedLayerIndex: character.LayerId?.LayerIndex);
+        CreatedLayerIndex: character.LayerId?.LayerIndex,
+        InsertedLayerIndex: character.InsertedLayer ? character.LayerId?.LayerIndex : null);
 
     private static OperationExecutionResult LookupFailure(string code, string message, string? target) =>
         new(EditResult.Failed(code, message), target);

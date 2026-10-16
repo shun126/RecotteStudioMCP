@@ -46,6 +46,8 @@ public sealed record CharacterImportResult(EditResult EditResult, SpeakerLayerId
     public IReadOnlyList<ProjectDiagnostic> Diagnostics => EditResult.Diagnostics;
     /// <summary>Gets the staged project changes.</summary>
     public IReadOnlyList<ProjectChange> Changes => EditResult.Changes;
+    /// <summary>Gets whether the import inserted a new layer, shifting the layers after it, rather than filling the empty Speaker layer.</summary>
+    public bool InsertedLayer { get; init; }
 }
 
 public sealed partial class ProjectEditor
@@ -309,6 +311,8 @@ public sealed partial class ProjectEditor
             if (targetIndex == 0 && targetLayers[0] is JsonObject first && (!JsonAccess.TryGetString(first, "type", out string firstType) || firstType != "Annot"))
                 targetIndex = targetLayers.Count;
             targetLayers.Insert(targetIndex, importedLayer);
+            for (int prior = 0; prior < changes.Count; prior++)
+                changes[prior] = LayerInsertionMetadata.Change(changes[prior], targetIndex);
         }
         targetSpeakers.Add(donorSpeaker.DeepClone());
 
@@ -332,7 +336,10 @@ public sealed partial class ProjectEditor
                 $"$.layers[{index}].properties.TelopTargetLayer.p-value"));
         }
         changes.AddRange(made);
-        return new(EditResult.Succeeded(made), new SpeakerLayerId(targetIndex), objectId, request.SpeakerKey);
+        return new(EditResult.Succeeded(made), new SpeakerLayerId(targetIndex), objectId, request.SpeakerKey)
+        {
+            InsertedLayer = reusableIndex < 0,
+        };
     }
 
     // Speaker layers of the target other than the one at excludedIndex (the layer being replaced or just imported).

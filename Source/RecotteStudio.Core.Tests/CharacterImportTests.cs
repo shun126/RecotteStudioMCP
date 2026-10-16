@@ -10,6 +10,9 @@ public sealed class CharacterImportTests : IDisposable
 
     public void Dispose() => Directory.Delete(directory, true);
 
+    private static string SampleImage => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects",
+        "004OneImage", "Sample.png");
+
     private static string TwoVoices => Path.Combine(TestProjects.RepositoryRoot, "Documents", "RecotteProjects",
         "011TwoVoices", "011TwoVoices.ccproj");
 
@@ -165,6 +168,50 @@ public sealed class CharacterImportTests : IDisposable
         ProjectDiagnostic diagnostic = Assert.Single(batch.Diagnostics, item => item.Severity == DiagnosticSeverity.Error);
         Assert.Equal("RC4606", diagnostic.Code);
         Assert.Contains(Man, diagnostic.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ImportCharacter_FillingTheEmptySpeakerLayerLeavesEarlierResultsInPlace()
+    {
+        RecotteProjectDocument target = RecotteProject.Create(new("Reuse", directory));
+
+        ProjectBatchResult batch = target.ApplyOperations(new ProjectOperation[]
+        {
+            new AddImageAssetOperation(new LayerIndexReference(2), SampleImage, Path.Combine(directory, "Out.ccproj"), "image", new(0m), new(1m)),
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
+        });
+
+        Assert.True(batch.Success);
+        Assert.Equal(1, batch.OperationResults[1].CreatedLayerIndex);
+        AssertLocatesSavedObjects(target, batch.OperationResults[0], 2);
+        Assert.Equal(batch.OperationResults.SelectMany(operation => operation.Changes), batch.Changes);
+    }
+
+    [Fact]
+    public void ImportCharacter_InsertingASpeakerLayerRebasesEarlierResultsAndChanges()
+    {
+        RecotteProjectDocument target = RecotteProject.Create(new("Insert", directory));
+
+        ProjectBatchResult batch = target.ApplyOperations(new ProjectOperation[]
+        {
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
+            new AddImageAssetOperation(new LayerIndexReference(2), SampleImage, Path.Combine(directory, "Out.ccproj"), "image", new(0m), new(1m)),
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Woman, new(0m), new(10m)),
+        });
+
+        Assert.True(batch.Success);
+        Assert.Equal(new int?[] { 1, null, 2 }, batch.OperationResults.Select(result => result.CreatedLayerIndex));
+        AssertLocatesSavedObjects(target, batch.OperationResults[1], 3);
+        Assert.Equal(batch.OperationResults.SelectMany(operation => operation.Changes), batch.Changes);
+    }
+
+    private void AssertLocatesSavedObjects(RecotteProjectDocument document, ProjectOperationResult operation, int layerIndex)
+    {
+        TimelineObjectId id = Assert.IsType<TimelineObjectId>(operation.CreatedObjectId);
+        Assert.Equal(layerIndex, id.LayerIndex);
+        Assert.Contains(SavedLayers(document)[layerIndex]!["layer-objects"]!.AsArray(), item => (int?)item!["objkey"] == id.ObjectKey);
+        Assert.All(operation.Changes.Where(change => change.JsonPath.StartsWith("$.layers[", StringComparison.Ordinal)),
+            change => Assert.StartsWith($"$.layers[{layerIndex}]", change.JsonPath));
     }
 
     private JsonArray SavedLayers(RecotteProjectDocument document)
