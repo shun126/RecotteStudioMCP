@@ -176,6 +176,22 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public void ImportCharacterReportsAnUnreadableDonorAsALoadFailure()
+    {
+        string donor = Path.Combine(root, "locked.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+        using FileStream locked = new(donor, FileMode.Open, FileAccess.Read, FileShare.None);
+
+        McpToolResult<object> result = service.PreviewOperations(project, new[]
+        {
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("MCP_PROJECT_LOAD_FAILED", result.ErrorCode);
+    }
+
+    [Fact]
     public async Task CreateProjectCanAddVideoLayerAndPlaceVideoOnIt()
     {
         string video = Path.Combine(root, "Sample.mp4");
