@@ -306,10 +306,17 @@ public sealed partial class ProjectEditor
             targetLayers[targetIndex] = importedLayer;
         else
         {
-            targetIndex = targetLayers.Select((node, index) => (node, index)).FirstOrDefault(pair =>
-                pair.node is JsonObject layer && JsonAccess.TryGetString(layer, "type", out string type) && type == "Annot").index;
-            if (targetIndex == 0 && targetLayers[0] is JsonObject first && (!JsonAccess.TryGetString(first, "type", out string firstType) || firstType != "Annot"))
-                targetIndex = targetLayers.Count;
+            // Layers draw in array order, so the new character goes right after the last Speaker layer: an Annot layer the
+            // user put at the back to hold a background image stays behind it.
+            int[] speakerIndexes = TargetSpeakerLayers(targetLayers, -1).Select(item => item.Index).ToArray();
+            if (speakerIndexes.Length > 0) targetIndex = speakerIndexes.Max() + 1;
+            else
+            {
+                targetIndex = targetLayers.Select((node, index) => (node, index)).FirstOrDefault(pair =>
+                    pair.node is JsonObject layer && JsonAccess.TryGetString(layer, "type", out string type) && type == "Annot").index;
+                if (targetIndex == 0 && targetLayers[0] is JsonObject first && (!JsonAccess.TryGetString(first, "type", out string firstType) || firstType != "Annot"))
+                    targetIndex = targetLayers.Count;
+            }
             targetLayers.Insert(targetIndex, importedLayer);
             for (int prior = 0; prior < changes.Count; prior++)
                 changes[prior] = LayerInsertionMetadata.Change(changes[prior], targetIndex);

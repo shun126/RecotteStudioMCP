@@ -205,6 +205,25 @@ public sealed class CharacterImportTests : IDisposable
         Assert.Equal(batch.OperationResults.SelectMany(operation => operation.Changes), batch.Changes);
     }
 
+    [Fact]
+    public void ImportCharacter_InsertsAfterTheLastSpeakerLayerAndKeepsABackgroundLayerBehind()
+    {
+        RecotteProjectDocument target = RecotteProject.Create(new("Background", directory));
+
+        ProjectBatchResult batch = target.ApplyOperations(new ProjectOperation[]
+        {
+            new AddAnnotationLayerOperation("下敷き", 0),
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Woman, new(0m), new(10m)),
+        });
+
+        Assert.True(batch.Success);
+        Assert.Equal(new int?[] { 0, 2, 3 }, batch.OperationResults.Select(result => result.CreatedLayerIndex));
+        JsonArray layers = SavedLayers(target);
+        Assert.Equal(new[] { "Annot", "Video", "Speaker", "Speaker", "Annot" }, layers.Select(layer => (string?)layer!["type"]));
+        Assert.Equal(new[] { "下敷き", "映像・音声1", "話者1", "話者2", "注釈1" }, layers.Select(Name));
+    }
+
     private void AssertLocatesSavedObjects(RecotteProjectDocument document, ProjectOperationResult operation, int layerIndex)
     {
         TimelineObjectId id = Assert.IsType<TimelineObjectId>(operation.CreatedObjectId);

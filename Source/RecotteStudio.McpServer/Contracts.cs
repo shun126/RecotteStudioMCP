@@ -11,7 +11,7 @@ public sealed record ProjectOperationDto(string Type, TimelineObjectTargetDto? T
     string? ProjectPath = null, string? DisplayName = null, string? FigureKey = null,
     decimal? X = null, decimal? Y = null, decimal? Width = null, decimal? Height = null,
     string? EffectKey = null, int? EffectIndex = null, decimal? Duration = null, string? LayerName = null,
-    string? DonorProjectPath = null, string? SpeakerKey = null);
+    string? DonorProjectPath = null, string? SpeakerKey = null, int? InsertIndex = null);
 public sealed record TextSequenceItemDto(string Text, decimal? Duration = null);
 public sealed record SubtitleTextDto(int LayerIndex, int ObjectKey, string Text);
 public sealed record FlipbookFrameDto(string ImagePath, decimal? Duration = null);

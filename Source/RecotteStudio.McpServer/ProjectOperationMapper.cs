@@ -41,8 +41,8 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "addVideoObject" => new AddVideoAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addAnnotationText" => new AddAnnotationTextOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addFigureObject" => Figure(value),
-                    "addVideoLayer" => new AddVideoLayerOperation(value.LayerName),
-                    "addAnnotationLayer" => new AddAnnotationLayerOperation(value.LayerName),
+                    "addVideoLayer" => new AddVideoLayerOperation(value.LayerName, value.InsertIndex),
+                    "addAnnotationLayer" => new AddAnnotationLayerOperation(value.LayerName, value.InsertIndex),
                     "importCharacter" => new ImportCharacterOperation(Donor(value.DonorProjectPath, donors), Required(value.SpeakerKey, "speakerKey"), Time(value.Start, "start"), Time(value.End, "end"), value.LayerName),
                     _ => throw new ArgumentException($"Unsupported operation '{value.Type}'. Supported operations: {string.Join(", ", SupportedTypes)}."),
                 });

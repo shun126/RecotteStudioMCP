@@ -111,6 +111,25 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectCanPutABackgroundImageBehindEveryLayer()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+        string output = Path.Combine(root, "下敷き付き.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("下敷き付き", output, false, new[]
+        {
+            new ProjectOperationDto("addAnnotationLayer", LayerName: "下敷き", InsertIndex: 0),
+            new ProjectOperationDto("addImageObject", Layer: new(Name: "下敷き"), AssetPath: image, ProjectPath: output,
+                DisplayName: "Sample.png", Start: 0m, End: 2m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "下敷き", "映像・音声1", "話者1", "注釈1" }, created.Layers.Select(layer => layer.Name));
+        Assert.Equal("Image", Assert.Single(created.Layers[0].Objects).Type);
+    }
+
+    [Fact]
     public void ListCharactersReportsSpeakerKeysAndLayers()
     {
         string donor = Path.Combine(root, "donor.ccproj");

@@ -80,6 +80,46 @@ public sealed class AnnotationLayerTests : IDisposable
             document.Layers.Select(layer => layer.Name));
     }
 
+    [Fact]
+    public void AddAnnotationLayer_AtIndexZeroHoldsABackgroundBehindEveryLayer()
+    {
+        string output = Path.Combine(directory, "Background.ccproj");
+        RecotteProjectDocument document = RecotteProject.Create(new("Background", directory));
+
+        // Layers draw in array order, so the Annot layer at index 0 is behind the video, the character, and the notes.
+        ProjectBatchSaveResult result = document.ApplyOperationsAndSaveCopy(output, new ProjectOperation[]
+        {
+            new AddAnnotationLayerOperation("下敷き", 0),
+            new AddImageAssetOperation(new LayerNameReference("下敷き"), Sample("004OneImage", "Sample.png"), output,
+                "background", new(0m), new(2m)),
+        });
+
+        Assert.True(result.Success, string.Join("; ", result.Diagnostics.Select(item => $"{item.Code} {item.Message}")));
+        Assert.Equal(0, result.BatchResult.OperationResults[0].CreatedLayerIndex);
+        Assert.Equal(new TimelineObjectId(0, Assert.IsType<TimelineObjectId>(result.BatchResult.OperationResults[1].CreatedObjectId).ObjectKey),
+            result.BatchResult.OperationResults[1].CreatedObjectId);
+        RecotteProjectDocument saved = RecotteProject.Load(output);
+        Assert.True(saved.Validate().IsValid);
+        Assert.Equal(new[] { "Annot", "Video", "Speaker", "Annot" }, saved.Layers.Select(layer => layer.Type));
+        Assert.Equal(new[] { "下敷き", "映像・音声1", "話者1", "注釈1" }, saved.Layers.Select(layer => layer.Name));
+        Assert.Equal("Image", Assert.Single(saved.Layers[0].Objects).Type);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(4)]
+    public void AddAnnotationLayer_RejectsAnIndexOutsideTheLayers(int index)
+    {
+        RecotteProjectDocument document = RecotteProject.Load(TestProjects.EmptyProject);
+        using ProjectEditSession session = document.BeginEdit();
+
+        LayerAddResult result = session.Editor.AddAnnotationLayer(new(null, index));
+
+        Assert.False(result.Success);
+        Assert.Equal("RC4003", Assert.Single(result.Diagnostics).Code);
+        Assert.Empty(session.Changes);
+    }
+
     [Theory]
     [InlineData("注釈1")]
     [InlineData("話者1")]

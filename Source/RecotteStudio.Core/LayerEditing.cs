@@ -2,11 +2,19 @@ using System.Text.Json.Nodes;
 
 namespace RecotteStudio.Core;
 
-/// <summary>Requests a new empty Video layer; a null or omitted name selects the next free default name.</summary>
-public sealed record AddVideoLayerRequest(string? Name = null);
+/// <summary>
+/// Requests a new empty Video layer; a null or omitted name selects the next free default name. Layers draw in array
+/// order, index 0 at the back: a null index places the layer after the last Video layer, and 0 to the layer count
+/// inserts it at that index.
+/// </summary>
+public sealed record AddVideoLayerRequest(string? Name = null, int? Index = null);
 
-/// <summary>Requests a new empty Annot layer; a null or omitted name selects the next free default name.</summary>
-public sealed record AddAnnotationLayerRequest(string? Name = null);
+/// <summary>
+/// Requests a new empty Annot layer; a null or omitted name selects the next free default name. Layers draw in array
+/// order, index 0 at the back: a null index places the layer after the last Annot layer, and 0 to the layer count
+/// inserts it at that index, so 0 puts its images behind every other layer.
+/// </summary>
+public sealed record AddAnnotationLayerRequest(string? Name = null, int? Index = null);
 
 /// <summary>Contains the result of adding a layer.</summary>
 public sealed record LayerAddResult(EditResult EditResult, int? LayerIndex, string? Name)
@@ -25,32 +33,35 @@ public sealed partial class ProjectEditor
     internal const string AnnotationLayerTemplateResource = "RecotteStudio.Core.Templates.AnnotationLayer.ccproj";
 
     /// <summary>
-    /// Adds an empty Video layer directly after the last Video layer, where Recotte Studio places one (013TwoVideos), so
-    /// it draws above the existing videos and below Speaker and Annot layers. Every later layer's index grows by one.
+    /// Adds an empty Video layer, by default directly after the last Video layer, where Recotte Studio places one
+    /// (013TwoVideos), so it draws above the existing videos. Every later layer's index grows by one.
     /// </summary>
     public LayerAddResult AddVideoLayer(AddVideoLayerRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         // Recotte Studio names Video layers 映像・音声1, 映像・音声2, ... (001EmptyProject, 013TwoVideos).
-        return AddLayer("Video", "映像・音声", VideoLayerTemplateResource, request.Name, "AddVideoLayer");
+        return AddLayer("Video", "映像・音声", VideoLayerTemplateResource, request.Name, request.Index, "AddVideoLayer");
     }
 
     /// <summary>
-    /// Adds an empty Annot layer directly after the last Annot layer, where Recotte Studio places one (012TwoImages), so
-    /// its images, notes, and stamps draw above every existing layer. Every later layer's index grows by one.
+    /// Adds an empty Annot layer, by default directly after the last Annot layer, where Recotte Studio places one
+    /// (012TwoImages), so its images, notes, and stamps draw above every existing layer. Every later layer's index grows by one.
     /// </summary>
     public LayerAddResult AddAnnotationLayer(AddAnnotationLayerRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         // Recotte Studio names Annot layers 注釈1, 注釈2, ... (001EmptyProject, 012TwoImages).
-        return AddLayer("Annot", "注釈", AnnotationLayerTemplateResource, request.Name, "AddAnnotationLayer");
+        return AddLayer("Annot", "注釈", AnnotationLayerTemplateResource, request.Name, request.Index, "AddAnnotationLayer");
     }
 
-    // Clones the last layer of the given type from a sample in which Recotte Studio added it, empties it, and inserts it
-    // after the target's last layer of that type, or at the end when the target has none.
-    private LayerAddResult AddLayer(string type, string defaultPrefix, string templateResource, string? requestedName, string operation)
+    // Clones the last layer of the given type from a sample in which Recotte Studio added it, empties it, and inserts it at
+    // the requested index, or else after the target's last layer of that type (at the end when the target has none).
+    private LayerAddResult AddLayer(string type, string defaultPrefix, string templateResource, string? requestedName,
+        int? requestedIndex, string operation)
     {
         if (root["layers"] is not JsonArray layers) return LayerFailed("RC4001", "The project has no layers array.");
+        if (requestedIndex is int requested && (requested < 0 || requested > layers.Count))
+            return LayerFailed("RC4003", $"The layer index {requested} must be between 0 and the layer count {layers.Count}.");
         HashSet<string> names = Layers()
             .Where(item => JsonAccess.TryGetString(item.layer, "name", out _))
             .Select(item => { JsonAccess.TryGetString(item.layer, "name", out string value); return value; })
@@ -87,7 +98,7 @@ public sealed partial class ProjectEditor
 
         int[] sameType = Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string layerType) && layerType == type)
             .Select(item => item.index).ToArray();
-        int index = sameType.Length > 0 ? sameType.Max() + 1 : type == "Video" ? 0 : layers.Count;
+        int index = requestedIndex ?? (sameType.Length > 0 ? sameType.Max() + 1 : type == "Video" ? 0 : layers.Count);
         layers.Insert(index, added);
         for (int prior = 0; prior < changes.Count; prior++)
             changes[prior] = LayerInsertionMetadata.Change(changes[prior], index);

@@ -91,13 +91,13 @@ public sealed record AddFigureOperation(LayerReference Layer, FigureDefinition F
 }
 
 /// <summary>Adds an empty Video layer after the last Video layer; later layers' indexes grow by one.</summary>
-public sealed record AddVideoLayerOperation(string? Name = null) : ProjectOperation
+public sealed record AddVideoLayerOperation(string? Name = null, int? Index = null) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.AddVideoLayer;
 }
 
 /// <summary>Adds an empty Annot layer after the last Annot layer; later layers' indexes grow by one.</summary>
-public sealed record AddAnnotationLayerOperation(string? Name = null) : ProjectOperation
+public sealed record AddAnnotationLayerOperation(string? Name = null, int? Index = null) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.AddAnnotationLayer;
 }
@@ -349,8 +349,8 @@ public sealed partial class ProjectEditor
                     int.TryParse(change.Target, out int key) ? new(layerIndex, key) : null;
                 return new(edit, $"layer:{layerIndex}", created);
             }),
-            AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name))),
-            AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name))),
+            AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name, value.Index))),
+            AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name, value.Index))),
             ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
                 value.StartTime, value.EndTime, value.LayerName))),
             AddFigureOperation value => WithLayer(value.Layer, layerIndex =>
