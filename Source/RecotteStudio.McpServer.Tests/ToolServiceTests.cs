@@ -173,6 +173,30 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task MoveSpeakerVoiceToLayerHandsALineToTheOtherSpeaker()
+    {
+        string source = Path.Combine(root, "二人.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), source);
+        string output = Path.Combine(root, "振り分け.ccproj");
+
+        McpToolResult<object> result = await service.ApplyOperationsAndSaveCopyAsync(source, output, false, new[]
+        {
+            new ProjectOperationDto("moveSpeakerVoiceToLayer", Target: new(LayerIndex: 1, ObjectKey: 1001), Layer: new(Name: "話者2")),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement batch = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch");
+        // Both layers number their voice 1001, so the moved line takes a new key on the woman's layer.
+        Assert.Equal(new TimelineObjectId(2, 1002).ToString(), Assert.Single(batch.GetProperty("audioRegenerationRequired").EnumerateArray()).GetString());
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+        RecotteProjectDocument saved = RecotteProject.Load(output);
+        Assert.Equal(new[] { 0, 2 }, saved.Layers.OfType<SpeakerLayerView>()
+            .Select(layer => layer.Objects.Count(item => item.Type == "Speaker Voice")));
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanMoveSpeakerVoiceToLayer").GetBoolean());
+    }
+
+    [Fact]
     public void ImportCharacterRejectsADonorOutsideTheWorkspace()
     {
         string outside = Directory.CreateTempSubdirectory("recotte-donor-").FullName;

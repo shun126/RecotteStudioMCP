@@ -16,6 +16,12 @@ Recotte Studio MCP の主な変更点を記録します。
   - ドナーのパスも作業フォルダの制限を受けます。
 - `recotte_list_characters` を追加しました。プロジェクトのキャラクターを `speakerKey`、名前、モデル、話者レイヤーとともに一覧します。`importCharacter` のドナーを調べるときに使います。
 - **注釈レイヤーを追加できるようになりました。** 操作 `addAnnotationLayer` を追加しました（#14）。空の注釈レイヤーを最後の注釈レイヤーの直後に追加するため、そこに置いた画像・注釈テキスト・スタンプは既存のすべてのレイヤーより手前に描画されます。既定の名前は `注釈2` のように番号付きで、`layerName` で指定することもできます。名前の扱いと結果の `createdLayerIndex` は `addVideoLayer` と同じです。Capabilities に `canAddAnnotationLayer` を追加しました。
+- **台詞を別の話者レイヤーへ移せるようになりました。** 操作 `moveSpeakerVoiceToLayer` を追加しました。話者は台詞ではなく話者レイヤーに結び付いているため、1つの話者レイヤーにまとまった2人分の台詞を、話者ごとのレイヤーへ振り分けるときに使います。
+  - 本文と表示時刻はそのまま残ります。元のレイヤーの既定の文字スタイル・字幕枠を使っている台詞は、移動先のレイヤーのものに付け替えます。
+  - Recotte Studio はオブジェクトの番号（`objkey`）をレイヤーごとに振るため、移動先に同じ番号があるときは新しい番号を割り当てます。移動後の台詞は結果の `target` で確認してください。
+  - 移動先はロックされていない別の話者レイヤーに限ります（`RC4209`）。移動先の台詞と時間が重なる場合は `RC4211` で失敗します。
+  - 音声付きの台詞を別の話者へ移すと、音声は元の話者の声のまま残ります。`RC4208` と `audioRegenerationRequired` で知らせるので、Recotte Studio で再生成してください。
+  - Capabilities に `canMoveSpeakerVoiceToLayer` を追加しました。
 - **レイヤーの挿入位置を指定できるようになりました。** `addVideoLayer` と `addAnnotationLayer` に `insertIndex`（0〜レイヤー数）を追加しました。レイヤーは `layers` 配列の並び順で描画され、index 0 が最も奥です。`addAnnotationLayer` に `insertIndex: 0` を指定すると、全要素の後ろに下敷き画像を置けます。範囲外は `RC4003` で失敗します。
 - 形式解析用のサンプル `011TwoVoices`、`012TwoImages`、`013TwoVideos` を追加しました。
 - **プロジェクトが参照する素材ファイルを確認できるようになりました。** `recotte_inspect_assets` は、これまで常に `MCP_ASSET_INSPECTION_UNSUPPORTED` を返していましたが、登録済みの画像・動画・音声・スタンプ SVG ごとに、使っているタイムラインのオブジェクトと、保存された相対パス・絶対パスにファイルがあるかを返します。状態は `Found`（どちらかのパスにある）、`Missing`（どちらにもない）、`Unresolved`（パスを解決できない）です。`loc` 0 はプロジェクトのフォルダ、`loc` 1 は Recotte Studio の figures フォルダを基準に解決し、未確認の `loc` は推測せず `Unresolved` とします。登録されていないファイルキーを参照するオブジェクトは `danglingReferences` に返します。
