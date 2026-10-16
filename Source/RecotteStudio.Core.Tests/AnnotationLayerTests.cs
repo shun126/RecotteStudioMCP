@@ -75,7 +75,7 @@ public sealed class AnnotationLayerTests : IDisposable
         });
 
         Assert.True(batch.Success);
-        Assert.Equal(new int?[] { 3, 1, 5 }, batch.OperationResults.Select(result => result.CreatedLayerIndex));
+        Assert.Equal(new int?[] { 4, 1, 5 }, batch.OperationResults.Select(result => result.CreatedLayerIndex));
         Assert.Equal(new[] { "映像・音声1", "映像・音声2", "話者1", "注釈1", "注釈2", "注釈3" },
             document.Layers.Select(layer => layer.Name));
     }

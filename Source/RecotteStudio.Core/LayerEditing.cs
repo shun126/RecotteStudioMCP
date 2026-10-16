@@ -89,6 +89,8 @@ public sealed partial class ProjectEditor
             .Select(item => item.index).ToArray();
         int index = sameType.Length > 0 ? sameType.Max() + 1 : type == "Video" ? 0 : layers.Count;
         layers.Insert(index, added);
+        for (int prior = 0; prior < changes.Count; prior++)
+            changes[prior] = LayerInsertionMetadata.Change(changes[prior], index);
         ProjectChange change = new(operation, $"layer:{index}", null, name, $"$.layers[{index}]");
         changes.Add(change);
         return new(EditResult.Succeeded(new[] { change }), index, name);
