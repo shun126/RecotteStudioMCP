@@ -67,6 +67,8 @@ public sealed partial class ProjectEditor
         int index = Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string type) && type == "Video")
             .Select(item => item.index + 1).DefaultIfEmpty(0).Max();
         layers.Insert(index, added);
+        for (int prior = 0; prior < changes.Count; prior++)
+            changes[prior] = LayerInsertionMetadata.Change(changes[prior], index);
         ProjectChange change = new("AddVideoLayer", $"layer:{index}", null, name, $"$.layers[{index}]");
         changes.Add(change);
         return new(EditResult.Succeeded(new[] { change }), index, name);

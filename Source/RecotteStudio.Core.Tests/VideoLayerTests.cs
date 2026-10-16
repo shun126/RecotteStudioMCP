@@ -4,6 +4,78 @@ namespace RecotteStudio.Core.Tests;
 
 public sealed class VideoLayerTests
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void Batch_PreservesFinalAudioStateAcrossInsertions(bool insertFirst, bool revert)
+    {
+        RecotteProjectDocument document = RecotteProject.Load(Sample("003OneVoice", "003OneVoice.ccproj"));
+        string original = Assert.IsType<SpeakerVoiceView>(Assert.Single(document.Layers[1].Objects)).Text!;
+        List<ProjectOperation> operations = new();
+        if (insertFirst) operations.Add(new AddVideoLayerOperation());
+        operations.Add(new UpdateSpeakerTextOperation(new ObjectKeyReference(1000), "changed"));
+        operations.Add(new AddVideoLayerOperation());
+        if (revert) operations.Add(new UpdateSpeakerTextOperation(new ObjectKeyReference(1000), original));
+        operations.Add(new AddVideoLayerOperation());
+
+        ProjectBatchResult result = document.ApplyOperations(operations);
+
+        Assert.True(result.Success);
+        int layer = insertFirst ? 4 : 3;
+        if (revert)
+        {
+            Assert.Empty(result.AudioRegenerationRequired);
+            Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+        }
+        else
+        {
+            Assert.Equal(new TimelineObjectId(layer, 1000), Assert.Single(result.AudioRegenerationRequired));
+            ProjectDiagnostic warning = Assert.Single(result.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+            Assert.StartsWith($"$.layers[{layer}]", warning.JsonPath);
+            Assert.Contains($"on layer {layer} was changed", warning.Message);
+        }
+        Assert.All(result.OperationResults.Where(operation => operation.OperationType == ProjectOperationKind.UpdateSpeakerText),
+            operation => Assert.Equal(new TimelineObjectId(layer, 1000).ToString(), operation.Target));
+    }
+
+    [Fact]
+    public void Batch_RebasesCreatedObjectsAndChangesToSavedLayerIndexes()
+    {
+        string directory = Directory.CreateTempSubdirectory("RecotteVideoLayerMetadata-").FullName;
+        try
+        {
+            RecotteProjectDocument document = RecotteProject.Load(TestProjects.EmptyProject);
+            ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+            {
+                new AddTextOnlySpeakerVoiceOperation(new LayerIndexReference(1), "voice", new(0m), new(1m)),
+                new AddAnnotationTextOperation(new LayerIndexReference(2), "caption", new(0m), new(1m)),
+                new AddVideoLayerOperation(),
+                new MoveTimelineObjectOperation(new ObjectKeyReference(1), new(1m), new(2m)),
+                new AddVideoLayerOperation(),
+            });
+
+            Assert.True(result.Success);
+            string output = Path.Combine(directory, "rebased.ccproj");
+            document.SaveCopy(output);
+            RecotteProjectDocument saved = RecotteProject.Load(output);
+            for (int index = 0; index < 2; index++)
+            {
+                ProjectOperationResult operation = result.OperationResults[index];
+                TimelineObjectId id = Assert.IsType<TimelineObjectId>(operation.CreatedObjectId);
+                Assert.Equal(index + 3, id.LayerIndex);
+                Assert.Equal($"layer:{id.LayerIndex}", operation.Target);
+                Assert.Contains(saved.Layers[id.LayerIndex].Objects, item => item.ObjectKey == id.ObjectKey);
+                Assert.All(operation.Changes.Where(change => change.JsonPath.StartsWith("$.layers[", StringComparison.Ordinal)),
+                    change => Assert.StartsWith($"$.layers[{id.LayerIndex}]", change.JsonPath));
+            }
+            Assert.Equal(new TimelineObjectId(3, 1).ToString(), result.OperationResults[3].Target);
+            Assert.Equal(result.OperationResults.SelectMany(operation => operation.Changes), result.Changes);
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
     private static string Sample(string directory, string file) => Path.Combine(
         TestProjects.RepositoryRoot, "Documents", "RecotteProjects", directory, file);
 
