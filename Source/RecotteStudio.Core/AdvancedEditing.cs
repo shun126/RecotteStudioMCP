@@ -213,7 +213,7 @@ public sealed partial class ProjectEditor
     /// <summary>
     /// Imports one character registration and its character-only Speaker layer from a donor document. The donor's telop
     /// frames replace the target's, because Recotte Studio fits them around every character's position, so the donor must
-    /// contain every speaker and every telop frame the target already uses.
+    /// contain every speaker and every telop frame the target already uses, with each existing character placed as it is here.
     /// </summary>
     public CharacterImportResult ImportCharacter(ImportCharacterRequest request)
     {
@@ -273,6 +273,14 @@ public sealed partial class ProjectEditor
                 .FirstOrDefault(frame => !string.IsNullOrEmpty(frame) && !donorFrames.Contains(frame));
             if (missingFrame is not null)
                 return CharacterFailed("RC4606", $"The target uses telop frame '{missingFrame}', which the donor does not define.");
+            // The donor's frames are fitted around the donor's characters, so each character already here must sit where it does in the donor.
+            string? movedSpeaker = TargetSpeakerLayers(targetLayers, reusableIndex)
+                .Select(item => (Speaker: JsonAccess.GetPropertyString(item.Layer, "Speaker"), Bounds: CharacterBounds(item.Layer)))
+                .Where(item => item.Bounds is not null)
+                .FirstOrDefault(item => DonorLayerOfSpeaker(donorLayers, item.Speaker) is not JsonObject donorLayer ||
+                    !SemanticJsonComparer.Equals(item.Bounds, CharacterBounds(donorLayer))).Speaker;
+            if (movedSpeaker is not null)
+                return CharacterFailed("RC4606", $"Character '{movedSpeaker}' is placed differently in the donor, whose telop frames would no longer fit it.");
         }
 
         importedObjects.Clear();
@@ -338,6 +346,10 @@ public sealed partial class ProjectEditor
         string.IsNullOrEmpty(speakerKey) ? null : donorLayers.OfType<JsonObject>().FirstOrDefault(layer =>
             JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker" &&
             JsonAccess.GetPropertyString(layer, "Speaker") == speakerKey);
+
+    private static JsonNode? CharacterBounds(JsonObject layer) => (layer["layer-objects"] as JsonArray)?.OfType<JsonObject>()
+        .Where(item => JsonAccess.TryGetString(item, "type", out string type) && type == "Speaker Character")
+        .Select(item => (item["properties"] as JsonObject)?["CharBounds"]).FirstOrDefault();
 
     // Maps a donor layer name to the name of the target layer holding the same character, if it was imported.
     private static string? TargetLayerOfDonorLayer(JsonArray donorLayers, JsonArray targetLayers, int excludedIndex, string donorLayerName)
