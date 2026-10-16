@@ -85,6 +85,18 @@ JSONのキー順序、インデント、数値の表記は意味の一部とし�
 
 `Speaker` レイヤーは `voice-props` を持ちます。キャラクターを追加した場合は、使用可能なアクションを列挙する `actions` も追加されます。
 
+### レイヤーの追加
+
+`011TwoVoices`、`012TwoImages`、`013TwoVideos` では、同じ種類の2つ目のレイヤーが、その種類の最後のレイヤーの直後に挿入されています。後ろのレイヤーは配列位置が1つずつ後ろにずれます。
+
+| サンプル | 追加後のレイヤー |
+| --- | --- |
+| `011TwoVoices` | `Video` `映像・音声1`、`Speaker` `話者1`、`Speaker` `話者2`、`Annot` `注釈1` |
+| `012TwoImages` | `Video` `映像・音声1`、`Speaker` `話者1`、`Annot` `注釈1`、`Annot` `注釈2` |
+| `013TwoVideos` | `Video` `映像・音声1`、`Video` `映像・音声2`、`Speaker` `話者1`、`Annot` `注釈1` |
+
+`013TwoVideos` で追加された `Video` レイヤーは、名前、`selected`、`layer-objects` を除いて `映像・音声1` と同じ内容です。`012TwoImages` で追加された `Annot` レイヤーも同様に、名前、`selected`、`layer-objects` を除いて `注釈1` と同じです。名前は種類ごとの既定名に番号を付けたものです。`objkey` はレイヤーごとに振られ、2つの `Video` レイヤーの動画はどちらも `1000` です。同じ動画ファイルは `file-items` に1回だけ登録され、両方の動画から同じ `ik` で参照されます。`005OneVideo` と比べると、`speakers`、`telop-frames`、`text-styles` などのトップレベルの値は変わらず、`setting` もクリップの配置に伴う `duration` と `position` 以外は同じです。
+
 ### プロパティ値の共通形式
 
 レイヤーとタイムラインオブジェクトの `properties` は、プロパティ名をキーとし、概ね次の形式を持ちます。

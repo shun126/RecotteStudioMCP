@@ -85,6 +85,156 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectCanAddAnnotationLayerAndPlaceNotesOnIt()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+        string output = Path.Combine(root, "前景付き.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("前景付き", output, false, new[]
+        {
+            new ProjectOperationDto("addAnnotationLayer", LayerName: "前景"),
+            new ProjectOperationDto("addImageObject", Layer: new(Name: "前景"), AssetPath: image, ProjectPath: output,
+                DisplayName: "Sample.png", Start: 0m, End: 2m),
+            new ProjectOperationDto("addAnnotationText", Layer: new(Name: "前景"), Text: "編集メモ", Start: 0m, End: 2m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement operations = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch").GetProperty("OperationResults");
+        Assert.Equal(3, operations[0].GetProperty("CreatedLayerIndex").GetInt32());
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "注釈1", "前景" }, created.Layers.OfType<AnnotationLayerView>().Select(layer => layer.Name));
+        Assert.Equal(new[] { "Image", "Figure" }, created.Layers[3].Objects.Select(item => item.Type));
+        JsonElement layers = JsonSerializer.SerializeToElement(service.ListLayers(output).Data).GetProperty("layers");
+        Assert.Equal("前景", layers[3].GetProperty("Name").GetString());
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanAddAnnotationLayer").GetBoolean());
+    }
+
+    [Fact]
+    public async Task CreateProjectCanPutABackgroundImageBehindEveryLayer()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+        string output = Path.Combine(root, "下敷き付き.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("下敷き付き", output, false, new[]
+        {
+            new ProjectOperationDto("addAnnotationLayer", LayerName: "下敷き", InsertIndex: 0),
+            new ProjectOperationDto("addImageObject", Layer: new(Name: "下敷き"), AssetPath: image, ProjectPath: output,
+                DisplayName: "Sample.png", Start: 0m, End: 2m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "下敷き", "映像・音声1", "話者1", "注釈1" }, created.Layers.Select(layer => layer.Name));
+        Assert.Equal("Image", Assert.Single(created.Layers[0].Objects).Type);
+    }
+
+    [Fact]
+    public void ListCharactersReportsSpeakerKeysAndLayers()
+    {
+        string donor = Path.Combine(root, "donor.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+
+        McpToolResult<object> result = service.ListCharacters(donor);
+
+        Assert.True(result.Success);
+        JsonElement characters = JsonSerializer.SerializeToElement(result.Data).GetProperty("characters");
+        Assert.Equal(new[] { "2D-スーツ男性", "2D-スーツ女性" },
+            characters.EnumerateArray().Select(item => item.GetProperty("speakerKey").GetString()));
+        Assert.Equal(new[] { 1, 2 }, characters.EnumerateArray().Select(item => item.GetProperty("layerIndex").GetInt32()));
+        Assert.Equal("下枠", characters[0].GetProperty("telopFrame").GetString());
+        Assert.Empty(JsonSerializer.SerializeToElement(service.ListCharacters(project).Data).GetProperty("characters").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task CreateProjectCanImportCharactersAndGiveThemDialogue()
+    {
+        string donor = Path.Combine(root, "donor.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+        string output = Path.Combine(root, "対談.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("対談", output, false, new[]
+        {
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ女性", Start: 0m, End: 6m,
+                LayerName: "聞き手"),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "話者1"), Text: "こんにちは", Start: 1m, End: 3m),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "聞き手"), Text: "よろしく", Start: 3m, End: 5m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement operations = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch").GetProperty("OperationResults");
+        Assert.Equal(new[] { 1, 2 }, new[] { operations[0], operations[1] }.Select(item => item.GetProperty("CreatedLayerIndex").GetInt32()));
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.True(created.Validate().IsValid);
+        Assert.Equal(new[] { "2D-スーツ男性", "2D-スーツ女性" }, created.Speakers.Select(speaker => speaker.Key));
+        Assert.Equal(new[] { "話者1", "聞き手" }, created.Layers.OfType<SpeakerLayerView>().Select(layer => layer.Name));
+        Assert.All(created.Layers.OfType<SpeakerLayerView>(), layer =>
+            Assert.Equal(new[] { "Speaker Character", "Speaker Voice" }, layer.Objects.Select(item => item.Type)));
+    }
+
+    [Fact]
+    public void ImportCharacterRejectsADonorOutsideTheWorkspace()
+    {
+        string outside = Directory.CreateTempSubdirectory("recotte-donor-").FullName;
+        try
+        {
+            string donor = Path.Combine(outside, "donor.ccproj");
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+            WorkspacePathPolicy policy = new(new(root));
+            RecotteToolService guarded = new(policy, new ProjectOperationMapper(paths: policy), new());
+
+            McpToolResult<object> result = guarded.PreviewOperations(project, new[]
+            {
+                new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+            });
+
+            Assert.False(result.Success);
+            Assert.Equal("MCP_PATH_OUTSIDE_WORKSPACE", result.ErrorCode);
+        }
+        finally { Directory.Delete(outside, true); }
+    }
+
+    [Fact]
+    public void ImportCharacterReportsAnUnreadableDonorAsALoadFailure()
+    {
+        string donor = Path.Combine(root, "locked.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+        using FileStream locked = new(donor, FileMode.Open, FileAccess.Read, FileShare.None);
+
+        McpToolResult<object> result = service.PreviewOperations(project, new[]
+        {
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("MCP_PROJECT_LOAD_FAILED", result.ErrorCode);
+    }
+
+    [Fact]
+    public async Task CreateProjectCanAddVideoLayerAndPlaceVideoOnIt()
+    {
+        string video = Path.Combine(root, "Sample.mp4");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.mp4"), video);
+        string output = Path.Combine(root, "二画面.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("二画面", output, false, new[]
+        {
+            new ProjectOperationDto("addVideoLayer", LayerName: "ワイプ"),
+            new ProjectOperationDto("addVideoObject", Layer: new(Name: "ワイプ"), AssetPath: video, ProjectPath: output,
+                DisplayName: "wipe", Start: 0m, End: 2m),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "話者1"), Text: "こんにちは", Start: 0m, End: 2m),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement operations = JsonSerializer.SerializeToElement(result.Data).GetProperty("batch").GetProperty("OperationResults");
+        Assert.Equal(1, operations[0].GetProperty("CreatedLayerIndex").GetInt32());
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal(new[] { "Video", "Video", "Speaker", "Annot" }, created.Layers.Select(layer => layer.Type));
+        Assert.Equal("ワイプ", created.Layers[1].Name);
+        Assert.Equal("Video", Assert.Single(created.Layers[1].Objects).Type);
+        Assert.Equal("Speaker Voice", Assert.Single(created.Layers[2].Objects).Type);
+    }
+
+    [Fact]
     public async Task FullScreenImageUnderDialogueReportsNoTelopCoverageWarning()
     {
         string image = Path.Combine(root, "Background.png");
@@ -105,6 +255,25 @@ public sealed class ToolServiceTests : IDisposable
         Assert.Equal(2, RecotteProject.Load(output).Layers.Sum(layer => layer.Objects.Count));
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC2401");
         Assert.DoesNotContain(service.ValidateProject(output).Diagnostics, diagnostic => diagnostic.Code == "RC2401");
+    }
+
+    [Fact]
+    public void FailedPreviewReportsTheFirstErrorDiagnosticAsItsErrorCode()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+
+        // Images go on annotation layers only, so placing one on the Video layer behind everything is rejected.
+        McpToolResult<object> result = service.PreviewOperations(project, new[]
+        {
+            new ProjectOperationDto("addImageObject", Layer: new(LayerIndex: 0), AssetPath: image, ProjectPath: project,
+                DisplayName: "Background.png", Start: 0m, End: 2m),
+        });
+
+        Assert.False(result.Success);
+        Assert.Equal("edit", result.Category);
+        Assert.Equal("RC4503", result.ErrorCode);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4503");
     }
 
     [Fact]

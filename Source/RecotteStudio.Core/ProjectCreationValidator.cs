@@ -50,24 +50,29 @@ internal static class ProjectCreationValidator
             "does not identify the requested project directory", "RC2305");
     }
 
+    // A new project has exactly Video, Speaker, and Annot. Once edited it may hold more layers of those types in any order,
+    // because layers draw in array order (index 0 at the back): an Annot layer at index 0 holds a background image.
     private static void ValidateInitialLayers(JsonArray layers, bool requireEmpty, List<ProjectDiagnostic> diagnostics)
     {
         string[] expected = ["Video", "Speaker", "Annot"];
-        if (layers.Count < expected.Length)
-        {
-            diagnostics.Add(Error("RC2306", "The required Video, Speaker, and Annot layers are missing.", "$.layers"));
-            return;
-        }
-        for (int index = 0; index < expected.Length; index++)
+        HashSet<string> present = new(StringComparer.Ordinal);
+        for (int index = 0; index < layers.Count; index++)
         {
             string path = $"$.layers[{index}]";
-            if (layers[index] is not JsonObject layer || !JsonAccess.TryGetString(layer, "type", out string type) || type != expected[index])
-                diagnostics.Add(Error("RC2306", $"Layer {index} must be '{expected[index]}'.", $"{path}.type"));
-            else if (layer["layer-objects"] is not JsonArray objects)
+            if (layers[index] is not JsonObject layer || !JsonAccess.TryGetString(layer, "type", out string type) ||
+                !expected.Contains(type))
+            {
+                diagnostics.Add(Error("RC2306", $"Layer {index} must be 'Video', 'Speaker', or 'Annot'.", $"{path}.type"));
+                continue;
+            }
+            present.Add(type);
+            if (layer["layer-objects"] is not JsonArray objects)
                 diagnostics.Add(Error("RC2306", "layer-objects must be an array.", $"{path}.layer-objects"));
             else if (requireEmpty && objects.Count != 0)
                 diagnostics.Add(Error("RC2306", "A new empty project layer must not contain objects.", $"{path}.layer-objects"));
         }
+        if (present.Count != expected.Length)
+            diagnostics.Add(Error("RC2306", "The required Video, Speaker, and Annot layers are missing.", "$.layers"));
     }
 
     internal static string DirectoryUri(string directory) =>

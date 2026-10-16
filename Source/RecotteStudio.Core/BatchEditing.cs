@@ -18,6 +18,9 @@ public enum ProjectOperationKind
     AddFadeEffect,
     UpdateFadeEffect,
     RemoveFadeEffect,
+    AddVideoLayer,
+    ImportCharacter,
+    AddAnnotationLayer,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -87,6 +90,28 @@ public sealed record AddFigureOperation(LayerReference Layer, FigureDefinition F
     public override ProjectOperationKind Kind => ProjectOperationKind.AddFigure;
 }
 
+/// <summary>Adds an empty Video layer after the last Video layer; later layers' indexes grow by one.</summary>
+public sealed record AddVideoLayerOperation(string? Name = null, int? Index = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddVideoLayer;
+}
+
+/// <summary>Adds an empty Annot layer after the last Annot layer; later layers' indexes grow by one.</summary>
+public sealed record AddAnnotationLayerOperation(string? Name = null, int? Index = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.AddAnnotationLayer;
+}
+
+/// <summary>
+/// Imports a character and its Speaker layer from a donor project, reusing the target's empty Speaker layer or inserting
+/// before the first Annot layer; an inserted layer makes every later layer's index grow by one.
+/// </summary>
+public sealed record ImportCharacterOperation(RecotteProjectDocument Donor, string SpeakerKey, ProjectTime StartTime,
+    ProjectTime EndTime, string? LayerName = null) : ProjectOperation
+{
+    public override ProjectOperationKind Kind => ProjectOperationKind.ImportCharacter;
+}
+
 /// <summary>Configures allocators and duration handling used by a document-level batch.</summary>
 public sealed record ProjectBatchOptions
 {
@@ -104,7 +129,11 @@ public sealed record ProjectOperationResult(
     TimelineObjectId? CreatedObjectId,
     string? CreatedFileItemKey,
     IReadOnlyList<ProjectChange> Changes,
-    IReadOnlyList<ProjectDiagnostic> Diagnostics);
+    IReadOnlyList<ProjectDiagnostic> Diagnostics)
+{
+    /// <summary>Gets the added layer's index in the final batch state.</summary>
+    public int? CreatedLayerIndex { get; init; }
+}
 
 /// <summary>Contains the complete structured result of an atomic batch.</summary>
 public sealed record ProjectBatchResult(
@@ -130,7 +159,8 @@ public sealed record ProjectBatchResult(
 public sealed record ProjectBatchPreview(ProjectBatchResult BatchResult, ProjectTime? EstimatedDuration, bool CanSaveCopy);
 
 internal sealed record OperationExecutionResult(EditResult EditResult, string? Target,
-    TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null);
+    TimelineObjectId? CreatedObjectId = null, string? CreatedFileItemKey = null, int? CreatedLayerIndex = null,
+    int? InsertedLayerIndex = null);
 
 public sealed partial class ProjectEditSession
 {
@@ -146,6 +176,7 @@ public sealed partial class ProjectEditSession
 
         batchApplied = true;
         JsonObject before = (JsonObject)workingRoot.DeepClone();
+        JsonObject audioBaseline = (JsonObject)before.DeepClone();
         List<ProjectOperationResult> results = new();
         List<ProjectDiagnostic> diagnostics = new();
 
@@ -154,8 +185,29 @@ public sealed partial class ProjectEditSession
             ProjectOperation operation = operations[index];
             OperationExecutionResult executed = Editor.ApplyOperation(operation);
             EditResult edit = executed.EditResult;
+            if (edit.Success && executed.InsertedLayerIndex is int insertedIndex)
+            {
+                // Align original voice text with the evolving layout without changing the rollback snapshot.
+                ((JsonArray)audioBaseline["layers"]!).Insert(insertedIndex, new JsonObject());
+                for (int prior = 0; prior < results.Count; prior++)
+                {
+                    ProjectOperationResult result = results[prior];
+                    results[prior] = result with
+                    {
+                        Target = LayerInsertionMetadata.Target(result.Target, insertedIndex),
+                        CreatedObjectId = result.CreatedObjectId is TimelineObjectId id
+                            ? id with { LayerIndex = LayerInsertionMetadata.Index(id.LayerIndex, insertedIndex) } : null,
+                        CreatedLayerIndex = result.CreatedLayerIndex is int layer
+                            ? LayerInsertionMetadata.Index(layer, insertedIndex) : null,
+                        Changes = result.Changes.Select(change => LayerInsertionMetadata.Change(change, insertedIndex)).ToArray(),
+                        Diagnostics = result.Diagnostics.Select(diagnostic => LayerInsertionMetadata.Diagnostic(diagnostic, insertedIndex)).ToArray(),
+                    };
+                }
+                for (int prior = 0; prior < diagnostics.Count; prior++)
+                    diagnostics[prior] = LayerInsertionMetadata.Diagnostic(diagnostics[prior], insertedIndex);
+            }
             results.Add(new(index, operation.Kind, edit.Success, executed.Target, executed.CreatedObjectId,
-                executed.CreatedFileItemKey, edit.Changes, edit.Diagnostics));
+                executed.CreatedFileItemKey, edit.Changes, edit.Diagnostics) { CreatedLayerIndex = executed.CreatedLayerIndex });
             diagnostics.AddRange(edit.Diagnostics);
             if (!edit.Success)
             {
@@ -177,7 +229,7 @@ public sealed partial class ProjectEditSession
         }
 
         (IReadOnlyList<TimelineObjectId> audioRegenerationRequired, IReadOnlyList<ProjectDiagnostic> finalDiagnostics) =
-            FinalizeAudioRegeneration(before, workingRoot, results, diagnostics);
+            FinalizeAudioRegeneration(audioBaseline, workingRoot, results, diagnostics);
         return new(true, operations.Count, null, results.ToArray(), Changes.ToArray(),
             finalDiagnostics, validation, true, false, false)
         {
@@ -297,6 +349,10 @@ public sealed partial class ProjectEditor
                     int.TryParse(change.Target, out int key) ? new(layerIndex, key) : null;
                 return new(edit, $"layer:{layerIndex}", created);
             }),
+            AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name, value.Index))),
+            AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name, value.Index))),
+            ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
+                value.StartTime, value.EndTime, value.LayerName))),
             AddFigureOperation value => WithLayer(value.Layer, layerIndex =>
             {
                 AssetAddResult asset = AddFigure(new(layerIndex, value.Figure, value.StartTime, value.EndTime,
@@ -343,6 +399,16 @@ public sealed partial class ProjectEditor
         if (matches.Length > 1) return LookupFailure("RC6002", "The referenced timeline object is ambiguous.", reference.ToString());
         return action(matches[0]);
     }
+
+    private static OperationExecutionResult LayerAdded(LayerAddResult layer) => new(layer.EditResult,
+        layer.LayerIndex is int index ? $"layer:{index}" : null, CreatedLayerIndex: layer.LayerIndex,
+        InsertedLayerIndex: layer.LayerIndex);
+
+    // An import that fills the empty Speaker layer still reports it, but only an inserted layer shifts the layers after it.
+    private static OperationExecutionResult CharacterImported(CharacterImportResult character) => new(character.EditResult,
+        character.LayerId is { } layer ? $"layer:{layer.LayerIndex}" : null, character.ObjectId,
+        CreatedLayerIndex: character.LayerId?.LayerIndex,
+        InsertedLayerIndex: character.InsertedLayer ? character.LayerId?.LayerIndex : null);
 
     private static OperationExecutionResult LookupFailure(string code, string message, string? target) =>
         new(EditResult.Failed(code, message), target);

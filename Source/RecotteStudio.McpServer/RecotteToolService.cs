@@ -87,6 +87,19 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
         }).ToArray(),
     }));
 
+    public McpToolResult<object> ListCharacters(string projectPath) => WithDocument(projectPath, (_, document) => Ok(new
+    {
+        characters = document.Speakers.Select(speaker =>
+        {
+            SpeakerLayerView? layer = document.Layers.OfType<SpeakerLayerView>().FirstOrDefault(item => item.SpeakerKey == speaker.Key);
+            return new
+            {
+                speakerKey = speaker.Key, speaker.Name, model = speaker.File,
+                layerIndex = layer?.Index, layerName = layer?.Name, telopFrame = layer?.TelopFrame,
+            };
+        }).ToArray(),
+    }));
+
     public McpToolResult<object> ListTimeline(string projectPath, string? layerName = null, string? objectType = null,
         decimal? start = null, decimal? end = null) => WithDocument(projectPath, (_, document) =>
     {
@@ -559,13 +572,14 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
 
     private static McpToolResult<object> BatchSave(string source, string output, ProjectBatchSaveResult result) =>
         new(result.Success, result.Success ? "success" : result.SaveFailureKind is null ? "edit" : "save",
-            result.SaveFailureKind?.ToString(), result.Success ? null : "The atomic edit or SaveCopy operation failed.",
+            result.Success ? null : result.SaveFailureKind?.ToString() ?? FirstErrorCode(result.Diagnostics),
+            result.Success ? null : "The atomic edit or SaveCopy operation failed.",
             new { projectPath = source, outputPath = output, batch = BatchData(result.BatchResult, result.Success), save = result.SaveResult is null ? null : Save(result.SaveResult) },
             Diagnostics(Kept(result.Diagnostics, result.Success)));
     private static McpToolResult<object> OverwriteResult(string path, ProjectBatchSaveResult result)
     {
         ProjectSaveResult? save = result.SaveResult;
-        string? errorCode = result.SaveFailureKind?.ToString();
+        string? errorCode = result.Success ? null : result.SaveFailureKind?.ToString() ?? FirstErrorCode(result.Diagnostics);
         string category = result.Success ? "success" : result.SaveFailureKind == ProjectSaveFailureKind.SourceChanged ? "conflict" :
             result.SaveFailureKind is null ? "edit" : "save";
         return new(result.Success, category, errorCode,
@@ -577,8 +591,13 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
                     diagnostics = Diagnostics(save.ValidationAfterSave.Diagnostics) } }, Diagnostics(Kept(result.Diagnostics, result.Success)));
     }
     private static McpToolResult<object> Batch(ProjectBatchResult result, object? extra = null, IEnumerable<ProjectDiagnostic>? diagnostics = null) =>
-        new(result.Success, result.Success ? "success" : "edit", null, result.Success ? null : "The atomic operation preview failed.",
+        new(result.Success, result.Success ? "success" : "edit",
+            result.Success ? null : FirstErrorCode(diagnostics ?? result.Diagnostics), result.Success ? null : "The atomic operation preview failed.",
             new { batch = BatchData(result, result.Success), extra }, Diagnostics(Kept(diagnostics ?? result.Diagnostics, result.Success)));
+    // A failed batch carries its reason only in the diagnostics; surfacing the first error code lets callers and the
+    // activity log tell, say, a wrong layer type (RC4503) from a missing object without reading every diagnostic.
+    private static string? FirstErrorCode(IEnumerable<ProjectDiagnostic> diagnostics) =>
+        diagnostics.FirstOrDefault(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)?.Code;
     // changesKept is false when the batch failed or its save failed: every operation was rolled back or never reached the
     // file, so no clip's text changed even though earlier operations in the batch report success.
     private static object BatchData(ProjectBatchResult value, bool changesKept) => new { value.Success, value.AppliedOperationCount, value.FailedOperationIndex,
