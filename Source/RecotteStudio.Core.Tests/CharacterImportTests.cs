@@ -139,6 +139,34 @@ public sealed class CharacterImportTests : IDisposable
         Assert.Contains("下枠", diagnostic.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ImportCharacter_RejectsADonorThatPlacesAnExistingCharacterElsewhere()
+    {
+        RecotteProjectDocument target = RecotteProject.Create(new("Layout", directory));
+        Assert.True(target.ApplyOperations(new[]
+        {
+            new ImportCharacterOperation(RecotteProject.Load(TwoVoices), Man, new(0m), new(10m)),
+        }).Success);
+        // The same two characters and frames, but the man stands where the donor's frames were not fitted around him.
+        JsonObject root = JsonNode.Parse(File.ReadAllText(TwoVoices))!.AsObject();
+        JsonObject manCharacter = root["layers"]!.AsArray().OfType<JsonObject>()
+            .Single(layer => (string?)layer["type"] == "Speaker" && Property(layer, "Speaker") == Man)["layer-objects"]!.AsArray().OfType<JsonObject>()
+            .Single(item => (string?)item["type"] == "Speaker Character");
+        manCharacter["properties"]!["CharBounds"]!["p-value"]![0] = 400.0;
+        string donorPath = Path.Combine(directory, "Donor.ccproj");
+        File.WriteAllText(donorPath, root.ToJsonString());
+
+        ProjectBatchResult batch = target.ApplyOperations(new[]
+        {
+            new ImportCharacterOperation(RecotteProject.Load(donorPath), Woman, new(0m), new(10m)),
+        });
+
+        Assert.False(batch.Success);
+        ProjectDiagnostic diagnostic = Assert.Single(batch.Diagnostics, item => item.Severity == DiagnosticSeverity.Error);
+        Assert.Equal("RC4606", diagnostic.Code);
+        Assert.Contains(Man, diagnostic.Message, StringComparison.Ordinal);
+    }
+
     private JsonArray SavedLayers(RecotteProjectDocument document)
     {
         string output = Path.Combine(directory, $"{Guid.NewGuid():N}.ccproj");
