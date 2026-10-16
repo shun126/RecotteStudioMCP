@@ -173,6 +173,26 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task MoveLayerSwapsTheSpeakerTracks()
+    {
+        string source = Path.Combine(root, "二人.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), source);
+        string output = Path.Combine(root, "入れ替え.ccproj");
+
+        McpToolResult<object> result = await service.ApplyOperationsAndSaveCopyAsync(source, output, false, new[]
+        {
+            new ProjectOperationDto("moveLayer", Layer: new(Name: "話者2"), InsertIndex: 1),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        RecotteProjectDocument saved = RecotteProject.Load(output);
+        Assert.Equal(new[] { "映像・音声1", "話者2", "話者1", "注釈1" }, saved.Layers.Select(layer => layer.Name));
+        Assert.Equal(new[] { "2D-スーツ女性", "2D-スーツ男性" }, saved.Speakers.Select(speaker => speaker.Key));
+        McpToolResult<object> missing = service.PreviewOperations(source, new[] { new ProjectOperationDto("moveLayer", Layer: new(Name: "話者2")) });
+        Assert.Equal("MCP_OPERATION_INVALID", missing.ErrorCode);
+    }
+
+    [Fact]
     public async Task CreateProjectCanGiveEachSpeakerItsOwnLayer()
     {
         string output = Path.Combine(root, "対話.ccproj");

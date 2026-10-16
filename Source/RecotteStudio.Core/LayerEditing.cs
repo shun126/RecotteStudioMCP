@@ -22,6 +22,20 @@ public sealed record AddAnnotationLayerRequest(string? Name = null, int? Index =
 /// </summary>
 public sealed record AddSpeakerLayerRequest(string? Name = null, int? Index = null);
 
+/// <summary>Requests moving the layer at LayerIndex so that it ends up at TargetIndex (0 to the layer count minus one).</summary>
+public sealed record MoveLayerRequest(int LayerIndex, int TargetIndex);
+
+/// <summary>Contains the result of moving a layer; LayerIndex is where the layer ended up.</summary>
+public sealed record LayerMoveResult(EditResult EditResult, int? LayerIndex, string? Name)
+{
+    /// <summary>Gets whether the layer was moved.</summary>
+    public bool Success => EditResult.Success;
+    /// <summary>Gets the operation diagnostics.</summary>
+    public IReadOnlyList<ProjectDiagnostic> Diagnostics => EditResult.Diagnostics;
+    /// <summary>Gets the staged project changes.</summary>
+    public IReadOnlyList<ProjectChange> Changes => EditResult.Changes;
+}
+
 /// <summary>Contains the result of adding a layer.</summary>
 public sealed record LayerAddResult(EditResult EditResult, int? LayerIndex, string? Name)
 {
@@ -137,6 +151,64 @@ public sealed partial class ProjectEditor
         changes.Add(change);
         return new(EditResult.Succeeded(new[] { change }), index, name);
     }
+
+    /// <summary>
+    /// Moves a layer to another position. Layers draw in array order, index 0 at the back, so this changes what draws over
+    /// what; the layer itself is unchanged, as when Recotte Studio swaps two tracks (008TwoCharacters to 014SwapTwoCharacters).
+    /// Every layer between the old and new positions shifts by one. Moving a Speaker layer also reorders the speaker registry
+    /// to follow the Speaker layers, which Recotte Studio does when it saves.
+    /// </summary>
+    public LayerMoveResult MoveLayer(MoveLayerRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (root["layers"] is not JsonArray layers) return LayerMoveFailed("RC4001", "The project has no layers array.");
+        if (request.LayerIndex < 0 || request.LayerIndex >= layers.Count || layers[request.LayerIndex] is not JsonObject layer)
+            return LayerMoveFailed("RC4005", $"Layer {request.LayerIndex} does not exist.");
+        if (request.TargetIndex < 0 || request.TargetIndex >= layers.Count)
+            return LayerMoveFailed("RC4003", $"The layer index {request.TargetIndex} must be between 0 and {layers.Count - 1}.");
+        if (IsLocked(layer)) return LayerMoveFailed("RC4005", $"Layer {request.LayerIndex} is locked.");
+        string name = LayerName(layer);
+        if (request.TargetIndex == request.LayerIndex) return new(EditResult.Succeeded(), request.LayerIndex, name);
+
+        layers.RemoveAt(request.LayerIndex);
+        layers.Insert(request.TargetIndex, layer);
+        Func<int, int> map = LayerInsertionMetadata.Move(request.LayerIndex, request.TargetIndex);
+        for (int prior = 0; prior < changes.Count; prior++)
+            changes[prior] = LayerInsertionMetadata.Change(changes[prior], map);
+        List<ProjectChange> made = new();
+        ProjectChange change = new("MoveLayer", $"layer:{request.TargetIndex}", request.LayerIndex, request.TargetIndex,
+            $"$.layers[{request.TargetIndex}]");
+        changes.Add(change);
+        made.Add(change);
+        if (JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker") OrderSpeakersByLayers(made);
+        return new(EditResult.Succeeded(made), request.TargetIndex, name);
+    }
+
+    // 014SwapTwoCharacters lists its speakers in the order of the Speaker layers showing them; speakers no layer shows keep
+    // their place after those.
+    private void OrderSpeakersByLayers(List<ProjectChange> made)
+    {
+        if (root["speakers"] is not JsonArray speakers) return;
+        List<string> layerOrder = Layers()
+            .Where(item => JsonAccess.TryGetString(item.layer, "type", out string type) && type == "Speaker")
+            .Select(item => JsonAccess.GetPropertyString(item.layer, "Speaker"))
+            .OfType<string>().Where(key => key.Length > 0).Distinct().ToList();
+        JsonNode?[] before = speakers.ToArray();
+        int Rank(JsonNode? node) => node is JsonObject speaker && JsonAccess.TryGetString(speaker, "key", out string key) &&
+            layerOrder.IndexOf(key) is int rank and >= 0 ? rank : layerOrder.Count;
+        JsonNode?[] after = before.Select((node, index) => (node, index)).OrderBy(pair => Rank(pair.node)).ThenBy(pair => pair.index)
+            .Select(pair => pair.node).ToArray();
+        if (before.SequenceEqual(after)) return;
+        string?[] Keys(IEnumerable<JsonNode?> nodes) => nodes.Select(node => node is JsonObject speaker &&
+            JsonAccess.TryGetString(speaker, "key", out string key) ? key : null).ToArray();
+        speakers.Clear();
+        foreach (JsonNode? node in after) speakers.Add(node);
+        ProjectChange change = new("OrderSpeakers", "speakers", Keys(before), Keys(after), "$.speakers");
+        changes.Add(change);
+        made.Add(change);
+    }
+
+    private static LayerMoveResult LayerMoveFailed(string code, string message) => new(EditResult.Failed(code, message), null, null);
 
     private string? MissingSpeakerLayerDefinition(JsonObject layer)
     {
