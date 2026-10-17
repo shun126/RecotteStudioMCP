@@ -59,6 +59,19 @@ public sealed class OperationAndLockTests
     }
 
     [Fact]
+    public void MapperMapsObjectBoundsWithOmittedValues()
+    {
+        OperationMapResult result = new ProjectOperationMapper().Map(new[]
+        {
+            new ProjectOperationDto("setObjectBounds", Target: new(LayerIndex: 2, ObjectKey: 1000), X: 10m, Width: 320m),
+        });
+
+        Assert.True(result.Success);
+        Assert.Equal(new SetObjectBoundsOperation(new TimelineObjectIdReference(new(2, 1000)), 10m, null, 320m, null),
+            Assert.Single(result.Operations));
+    }
+
+    [Fact]
     public async Task SameOutputPathIsSerialized()
     {
         OutputPathLockManager manager = new();

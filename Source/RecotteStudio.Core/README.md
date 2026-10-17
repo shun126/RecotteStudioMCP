@@ -82,12 +82,21 @@ Add an empty Video layer with `AddVideoLayer` (batch: `AddVideoLayerOperation`) 
 
 `AddAnnotationLayer` (batch: `AddAnnotationLayerOperation`) works the same way for an empty Annot layer: it clones the second Annot layer of `012TwoImages`, inserts it after the last Annot layer so that its images, annotation text, and stamps draw above every existing layer, or at the given index (index 0 makes it the backmost layer, for a background image), and names it `注釈N` unless a name is given. `Capabilities.CanAddAnnotationLayer` reports availability.
 
+Move or resize an Image or Figure (a stamp or an annotation text box) on an Annot layer, or a Video on a Video layer, with `SetObjectBounds` (batch: `SetObjectBoundsOperation`). It rewrites the object's `Bounds` rectangle `[x, y, width, height]` in project pixels; a null value keeps that part of the current rectangle, so an object can be moved without resizing it. Width and height must be positive, and at least one value is required (`RC4913`); other object types fail with `RC4911`, and keyframe-animated bounds with `RC4912`. Only a locked layer or a `locked` or `tl-locked` object blocks the edit (`RC4207`): Recotte Studio saves every video with `st-locked` and `pv-locked` set, so those flags are ignored and kept. `TimelineEntryView.Bounds` reports each object's current rectangle, `TimelineEntryCapabilities.CanSetBounds` whether it can be edited, and `Capabilities.CanSetObjectBounds` availability for the version.
+
 ```csharp
 ProjectBatchResult layered = document.ApplyOperations(
 [
     new AddVideoLayerOperation("ワイプ"),
     new AddVideoAssetOperation(new LayerNameReference("ワイプ"), "Wipe.mp4", "Project.ccproj", "wipe",
         new ProjectTime(2m), new ProjectTime(6m)),
+]);
+
+// The added video fills the screen; shrink it into the top-right corner in a later batch.
+TimelineObjectId wipe = layered.OperationResults[1].CreatedObjectId!.Value;
+document.ApplyOperations(
+[
+    new SetObjectBoundsOperation(new TimelineObjectIdReference(wipe), 1380m, 60m, 480m, 270m),
 ]);
 ```
 
