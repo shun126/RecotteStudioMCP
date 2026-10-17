@@ -3,6 +3,15 @@
 Recotte Studio MCP の主な変更点を記録します。
 書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に、バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
+## [未リリース]
+
+### 追加
+
+- **注釈レイヤーと動画レイヤーのオブジェクトの位置とサイズを変更できるようになりました。** 操作 `setObjectBounds` を追加しました。注釈レイヤーの画像・スタンプ・注釈テキストと、動画レイヤーの動画の表示位置（左上の `x`、`y`）と大きさ（`width`、`height`）を画面のピクセルで指定します。省略した値は現在のままなので、移動だけ、大きさの変更だけもできます。動画を縮小して隅に置くワイプなどに使います。
+  - Recotte Studio は動画を常に `st-locked`・`pv-locked` を付けて保存するため、これらのフラグでは失敗せず、フラグもそのまま残します。ロックされたレイヤーと `tl-locked` のオブジェクトは `RC4207` で失敗します。
+  - 対象外のオブジェクトは `RC4911`、キーフレームで動かしている場合は `RC4912`、値の指定がない場合や幅・高さが正でない場合は `RC4913` で失敗します。
+  - `recotte_list_timeline` の各エントリーに現在の `bounds` と `capabilities.canSetBounds` を、Capabilities に `canSetObjectBounds` を追加しました。
+
 ## [0.6.0] - 2026-10-16
 
 ### 追加

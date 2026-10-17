@@ -298,6 +298,37 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SetObjectBoundsShrinksAVideoIntoAWipe()
+    {
+        string video = Path.Combine(root, "Sample.mp4");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.mp4"), video);
+        string output = Path.Combine(root, "ワイプ.ccproj");
+        McpToolResult<object> created = await service.CreateProjectAsync("ワイプ", output, false, new[]
+        {
+            new ProjectOperationDto("addVideoLayer", LayerName: "ワイプ"),
+            new ProjectOperationDto("addVideoObject", Layer: new(Name: "ワイプ"), AssetPath: video, ProjectPath: output,
+                DisplayName: "wipe", Start: 0m, End: 2m),
+        }, default);
+        Assert.True(created.Success, created.Message);
+        JsonElement entry = Assert.Single(JsonSerializer.SerializeToElement(service.ListTimeline(output, layerName: "ワイプ").Data)
+            .GetProperty("entries").EnumerateArray());
+        Assert.Equal(1920m, entry.GetProperty("Bounds").GetProperty("Width").GetDecimal());
+        Assert.True(entry.GetProperty("Capabilities").GetProperty("CanSetBounds").GetBoolean());
+        int key = entry.GetProperty("objectKey").GetInt32();
+
+        McpToolResult<object> moved = await service.ApplyOperationsAndOverwriteAsync(output, new[]
+        {
+            new ProjectOperationDto("setObjectBounds", Target: new(LayerIndex: 1, ObjectKey: key), X: 1380m, Y: 60m, Width: 480m, Height: 270m),
+        }, default);
+
+        Assert.True(moved.Success, moved.Message);
+        TimelineEntryView wipe = Assert.Single(RecotteProject.Load(output).GetTimelineEntries(), item => item.LayerIndex == 1);
+        Assert.Equal(new ObjectBounds(1380m, 60m, 480m, 270m), wipe.Bounds);
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanSetObjectBounds").GetBoolean());
+    }
+
+    [Fact]
     public async Task FullScreenImageUnderDialogueReportsNoTelopCoverageWarning()
     {
         string image = Path.Combine(root, "Background.png");

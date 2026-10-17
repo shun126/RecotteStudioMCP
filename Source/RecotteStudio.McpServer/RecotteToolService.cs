@@ -619,7 +619,7 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
     private static object Timeline(TimelineEntryView value) => new { value.LayerIndex, value.LayerName, value.LayerType,
         objectKey = value.ObjectId?.ObjectKey, value.ObjectIndex, value.ObjectType, value.Name, value.Text,
         start = value.StartTime?.TotalSeconds, end = value.EndTime?.TotalSeconds, duration = value.Duration?.TotalSeconds,
-        locked = value.IsLocked, hasAudio = value.HasAudio, value.Capabilities };
+        locked = value.IsLocked, hasAudio = value.HasAudio, value.Bounds, value.Capabilities };
     private static object AssetObject(AssetReferencingObject value) => new { value.LayerIndex, value.ObjectIndex, value.ObjectKey,
         objectType = value.ObjectType, value.Name };
     private static ProjectTimeRange? Range(decimal? start, decimal? end) => start is null && end is null ? null :
