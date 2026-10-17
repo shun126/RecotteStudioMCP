@@ -91,6 +91,16 @@ ProjectBatchResult layered = document.ApplyOperations(
 ]);
 ```
 
+Make a character play an expression or gesture with `AddSpeakerAction` (batch: `AddSpeakerActionOperation`). It clones the Speaker Action of `015SpeakerActions` onto a Speaker layer that holds a character, sets `Emotion` to one of the layer's `actions` (the full `pack:name`, or the name after the colon when only one pack has it) and `Loop`, and moves the `OutWeight` blend to the clip's new end. Recotte Studio copies the action list from the character model when the character is added, so the `.rsp` model is never read; `SpeakerLayerView.Actions` lists it and `TimelineEntryView.Action` reports what a Speaker Action plays. Actions may overlap one another and the layer's voices; place one with a line's start and end to give that line an expression. A layer without a character or a locked layer fails with `RC4921`, an unknown action with `RC4922`, and a range that is invalid or shorter than the 0.2-second blend-in and blend-out together with `RC4923`. `Capabilities.CanAddSpeakerAction` reports availability.
+
+```csharp
+ProjectBatchResult expressive = document.ApplyOperations(
+[
+    new AddTextOnlySpeakerVoiceOperation(new LayerNameReference("話者1"), "うれしいです", new ProjectTime(1m), new ProjectTime(3m)),
+    new AddSpeakerActionOperation(new LayerNameReference("話者1"), "直立(笑顔1)", new ProjectTime(1m), new ProjectTime(3m)),
+]);
+```
+
 ## Atomic batch editing
 
 Installed effect discovery and Image/Video fade add, update, and removal are available through `EffectCatalog`,

@@ -95,6 +95,8 @@ public sealed record ProjectCapabilities(
     public bool CanAddSpeakerLayer { get; init; }
     /// <summary>Gets whether a Speaker Voice can be moved to another Speaker layer, so that layer's speaker says it.</summary>
     public bool CanMoveSpeakerVoiceToLayer { get; init; }
+    /// <summary>Gets whether a Speaker Action, an expression or gesture of a layer's character, can be added.</summary>
+    public bool CanAddSpeakerAction { get; init; }
 }
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
@@ -118,6 +120,8 @@ public sealed record TimelineEntryView(
 {
     /// <summary>Gets whether the Speaker Voice carries generated-audio markers.</summary>
     public bool HasAudio { get; init; }
+    /// <summary>Gets the action a Speaker Action plays (pack:name), or null for other objects.</summary>
+    public string? Action { get; init; }
 }
 
 /// <summary>Filters flattened timeline entries. Range matching uses half-open intervals.</summary>
@@ -181,6 +185,7 @@ public sealed partial class RecotteProjectDocument
             ProjectEditor.CanAddSpeakerLayerTo(root),
         CanMoveLayer = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanMoveSpeakerVoiceToLayer = profile.CanEditSpeakerVoice,
+        CanAddSpeakerAction = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
     };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>
@@ -343,6 +348,7 @@ public sealed partial class RecotteProjectDocument
                 id is not null && !locked && Capabilities.CanRemoveTimelineObject))
         {
             HasAudio = hasAudio,
+            Action = item.Type == "Speaker Action" ? JsonAccess.GetPropertyString(item.JsonNode, "Emotion") : null,
         };
     }
 

@@ -24,6 +24,7 @@ public enum ProjectOperationKind
     MoveSpeakerVoiceToLayer,
     AddSpeakerLayer,
     MoveLayer,
+    AddSpeakerAction,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -430,6 +431,12 @@ public sealed partial class ProjectEditor
                 LayerMoveResult move = MoveLayer(new(layerIndex, value.TargetIndex));
                 return new(move.EditResult, $"layer:{move.LayerIndex ?? layerIndex}",
                     MovedLayer: move.Success && move.LayerIndex is int to && to != layerIndex ? (layerIndex, to) : null);
+            }),
+            AddSpeakerActionOperation value => WithLayer(value.Layer, layerIndex =>
+            {
+                SpeakerActionAddResult action = AddSpeakerAction(new(new(layerIndex), value.Action, value.StartTime,
+                    value.EndTime, value.Loop));
+                return new(action.EditResult, $"layer:{layerIndex}", action.ObjectId);
             }),
             AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name, value.Index))),
             ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,

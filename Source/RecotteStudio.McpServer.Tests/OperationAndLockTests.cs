@@ -59,6 +59,22 @@ public sealed class OperationAndLockTests
     }
 
     [Fact]
+    public void MapperMapsSpeakerActionAndRequiresTheAction()
+    {
+        ProjectOperationMapper mapper = new();
+        OperationMapResult result = mapper.Map(new[]
+        {
+            new ProjectOperationDto("addSpeakerAction", Layer: new(Name: "話者1"), Action: "smile", Start: 1m, End: 2m),
+        });
+
+        Assert.True(result.Success);
+        Assert.Equal(new AddSpeakerActionOperation(new LayerNameReference("話者1"), "smile", new(1m), new(2m)),
+            Assert.Single(result.Operations));
+        Assert.Equal("MCP_OPERATION_INVALID", mapper.Map(new[]
+            { new ProjectOperationDto("addSpeakerAction", Layer: new(Name: "話者1"), Start: 1m, End: 2m) }).ErrorCode);
+    }
+
+    [Fact]
     public async Task SameOutputPathIsSerialized()
     {
         OutputPathLockManager manager = new();
