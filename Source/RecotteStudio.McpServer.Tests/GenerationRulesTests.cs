@@ -19,6 +19,18 @@ public sealed class GenerationRulesTests
     }
 
     [Fact]
+    public void SearchesNextToTheExecutableBeforeTheBaseDirectory()
+    {
+        IReadOnlyList<string> directories = GenerationRulesProvider.SearchDirectories();
+
+        Assert.Equal(Path.GetDirectoryName(Environment.ProcessPath), directories[0]);
+        Assert.Contains(directories, item => string.Equals(Path.TrimEndingDirectorySeparator(item),
+            Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory), StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(directories.Count, directories.Select(Path.TrimEndingDirectorySeparator)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Count());
+    }
+
+    [Fact]
     public void MissingGuidanceOnlyLogsWarningAndCanBeAddedLaterWithoutRestart()
     {
         string directory = Path.Combine(Path.GetTempPath(), $"recotte-guidance-{Guid.NewGuid():N}");
