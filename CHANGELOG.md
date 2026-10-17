@@ -12,6 +12,14 @@ Recotte Studio MCP の主な変更点を記録します。
   - 対象外のオブジェクトは `RC4911`、キーフレームで動かしている場合は `RC4912`、値の指定がない場合や幅・高さが正でない場合は `RC4913` で失敗します。
   - `recotte_list_timeline` の各エントリーに現在の `bounds` と `capabilities.canSetBounds` を、Capabilities に `canSetObjectBounds` を追加しました。
 
+### 変更
+
+- `GenerationRules.md` から、字幕枠を取得できない場合に画面の下側 20% を字幕領域とみなす暫定指針を削除しました。字幕枠は `recotte_get_capabilities` の実座標で確認します。
+
+### 修正
+
+- 配布版で、実行ファイルと同じフォルダの `GenerationRules.md` を `recotte_get_generation_rules` が読めず、`available=false` を返していた問題を修正しました。単一ファイルの実行ファイルは一時フォルダへ展開して動くため、展開先しか探していませんでした。まず実行ファイルのフォルダを探し、見つからない場合に展開先を探します。見つからない場合の警告には、探したパスをすべて記録します。
+
 ## [0.6.0] - 2026-10-16
 
 ### 追加

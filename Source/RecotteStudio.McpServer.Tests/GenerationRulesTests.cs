@@ -15,8 +15,19 @@ public sealed class GenerationRulesTests
         Assert.Equal(source.Replace("\r\n", "\n"), guidance.Replace("\r\n", "\n"));
         Assert.Contains("recotte_create_video_from_image", guidance);
         Assert.Contains("recotte_create_flipbook_video", guidance);
-        Assert.Contains("下側 20%", guidance);
         Assert.Contains("recotte_get_generation_rules", McpServerRegistration.ServerInstructions);
+    }
+
+    [Fact]
+    public void SearchesNextToTheExecutableBeforeTheBaseDirectory()
+    {
+        IReadOnlyList<string> directories = GenerationRulesProvider.SearchDirectories();
+
+        Assert.Equal(Path.GetDirectoryName(Environment.ProcessPath), directories[0]);
+        Assert.Contains(directories, item => string.Equals(Path.TrimEndingDirectorySeparator(item),
+            Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory), StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(directories.Count, directories.Select(Path.TrimEndingDirectorySeparator)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]
