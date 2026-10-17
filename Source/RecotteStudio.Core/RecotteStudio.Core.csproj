@@ -28,5 +28,6 @@
     <EmbeddedResource Include="..\..\Documents\RecotteProjects\009FullProject\009FullProject.ccproj" Link="Templates\009FullProject.ccproj" LogicalName="RecotteStudio.Core.Templates.Figure.ccproj" />
     <EmbeddedResource Include="..\..\Documents\RecotteProjects\013TwoVideos\013TwoVideos.ccproj" Link="Templates\013TwoVideos.ccproj" LogicalName="RecotteStudio.Core.Templates.VideoLayer.ccproj" />
     <EmbeddedResource Include="..\..\Documents\RecotteProjects\012TwoImages\012TwoImages.ccproj" Link="Templates\012TwoImages.ccproj" LogicalName="RecotteStudio.Core.Templates.AnnotationLayer.ccproj" />
+    <EmbeddedResource Include="..\..\Documents\RecotteProjects\015SpeakerActions\015SpeakerActions.ccproj" Link="Templates\015SpeakerActions.ccproj" LogicalName="RecotteStudio.Core.Templates.SpeakerAction.ccproj" />
   </ItemGroup>
 </Project>

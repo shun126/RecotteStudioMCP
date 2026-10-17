@@ -15,7 +15,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
-        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer",
+        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
@@ -38,6 +38,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "moveSpeakerVoiceToLayer" => new MoveSpeakerVoiceToLayerOperation(Object(value.Target), Layer(value.Layer)),
                     "addTextOnlySpeakerVoice" => new AddTextOnlySpeakerVoiceOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
                     "removeTimelineObject" => new RemoveTimelineObjectOperation(Object(value.Target)),
+                    "setObjectBounds" => new SetObjectBoundsOperation(Object(value.Target), value.X, value.Y, value.Width, value.Height),
                     "addImageObject" => new AddImageAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addVideoObject" => new AddVideoAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addAnnotationText" => new AddAnnotationTextOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
@@ -45,6 +46,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "addVideoLayer" => new AddVideoLayerOperation(value.LayerName, value.InsertIndex),
                     "addAnnotationLayer" => new AddAnnotationLayerOperation(value.LayerName, value.InsertIndex),
                     "addSpeakerLayer" => new AddSpeakerLayerOperation(value.LayerName, value.InsertIndex),
+                    "addSpeakerAction" => new AddSpeakerActionOperation(Layer(value.Layer), Required(value.Action, "action"), Time(value.Start, "start"), Time(value.End, "end"), value.Loop ?? false),
                     "moveLayer" => new MoveLayerOperation(Layer(value.Layer), value.InsertIndex ?? throw new ArgumentException("insertIndex is required.")),
                     "importCharacter" => new ImportCharacterOperation(Donor(value.DonorProjectPath, donors), Required(value.SpeakerKey, "speakerKey"), Time(value.Start, "start"), Time(value.End, "end"), value.LayerName),
                     _ => throw new ArgumentException($"Unsupported operation '{value.Type}'. Supported operations: {string.Join(", ", SupportedTypes)}."),

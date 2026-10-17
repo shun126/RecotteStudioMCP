@@ -95,10 +95,18 @@ public sealed record ProjectCapabilities(
     public bool CanAddSpeakerLayer { get; init; }
     /// <summary>Gets whether a Speaker Voice can be moved to another Speaker layer, so that layer's speaker says it.</summary>
     public bool CanMoveSpeakerVoiceToLayer { get; init; }
+    /// <summary>Gets whether Images, Figures, and Videos on Annot and Video layers can be moved and resized.</summary>
+    public bool CanSetObjectBounds { get; init; }
+    /// <summary>Gets whether a Speaker Action, an expression or gesture of a layer's character, can be added.</summary>
+    public bool CanAddSpeakerAction { get; init; }
 }
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
-public sealed record TimelineEntryCapabilities(bool CanUpdateText, bool CanMove, bool CanRemove);
+public sealed record TimelineEntryCapabilities(bool CanUpdateText, bool CanMove, bool CanRemove)
+{
+    /// <summary>Gets whether SetObjectBounds can move and resize the entry.</summary>
+    public bool CanSetBounds { get; init; }
+}
 
 /// <summary>Provides a flattened immutable timeline entry.</summary>
 public sealed record TimelineEntryView(
@@ -118,6 +126,10 @@ public sealed record TimelineEntryView(
 {
     /// <summary>Gets whether the Speaker Voice carries generated-audio markers.</summary>
     public bool HasAudio { get; init; }
+    /// <summary>Gets the object's screen rectangle in project pixels, or null when it has no Bounds.</summary>
+    public ObjectBounds? Bounds { get; init; }
+    /// <summary>Gets the action a Speaker Action plays (pack:name), or null for other objects.</summary>
+    public string? Action { get; init; }
 }
 
 /// <summary>Filters flattened timeline entries. Range matching uses half-open intervals.</summary>
@@ -181,6 +193,8 @@ public sealed partial class RecotteProjectDocument
             ProjectEditor.CanAddSpeakerLayerTo(root),
         CanMoveLayer = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanMoveSpeakerVoiceToLayer = profile.CanEditSpeakerVoice,
+        CanSetObjectBounds = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
+        CanAddSpeakerAction = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
     };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>
@@ -340,9 +354,14 @@ public sealed partial class RecotteProjectDocument
             duration, locked, new(speakerVoice && id is not null && !locked && Capabilities.CanEditSpeakerText &&
                     ProjectEditor.HasEditableText(item.JsonNode),
                 speakerVoice && !locked && Capabilities.CanMoveTimelineObject,
-                id is not null && !locked && Capabilities.CanRemoveTimelineObject))
+                id is not null && !locked && Capabilities.CanRemoveTimelineObject)
+            {
+                CanSetBounds = id is not null && Capabilities.CanSetObjectBounds && ProjectEditor.CanSetBounds(layer.JsonNode, item.JsonNode),
+            })
         {
             HasAudio = hasAudio,
+            Bounds = ProjectEditor.TryGetBounds(item.JsonNode, out ObjectBounds bounds) ? bounds : null,
+            Action = item.Type == "Speaker Action" ? JsonAccess.GetPropertyString(item.JsonNode, "Emotion") : null,
         };
     }
 
