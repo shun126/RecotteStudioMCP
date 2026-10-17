@@ -15,7 +15,6 @@ public sealed class GenerationRulesTests
         Assert.Equal(source.Replace("\r\n", "\n"), guidance.Replace("\r\n", "\n"));
         Assert.Contains("recotte_create_video_from_image", guidance);
         Assert.Contains("recotte_create_flipbook_video", guidance);
-        Assert.Contains("下側 20%", guidance);
         Assert.Contains("recotte_get_generation_rules", McpServerRegistration.ServerInstructions);
     }
 

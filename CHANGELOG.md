@@ -3,6 +3,12 @@
 Recotte Studio MCP の主な変更点を記録します。
 書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に、バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
+## [未リリース]
+
+### 変更
+
+- `GenerationRules.md` から、字幕枠を取得できない場合に画面の下側 20% を字幕領域とみなす暫定指針を削除しました。字幕枠は `recotte_get_capabilities` の実座標で確認します。
+
 ## [0.6.0] - 2026-10-16
 
 ### 追加
