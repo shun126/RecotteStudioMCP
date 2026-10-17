@@ -177,6 +177,18 @@ JSONのキー順序、インデント、数値の表記は意味の一部とし�
 
 `005OneVideo` では `Video` レイヤーに置かれます。画像系の表示プロパティに加え、`AudioVolume`、`EndTime`、`LoopPlay`、`SetSpeed`、`SpeedStretch`、`StartTime`、`VideoOffset` と `audio` を確認しています。
 
+### `Speaker Action`
+
+`009` と `015` では `Speaker` レイヤーに置かれ、そのレイヤーのキャラクターに表情や動作を指定した時間だけ演じさせます。台詞（`Speaker Voice`）の属性ではなく、時間範囲を持つ独立したクリップで、台詞やほかの `Speaker Action` と重ねて置けます。
+
+| キー | 役割 |
+| --- | --- |
+| `properties.Emotion.p-value` | 演じるアクション。レイヤーの `actions[].name`（`パック名:名前`。例: `tsurumaki_maki:Smile_1.vmd`、`2D-Maki:smile`） |
+| `properties.Loop.p-value` | `true` でクリップの終わりまで繰り返す |
+| `sub-objects` | `InWeight`（開始0秒、長さ0.2秒、`snap-type` 0）と `OutWeight`（開始はクリップ長−0.2秒、長さ0.2秒、`snap-type` 1）。アクションへの切り替えと戻りのブレンドと推定 |
+
+Speaker レイヤーの `actions` は、キャラクターを追加したときに Recotte Studio がモデル（`.rsp`）からコピーする一覧です。3Dモデルは `.vmd` のモーション名（30件）、2Dモデルは表情名やポーズと表情の組み合わせ（`2D-スーツ男性:直立(笑顔1)` など）を持ちます。`Speaker Action` の形式は 1.8.5.0（`009`）と 1.8.5.5（`015`）、2Dと3Dで同じです。
+
 ### `Speaker Character`
 
 `006` と `007` では `Speaker` レイヤーに置かれます。`Angle`、`Camera`、`CharBounds`、`CropBoundsRate`、`DefaultAction`、`Flip`、`OutSideBounds`、`TimeCurve`、`ViewMode` を確認しています。

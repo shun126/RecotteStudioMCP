@@ -173,6 +173,31 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectCanGiveALineTheCharactersExpression()
+    {
+        string donor = Path.Combine(root, "donor.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "TwoVoices.ccproj"), donor);
+        JsonElement character = JsonSerializer.SerializeToElement(service.ListCharacters(donor).Data).GetProperty("characters")[0];
+        Assert.Contains("2D-スーツ男性:直立(笑顔1)", character.GetProperty("actions").EnumerateArray().Select(item => item.GetString()));
+        string output = Path.Combine(root, "笑顔.ccproj");
+
+        McpToolResult<object> result = await service.CreateProjectAsync("笑顔", output, false, new[]
+        {
+            new ProjectOperationDto("importCharacter", DonorProjectPath: donor, SpeakerKey: "2D-スーツ男性", Start: 0m, End: 6m),
+            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(Name: "話者1"), Text: "うれしいです", Start: 1m, End: 3m),
+            new ProjectOperationDto("addSpeakerAction", Layer: new(Name: "話者1"), Action: "直立(笑顔1)", Start: 1m, End: 3m),
+            new ProjectOperationDto("addSpeakerAction", Layer: new(Name: "話者1"), Action: "2D-スーツ男性:頭を抱える", Start: 3m, End: 6m, Loop: true),
+        }, default);
+
+        Assert.True(result.Success, result.Message);
+        JsonElement entries = JsonSerializer.SerializeToElement(service.ListTimeline(output, objectType: "Speaker Action").Data).GetProperty("entries");
+        Assert.Equal(new[] { "2D-スーツ男性:直立(笑顔1)", "2D-スーツ男性:頭を抱える" },
+            entries.EnumerateArray().Select(item => item.GetProperty("Action").GetString()));
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanAddSpeakerAction").GetBoolean());
+    }
+
+    [Fact]
     public async Task MoveLayerSwapsTheSpeakerTracks()
     {
         string source = Path.Combine(root, "二人.ccproj");
