@@ -7,6 +7,14 @@
             <TextBlock Text="設定" Style="{StaticResource TitleTextBlockStyle}" />
 
             <StackPanel Spacing="8">
+                <TextBlock Text="バージョン情報" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock x:Name="VersionText" IsTextSelectionEnabled="True" />
+                <TextBlock x:Name="BuildText" IsTextSelectionEnabled="True"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="作業フォルダ" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock Text="空欄の場合は制限なし。変更するとMCPサーバーを再起動します。" TextWrapping="Wrap" />
                 <Grid ColumnSpacing="8">
@@ -58,14 +66,6 @@
                 <TextBlock Text="接続トークン" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock Text="接続設定例とエージェントへの依頼文には、このPC専用のトークンが含まれます。依頼文を会話に貼ると、トークンもその会話に含まれます。" TextWrapping="Wrap" />
                 <Button Content="トークンを再発行" Click="RegenerateToken_Click" HorizontalAlignment="Left" />
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="バージョン情報" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock x:Name="VersionText" IsTextSelectionEnabled="True" />
-                <TextBlock x:Name="BuildText" IsTextSelectionEnabled="True"
-                           Style="{StaticResource CaptionTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>
