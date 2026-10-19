@@ -44,6 +44,10 @@
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
   <ItemGroup>
+    <!-- 設定画面に表示するビルド日時。ファイルの更新日時はダウンロードや展開で変わるため、ビルド時に埋め込む -->
+    <AssemblyMetadata Include="BuildTime" Value="$([System.DateTime]::UtcNow.ToString('o'))" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\RecotteStudio.Core\RecotteStudio.Core.csproj" />
   </ItemGroup>
 </Project>
