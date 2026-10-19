@@ -3,7 +3,7 @@
 Recotte Studio MCP の主な変更点を記録します。
 書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に、バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
-## [Unreleased]
+## [0.6.2] - 2026-10-19
 
 ### 追加
 
@@ -14,6 +14,7 @@ Recotte Studio MCP の主な変更点を記録します。
 
 ### 変更
 
+- サーバーのバージョンを `0.6.2` に更新しました。
 - MCP サーバーの初期化時に送る指示文から、生成ルールにあたる内容（台詞の音声を生成しないこと、台詞を画像・動画へ描き込まないこと、字幕枠の位置と大きさ）を外しました。生成ルールは `GenerationRules.md` と `UserRules.md` に集約し、指示文は `recotte_get_generation_rules` の呼び出し、両者の優先順位、MCP ツールの使い方だけを案内します。
 - `GenerationRules.md` の「音声」に、音声合成ツールや `.wav` を作らないこと、テキストのみの台詞に音声がないことを問題として報告しないことを追記しました。
 - `recotte_get_capabilities` の `layout` から、字幕枠を避けて配置するよう促す `guidance` を削除しました。画面サイズと字幕枠の座標はこれまでどおり返します。
