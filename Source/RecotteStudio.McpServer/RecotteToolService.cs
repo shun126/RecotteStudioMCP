@@ -143,7 +143,6 @@ public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperati
             {
                 layerIndex = layer.Index, layer.Name, telopFrame = layer.TelopFrame,
             }).ToArray(),
-            guidance = McpServerRegistration.TelopLayout,
         },
     }));
 

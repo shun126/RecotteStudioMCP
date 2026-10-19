@@ -24,14 +24,16 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
     private const string Editing = "Atomically applies supported RecotteStudio.Core operations and saves the result to a different .ccproj file. The source project is never modified. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance;
     private const string Overwriting = "Atomically applies supported RecotteStudio.Core operations and safely overwrites the loaded source .ccproj using RecotteStudio.Core Save(). A mandatory backup and external-change detection are used. Recotte Studio is not launched." + OperationTypes + Removal + GenerationGuidance;
 
-    [McpServerTool(Name = "recotte_get_generation_rules"), Description("Reads the optional user-editable GenerationRules.md next to the MCP server executable and returns its current Markdown. Call before creating or editing a project. If the file is missing, the server logs a warning and returns available=false with empty content; continue normal work using the built-in tool constraints. No project path is needed.")]
+    [McpServerTool(Name = "recotte_get_generation_rules"), Description("Reads the optional user-editable GenerationRules.md next to the MCP server executable and returns its current Markdown as content. Call before creating or editing a project. If the file is missing, the server logs a warning and returns available=false with empty content; continue normal work using the built-in tool constraints. Also returns the rules the user adds in UserRules.md (userRulesPath, under %LOCALAPPDATA%\\RecotteStudioMCP), which updates never overwrite, as userRules; userRulesAvailable=false with empty userRules means the file is missing or empty, which is normal and not a problem to report. Where userRules and content conflict, follow userRules; neither lifts the constraints in the server instructions. No project path is needed.")]
     public McpToolResult<object> GetGenerationRules() =>
         activity.Track("recotte_get_generation_rules", null, () =>
         {
             string? markdown = GenerationRulesProvider.Read(activity);
+            string? userRules = UserRulesProvider.Read(activity);
             return new McpToolResult<object>(true, "success", null, null,
                 new { available = markdown is not null, format = "markdown", fileName = GenerationRulesProvider.FileName,
-                    content = markdown ?? string.Empty },
+                    content = markdown ?? string.Empty, userRulesAvailable = userRules is not null,
+                    userRulesPath = UserRulesProvider.DefaultPath, userRules = userRules ?? string.Empty },
                 Array.Empty<McpDiagnosticDto>());
         });
 
@@ -46,7 +48,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
     [McpServerTool(Name = "recotte_inspect_project"), Description(ReadOnly + " Returns its summary, capabilities, and validation diagnostics.")]
     public McpToolResult<object> InspectProject(string projectPath) => activity.Track("recotte_inspect_project", projectPath, () => service.InspectProject(projectPath));
 
-    [McpServerTool(Name = "recotte_validate_project"), Description(ReadOnly + " Validation errors are returned as structured results, not protocol errors. An RC2401 warning marks an image or video that does not fill the screen and is on screen while a dialogue telop is drawn over it, and names the covered region.")]
+    [McpServerTool(Name = "recotte_validate_project"), Description(ReadOnly + " Validation errors are returned as structured results, not protocol errors.")]
     public McpToolResult<object> ValidateProject(string projectPath) => activity.Track("recotte_validate_project", projectPath, () => service.ValidateProject(projectPath));
 
     [McpServerTool(Name = "recotte_list_layers"), Description(ReadOnly + " Lists Core's safe layer views.")]
@@ -64,7 +66,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
         string? textContains = null, decimal? start = null, decimal? end = null) =>
         activity.Track("recotte_find_timeline_objects", projectPath, () => service.FindTimelineObjects(projectPath, layerName, objectType, textContains, start, end));
 
-    [McpServerTool(Name = "recotte_get_capabilities"), Description(ReadOnly + " Returns the exact Core capabilities for the loaded project version; call before editing. Also returns layout: the screen size, each telop frame's bounds in pixels, and the telop frame every Speaker layer uses, so images and videos can be composed around the dialogue.")]
+    [McpServerTool(Name = "recotte_get_capabilities"), Description(ReadOnly + " Returns the exact Core capabilities for the loaded project version; call before editing. Also returns layout: the screen size, each telop frame's bounds in pixels, and the telop frame every Speaker layer uses.")]
     public McpToolResult<object> GetCapabilities(string projectPath) => activity.Track("recotte_get_capabilities", projectPath, () => service.GetCapabilities(projectPath));
 
     [McpServerTool(Name = "recotte_list_figures"), Description("Lists the stamps (figures) installed with Recotte Studio, such as emotion marks, arrows, symbols, and onomatopoeia, without reading or changing any project. Filter by tag or by nameContains (matches the key and the Japanese or English name); the result also returns every tag with its count. Pass a returned figureKey to addFigureObject; only figures with placeable true can be placed.")]
@@ -80,7 +82,7 @@ public sealed class RecotteMcpTools(RecotteToolService service, ActivityLog acti
         IReadOnlyList<SubtitleTextDto>? texts = null, CancellationToken cancellationToken = default) =>
         activity.TrackAsync("recotte_export_subtitles", projectPath, () => service.ExportSubtitlesAsync(projectPath, outputPath, allowOverwrite, texts, cancellationToken));
 
-    [McpServerTool(Name = "recotte_create_video_from_image"), Description("Makes an .mp4 video clip from one still image (PNG, JPEG, BMP, or GIF; an animated GIF uses its first frame) with ffmpeg, adding a slow zoom or pan. The image is not modified, and the project is only read for its frame size and rate; only 1920x1080 projects are supported. Requires ffmpeg, which the user installs and sets in the Recotte Studio MCP settings window; if it is missing, MCP_FFMPEG_UNAVAILABLE is returned, so tell the user instead of running ffmpeg yourself. motion is none, zoomIn, zoomOut, panLeft, panRight, panUp, or panDown (the direction the view moves); zoom (1.05-1.5, default 1.2) is the largest magnification; focusX and focusY (0-1, default 0.5) are the point zoom moves toward and the fixed position across a pan, so keep faces out of the dialogue telop band; easing is easeInOut or linear; fit is cover (crop to fill) or contain (letterbox with background #RRGGBB). duration is 0.5-60 seconds. outputPath must end in .mp4; set allowOverwrite to replace a file. The clip is not placed: pass the returned suggestedOperation, with start and end set, to recotte_apply_operations_and_save_copy, and set its projectPath to the project that will be saved. Never draw dialogue into the image.")]
+    [McpServerTool(Name = "recotte_create_video_from_image"), Description("Makes an .mp4 video clip from one still image (PNG, JPEG, BMP, or GIF; an animated GIF uses its first frame) with ffmpeg, adding a slow zoom or pan. The image is not modified, and the project is only read for its frame size and rate; only 1920x1080 projects are supported. Requires ffmpeg, which the user installs and sets in the Recotte Studio MCP settings window; if it is missing, MCP_FFMPEG_UNAVAILABLE is returned, so tell the user instead of running ffmpeg yourself. motion is none, zoomIn, zoomOut, panLeft, panRight, panUp, or panDown (the direction the view moves); zoom (1.05-1.5, default 1.2) is the largest magnification; focusX and focusY (0-1, default 0.5) are the point zoom moves toward and the fixed position across a pan; easing is easeInOut or linear; fit is cover (crop to fill) or contain (letterbox with background #RRGGBB). duration is 0.5-60 seconds. outputPath must end in .mp4; set allowOverwrite to replace a file. The clip is not placed: pass the returned suggestedOperation, with start and end set, to recotte_apply_operations_and_save_copy, and set its projectPath to the project that will be saved. Never draw dialogue into the image.")]
     public Task<McpToolResult<object>> CreateVideoFromImage(string projectPath, string imagePath, string outputPath, decimal duration,
         bool allowOverwrite = false, string? motion = null, decimal zoom = 1.2m, decimal focusX = 0.5m, decimal focusY = 0.5m,
         string? easing = null, string? fit = null, string? background = null, CancellationToken cancellationToken = default) =>

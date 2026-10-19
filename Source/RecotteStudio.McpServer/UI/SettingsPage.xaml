@@ -43,6 +43,15 @@
             </StackPanel>
 
             <StackPanel Spacing="8">
+                <TextBlock Text="ユーザールール" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="独自の生成ルールは、次の UserRules.md に Markdown で書きます。配布の GenerationRules.md と違い、更新しても上書きされません。ルールが食い違う場合は UserRules.md が優先されます。ファイルが無くても動作します。" TextWrapping="Wrap" />
+                <TextBlock x:Name="UserRulesPathText" IsTextSelectionEnabled="True" TextWrapping="Wrap"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Button Content="フォルダを開く" Click="OpenUserRulesFolder_Click" HorizontalAlignment="Left" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="Codex に接続" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock Text="%USERPROFILE%\.codex\config.toml の旧 stdio 設定を削除し、次を追加してください。設定後にCodexを再起動します。" TextWrapping="Wrap" />
                 <TextBox x:Name="CodexBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" />

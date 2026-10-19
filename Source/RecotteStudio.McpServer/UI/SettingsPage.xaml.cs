@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -15,6 +16,7 @@ public sealed partial class SettingsPage : Page
         InitializeComponent();
         VersionText.Text = $"Recotte Studio MCP {AppVersion.Version}";
         BuildText.Text = AppVersion.BuildDescription;
+        UserRulesPathText.Text = UserRulesProvider.DefaultPath;
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -105,6 +107,20 @@ public sealed partial class SettingsPage : Page
         FfmpegStatusText.Text = probe.Success
             ? $"ffmpeg {probe.Version} を使用できます（{source}: {resolution.ExecutablePath}）"
             : $"{probe.Message}（{source}: {resolution.ExecutablePath}）";
+    }
+
+    // Selects UserRules.md in Explorer when it exists; otherwise opens the folder where the user creates it.
+    private void OpenUserRulesFolder_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Directory.CreateDirectory(UserRulesProvider.DefaultDirectory);
+            string arguments = File.Exists(UserRulesProvider.DefaultPath)
+                ? $"/select,\"{UserRulesProvider.DefaultPath}\""
+                : $"\"{UserRulesProvider.DefaultDirectory}\"";
+            Process.Start(new ProcessStartInfo("explorer.exe", arguments) { UseShellExecute = true });
+        }
+        catch (Exception exception) { owner?.ShowError(exception); }
     }
 
     private async void RegenerateToken_Click(object sender, RoutedEventArgs e)

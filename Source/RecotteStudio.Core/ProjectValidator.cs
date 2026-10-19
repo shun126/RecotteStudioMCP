@@ -17,85 +17,9 @@ internal static class ProjectValidator
         if (layers is not null)
         {
             ValidateLayers(layers, fileKeys, speakerKeys, diagnostics);
-            WarnAboutTelopCoverage(root, layers, diagnostics);
         }
 
         return new ProjectValidationResult(diagnostics);
-    }
-
-    // Recotte Studio draws each dialogue line inside the voice's telop frame, on top of whatever image or video is on
-    // screen at that moment. The asset stays valid, so this only reminds the author which region is hidden when an
-    // asset smaller than the screen was placed across the frame.
-    private static void WarnAboutTelopCoverage(JsonObject root, JsonArray layers, List<ProjectDiagnostic> diagnostics)
-    {
-        Dictionary<string, TelopFrameView> frames = new(StringComparer.Ordinal);
-        foreach (TelopFrameView frame in TelopFrameView.ReadAll(root)) frames.TryAdd(frame.Name, frame);
-        if (frames.Count == 0) return;
-
-        List<(decimal Start, decimal End, TelopFrameView Frame)> telops = new();
-        foreach ((JsonObject voice, _) in VisibleObjectsOfType(layers, "Speaker Voice"))
-        {
-            if (voice["properties"] is JsonObject properties && properties["TelopOn"] is JsonObject telopOn &&
-                telopOn["p-value"] is JsonValue shown && shown.TryGetValue(out bool isShown) && isShown &&
-                JsonAccess.GetPropertyString(voice, "TelopFrame") is string frameName &&
-                frames.TryGetValue(frameName, out TelopFrameView? frame) && TryGetTimeRange(voice, out decimal start, out decimal end))
-            {
-                telops.Add((start, end, frame));
-            }
-        }
-        if (telops.Count == 0) return;
-
-        (decimal Width, decimal Height)? screen = root["setting"] is JsonObject setting && setting["size"] is JsonArray screenSize &&
-            screenSize.Count == 2 && JsonAccess.TryGetDecimal(screenSize[0], out decimal screenWidth) &&
-            JsonAccess.TryGetDecimal(screenSize[1], out decimal screenHeight) ? (screenWidth, screenHeight) : null;
-        foreach ((JsonObject asset, string path) in VisibleObjectsOfType(layers, "Image", "Video"))
-        {
-            if (asset["properties"] is not JsonObject properties ||
-                !JsonAccess.TryGetBounds(properties, out decimal x, out decimal y, out decimal width, out decimal height) ||
-                !TryGetTimeRange(asset, out decimal start, out decimal end)) continue;
-            // A background that fills the screen is always under the telop, so warning about it would only be noise.
-            if (screen is { } size && x <= 0 && y <= 0 && x + width >= size.Width && y + height >= size.Height) continue;
-            TelopFrameView[] covering = telops
-                .Where(telop => telop.Start < end && start < telop.End &&
-                    telop.Frame.X < x + width && x < telop.Frame.X + telop.Frame.Width &&
-                    telop.Frame.Y < y + height && y < telop.Frame.Y + telop.Frame.Height)
-                .Select(telop => telop.Frame).Distinct().ToArray();
-            if (covering.Length == 0) continue;
-
-            JsonAccess.TryGetString(asset, "type", out string type);
-            JsonAccess.TryGetString(asset, "name", out string name);
-            string regions = string.Join(", ", covering.Select(frame => FormattableString.Invariant(
-                $"{frame.Name} (x {frame.X:0.##}, y {frame.Y:0.##}, {frame.Width:0.##}x{frame.Height:0.##})")));
-            diagnostics.Add(Warning("RC2401",
-                $"{type} '{name}' is on screen while dialogue is drawn over it in telop frame {regions}. Check that no " +
-                "face, caption, or other important content sits in that region, and never draw the dialogue into the asset: " +
-                "Recotte Studio renders it from the Speaker layer.", path));
-        }
-    }
-
-    // A hidden layer draws nothing, so neither its assets nor its telops are on screen. A layer without the flag is shown.
-    private static IEnumerable<(JsonObject Object, string Path)> VisibleObjectsOfType(JsonArray layers, params string[] types)
-    {
-        for (int layerIndex = 0; layerIndex < layers.Count; layerIndex++)
-        {
-            if (layers[layerIndex] is not JsonObject layer || layer["layer-objects"] is not JsonArray objects) continue;
-            if (layer["visible"] is JsonValue visible && visible.TryGetValue(out bool isVisible) && !isVisible) continue;
-            for (int objectIndex = 0; objectIndex < objects.Count; objectIndex++)
-            {
-                if (objects[objectIndex] is JsonObject item && JsonAccess.TryGetString(item, "type", out string type) &&
-                    types.Contains(type))
-                {
-                    yield return (item, $"$.layers[{layerIndex}].layer-objects[{objectIndex}]");
-                }
-            }
-        }
-    }
-
-    private static bool TryGetTimeRange(JsonObject timelineObject, out decimal start, out decimal end)
-    {
-        end = default;
-        return JsonAccess.TryGetDecimal(timelineObject, "start-time", out start) &&
-            JsonAccess.TryGetDecimal(timelineObject, "end-time", out end) && start < end;
     }
 
     private static void ValidateLayers(JsonArray layers, HashSet<string> fileKeys, HashSet<string> speakerKeys, List<ProjectDiagnostic> diagnostics)

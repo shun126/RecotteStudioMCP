@@ -64,6 +64,15 @@ RecotteStudioMCP は、動画制作のガイドラインを `recotte_get_generat
 
 配布ZIPには、実行ファイルと同じフォルダに **編集可能な `GenerationRules.md`** を収録しています。MCPツールは呼び出すたびにこのファイルを読み直すため、利用者は再起動や再ビルドをせずにルールを変更できます。ファイルが存在しない場合はアプリのアクティビティに警告を記録しますが、MCPサーバーやプロジェクト操作は継続し、取得ツールは `available=false` と空の `content` を返します。LLMは必ずツールを呼ぶとは限らないため、制作前に「`recotte_get_generation_rules` を読んでから作って」と指定することもできます。
 
+`GenerationRules.md` は更新のたびに配布版で上書きされます。独自のルールは **`%LOCALAPPDATA%\RecotteStudioMCP\UserRules.md`** に Markdown で書いてください。このファイルは更新しても上書きされず、`recotte_get_generation_rules` が `GenerationRules.md` と一緒に `userRules` として返します。ルールが食い違う場合は `UserRules.md` が優先されます。ファイルが無い、または空の場合は何もしません。設定画面の「ユーザールール」から、このフォルダを開けます。
+
+```markdown
+# 私のルール
+
+- 立ち絵は画面の右側に置く。
+- 1つの台詞は40文字以内にする。
+```
+
 ## できること
 
 - プロジェクトの調査: レイヤー、タイムライン、台詞、画面と字幕枠の配置を確認し、プロジェクトを検証します。
