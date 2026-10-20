@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 
 namespace RecotteStudio.McpServer.UI;
@@ -20,13 +21,16 @@ internal static class AppVersion
             List<string> parts = new();
             if (Informational.Length > 1 && Informational[1].Length > 0)
                 parts.Add($"コミット {Informational[1][..Math.Min(7, Informational[1].Length)]}");
-            // The launcher executable is not rewritten by an incremental build, so the assembly is dated. It has no
-            // location inside a single-file bundle, where the executable is the build output itself.
-            string location = typeof(AppVersion).Assembly.Location;
-            string? path = location.Length > 0 ? location : Environment.ProcessPath;
-            if (path is not null && File.Exists(path))
-                parts.Add($"ビルド {File.GetLastWriteTime(path):yyyy-MM-dd HH:mm}");
+            if (BuildTime is DateTimeOffset built)
+                parts.Add($"ビルド {built.ToLocalTime():yyyy-MM-dd HH:mm}");
             return string.Join(" ・ ", parts);
         }
     }
+
+    // The project embeds the build time, because downloading or extracting a release rewrites the file's own dates.
+    private static DateTimeOffset? BuildTime =>
+        typeof(AppVersion).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(item => item.Key == "BuildTime")?.Value is string value &&
+        DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTimeOffset time)
+            ? time : null;
 }

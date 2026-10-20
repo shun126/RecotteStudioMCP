@@ -8,7 +8,7 @@ Codes, rather than English messages, are the stable machine-readable contract. E
 | Required structure | RC1101, RC1102, RC2001 | app version or required typed structure missing/invalid |
 | Registry/reference integrity | RC2101, RC2102 | unregistered file or speaker reference |
 | Timeline | RC2201, RC2202, RC2203 | invalid range or duplicate/cross-layer object key |
-| Layout | RC2401 | warning that an Image or Video not filling the screen is shown while a Speaker Voice telop is drawn over it; the message names the telop frame and its bounds, and the project stays valid |
+| Layout (retired) | RC2401 | no longer reported; the code is not reused |
 | New-project creation | RC2301-RC2307 | required root/settings, GUID, name, directory, layers, styles, time, or template sanitization failure |
 | Unknown retained structure | RC3001, RC3002 | unknown layer/object preserved |
 | Version compatibility | RC3101, RC3102 | unknown or read-only version |

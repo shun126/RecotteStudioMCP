@@ -64,6 +64,15 @@ RecotteStudioMCP は、動画制作のガイドラインを `recotte_get_generat
 
 配布ZIPには、実行ファイルと同じフォルダに **編集可能な `GenerationRules.md`** を収録しています。MCPツールは呼び出すたびにこのファイルを読み直すため、利用者は再起動や再ビルドをせずにルールを変更できます。ファイルが存在しない場合はアプリのアクティビティに警告を記録しますが、MCPサーバーやプロジェクト操作は継続し、取得ツールは `available=false` と空の `content` を返します。LLMは必ずツールを呼ぶとは限らないため、制作前に「`recotte_get_generation_rules` を読んでから作って」と指定することもできます。
 
+`GenerationRules.md` は更新のたびに配布版で上書きされます。独自のルールは **`%LOCALAPPDATA%\RecotteStudioMCP\UserRules.md`** に Markdown で書いてください。このファイルは更新しても上書きされず、`recotte_get_generation_rules` が `GenerationRules.md` と一緒に `userRules` として返します。ルールが食い違う場合は `UserRules.md` が優先されます。ファイルが無い、または空の場合は何もしません。設定画面の「ユーザールール」から、このフォルダを開けます。
+
+```markdown
+# 私のルール
+
+- 立ち絵は画面の右側に置く。
+- 1つの台詞は40文字以内にする。
+```
+
 ## できること
 
 - プロジェクトの調査: レイヤー、タイムライン、台詞、画面と字幕枠の配置を確認し、プロジェクトを検証します。
@@ -84,7 +93,7 @@ RecotteStudioMCP は、動画制作のガイドラインを `recotte_get_generat
 
 ## 使い始める
 
-1. [Releases](https://github.com/shun126/RecotteStudioMCP/releases) の `RecotteStudioMCP-<バージョン>-win-x64.zip`（例: `RecotteStudioMCP-0.6.1-win-x64.zip`）を展開します。
+1. [Releases](https://github.com/shun126/RecotteStudioMCP/releases) の `RecotteStudioMCP-<バージョン>-win-x64.zip`（例: `RecotteStudioMCP-0.6.2-win-x64.zip`）を展開します。
 2. `RecotteStudio.McpServer.exe` を起動します。ウィンドウが開いている間、`http://127.0.0.1:8765/mcp` で MCP サーバーが稼働します。最小化しても稼働し、閉じると停止します。
 3. 必要なら画面左下の設定を開き、作業フォルダを指定して「作業フォルダを適用」を押します。未指定の場合は従来どおり、既存ディレクトリ内の任意の `.ccproj` を扱えます。
 4. 設定画面の Codex または Claude Code の接続例をコピーして接続します。接続例にはこの PC 専用の接続トークンが含まれるため、公開しないでください。

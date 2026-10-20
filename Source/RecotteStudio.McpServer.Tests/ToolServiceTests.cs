@@ -354,29 +354,6 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task FullScreenImageUnderDialogueReportsNoTelopCoverageWarning()
-    {
-        string image = Path.Combine(root, "Background.png");
-        // Signature plus an IHDR chunk header declaring 1920x1080; Core reads nothing beyond it.
-        File.WriteAllBytes(image, new byte[]
-        {
-            137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 7, 128, 0, 0, 4, 56,
-        });
-        string output = Path.Combine(root, "背景付き.ccproj");
-        McpToolResult<object> result = await service.CreateProjectAsync("背景付き", output, false, new[]
-        {
-            new ProjectOperationDto("addTextOnlySpeakerVoice", Layer: new(LayerIndex: 1), Text: "こんにちは", Start: 0m, End: 2m),
-            new ProjectOperationDto("addImageObject", Layer: new(LayerIndex: 2), Start: 0m, End: 2m, AssetPath: image,
-                ProjectPath: output, DisplayName: "Background.png"),
-        }, default);
-
-        Assert.True(result.Success);
-        Assert.Equal(2, RecotteProject.Load(output).Layers.Sum(layer => layer.Objects.Count));
-        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Code == "RC2401");
-        Assert.DoesNotContain(service.ValidateProject(output).Diagnostics, diagnostic => diagnostic.Code == "RC2401");
-    }
-
-    [Fact]
     public void FailedPreviewReportsTheFirstErrorDiagnosticAsItsErrorCode()
     {
         string image = Path.Combine(root, "Sample.png");
