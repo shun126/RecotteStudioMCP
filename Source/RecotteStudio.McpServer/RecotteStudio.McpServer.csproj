@@ -43,10 +43,13 @@
     <None Include="..\..\Documents\RecotteStudioCore\GenerationRules.md" Link="GenerationRules.md"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
-  <ItemGroup>
-    <!-- 設定画面に表示するビルド日時。ファイルの更新日時はダウンロードや展開で変わるため、ビルド時に埋め込む -->
-    <AssemblyMetadata Include="BuildTime" Value="$([System.DateTime]::UtcNow.ToString('o'))" />
-  </ItemGroup>
+  <!-- Evaluate UtcNow during each build, not project evaluation. The SDK hashes AssemblyMetadata
+       in GetAssemblyAttributes and regenerates AssemblyInfo when it changes, including with a reused obj folder. -->
+  <Target Name="SetBuildTimestamp" BeforeTargets="GetAssemblyAttributes" Condition="'$(GenerateAssemblyInfo)' == 'true'">
+    <ItemGroup>
+      <AssemblyMetadata Include="BuildTime" Value="$([System.DateTime]::UtcNow.ToString('o'))" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <ProjectReference Include="..\RecotteStudio.Core\RecotteStudio.Core.csproj" />
   </ItemGroup>
