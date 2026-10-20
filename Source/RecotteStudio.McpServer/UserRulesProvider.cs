@@ -33,7 +33,23 @@ public static class UserRulesProvider
         try
         {
             if (!File.Exists(path)) return null;
-            markdown = File.ReadAllText(path, Encoding.UTF8);
+
+            // Read only the allowed prefix and one extra character to detect truncation.
+            // ReadBlock handles short reads and preserves UTF-8 decoding across byte boundaries.
+            using StreamReader reader = new(path, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            char[] prefix = new char[MaxLength + 1];
+            int count = reader.ReadBlock(prefix, 0, prefix.Length);
+            bool truncated = count > MaxLength;
+            int length = Math.Min(count, MaxLength);
+
+            // Never split a UTF-16 surrogate pair at the cut.
+            if (truncated && char.IsHighSurrogate(prefix[length - 1]))
+                length--;
+
+            markdown = new string(prefix, 0, length);
+            if (truncated)
+                activity.Record(ActivityKind.Warning, "ユーザールールが長すぎます",
+                    $"{path} — 先頭の {length} 文字だけを渡します（上限 {MaxLength} 文字）");
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -41,13 +57,6 @@ public static class UserRulesProvider
             return null;
         }
 
-        if (string.IsNullOrWhiteSpace(markdown)) return null;
-        if (markdown.Length <= MaxLength) return markdown;
-
-        // Never split a surrogate pair at the cut.
-        int length = char.IsHighSurrogate(markdown[MaxLength - 1]) ? MaxLength - 1 : MaxLength;
-        activity.Record(ActivityKind.Warning, "ユーザールールが長すぎます",
-            $"{path} — 先頭の {length} 文字だけを渡します（{markdown.Length} 文字）");
-        return markdown[..length];
+        return string.IsNullOrWhiteSpace(markdown) ? null : markdown;
     }
 }
