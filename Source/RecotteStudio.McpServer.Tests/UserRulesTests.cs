@@ -67,6 +67,47 @@ public sealed class UserRulesTests : IDisposable
     }
 
     [Fact]
+    public void ExactlyMaxLengthDoesNotLogAWarning()
+    {
+        string content = new string('a', UserRulesProvider.MaxLength);
+        File.WriteAllText(RulesPath, content, Encoding.UTF8);
+
+        Assert.Equal(content, UserRulesProvider.Read(activity, directory));
+        Assert.Empty(entries);
+    }
+
+    [Fact]
+    public void LargeFileReturnsOnlyTheCappedPrefix()
+    {
+        // A multi-megabyte file should never be fully decoded or copied into a string.
+        const int fileSize = 8 * 1024 * 1024;
+        using (FileStream stream = File.Create(RulesPath))
+        {
+            byte[] header = Encoding.UTF8.GetBytes("# user rules\\n");
+            stream.Write(header);
+            stream.SetLength(fileSize);
+        }
+
+        string? rules = UserRulesProvider.Read(activity, directory);
+
+        Assert.NotNull(rules);
+        Assert.Equal(UserRulesProvider.MaxLength, rules.Length);
+        Assert.StartsWith("# user rules", rules);
+        Assert.Equal(ActivityKind.Warning, Assert.Single(entries).Kind);
+    }
+
+    [Fact]
+    public void Utf8CharactersAreDecodedAcrossTheLengthBoundary()
+    {
+        string content = new string('あ', UserRulesProvider.MaxLength) + "後";
+        File.WriteAllText(RulesPath, content, Encoding.UTF8);
+
+        Assert.Equal(new string('あ', UserRulesProvider.MaxLength),
+            UserRulesProvider.Read(activity, directory));
+        Assert.Equal(ActivityKind.Warning, Assert.Single(entries).Kind);
+    }
+
+    [Fact]
     public void OversizedFileIsCutWithoutSplittingACharacter()
     {
         string content = new string('a', UserRulesProvider.MaxLength - 1) + "😀" + "tail";
