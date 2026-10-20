@@ -13,8 +13,11 @@ public sealed class AppVersionTests
             .SingleOrDefault(item => item.Key == "BuildTime")?.Value;
 
         Assert.NotNull(value);
-        DateTimeOffset built = DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        // A cached build can legitimately be older than one day when tests run with --no-build.
+        // Incremental builds regenerate this metadata in the project's SetBuildTimestamp target.
+        Assert.True(DateTimeOffset.TryParseExact(value, "o", CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind, out DateTimeOffset built));
         Assert.Equal(TimeSpan.Zero, built.Offset);
-        Assert.InRange(built, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddMinutes(1));
+        Assert.InRange(built, DateTimeOffset.UnixEpoch, DateTimeOffset.UtcNow.AddMinutes(1));
     }
 }
