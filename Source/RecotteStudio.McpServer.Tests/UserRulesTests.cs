@@ -83,7 +83,7 @@ public sealed class UserRulesTests : IDisposable
         const int fileSize = 8 * 1024 * 1024;
         using (FileStream stream = File.Create(RulesPath))
         {
-            byte[] header = Encoding.UTF8.GetBytes("# user rules\\n");
+            byte[] header = Encoding.UTF8.GetBytes("# user rules\n");
             stream.Write(header);
             stream.SetLength(fileSize);
         }
