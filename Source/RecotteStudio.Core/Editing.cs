@@ -215,12 +215,19 @@ public sealed partial class ProjectEditor
         return new(true, new[] { stale }, made);
     }
 
-    /// <summary>Moves a Speaker Voice after validating locks, range, and duration policy.</summary>
+    /// <summary>
+    /// Sets the time range of a Speaker Voice, or of an Image or Figure on an Annot layer or a Video on a Video layer,
+    /// after validating locks, range, and duration policy.
+    /// </summary>
     public EditResult MoveTimelineObject(MoveTimelineObjectRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (request.StartTime.TotalSeconds > request.EndTime.TotalSeconds) return EditResult.Failed("RC4301", "Start time must not be after end time.");
-        var found = Find(request.ObjectId); EditResult? rejected = CheckSpeakerVoice(found); if (rejected is not null) return rejected;
+        var found = Find(request.ObjectId);
+        if (found is { } clip && IsVisualClip(clip.layer, clip.obj)) return MoveClip(request, clip.layer, clip.obj, clip.path);
+        if (found is { } other && (!JsonAccess.TryGetString(other.obj, "type", out string type) || type != "Speaker Voice"))
+            return EditResult.Failed("RC4202", "Only a Speaker Voice, an Image or Figure on an Annot layer, or a Video on a Video layer can be moved in time.", other.path);
+        EditResult? rejected = CheckSpeakerVoice(found); if (rejected is not null) return rejected;
         EditResult? durationError = ApplyDuration(request.EndTime.TotalSeconds); if (durationError is not null) return durationError;
         List<ProjectChange> made = new();
         Change(found!.Value.obj, "start-time", request.StartTime.TotalSeconds, "MoveTimelineObject", request.ObjectId.ToString(), $"{found.Value.path}.start-time", made);

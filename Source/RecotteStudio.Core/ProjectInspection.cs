@@ -97,6 +97,8 @@ public sealed record ProjectCapabilities(
     public bool CanMoveSpeakerVoiceToLayer { get; init; }
     /// <summary>Gets whether Images, Figures, and Videos on Annot and Video layers can be moved and resized.</summary>
     public bool CanSetObjectBounds { get; init; }
+    /// <summary>Gets whether MoveTimelineObject can change the time range of Images, Figures, and Videos on Annot and Video layers.</summary>
+    public bool CanMoveClips { get; init; }
     /// <summary>Gets whether a Speaker Action, an expression or gesture of a layer's character, can be added.</summary>
     public bool CanAddSpeakerAction { get; init; }
 }
@@ -194,6 +196,7 @@ public sealed partial class RecotteProjectDocument
         CanMoveLayer = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanMoveSpeakerVoiceToLayer = profile.CanEditSpeakerVoice,
         CanSetObjectBounds = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
+        CanMoveClips = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanAddSpeakerAction = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
     };
 
@@ -353,7 +356,8 @@ public sealed partial class RecotteProjectDocument
         return new(layer.Index, layer.Name, layer.Type, item.Index, id, item.Type, item.Name, item.Text, start, end,
             duration, locked, new(speakerVoice && id is not null && !locked && Capabilities.CanEditSpeakerText &&
                     ProjectEditor.HasEditableText(item.JsonNode),
-                speakerVoice && !locked && Capabilities.CanMoveTimelineObject,
+                speakerVoice ? !locked && Capabilities.CanMoveTimelineObject
+                    : id is not null && Capabilities.CanMoveClips && ProjectEditor.CanMoveClip(layer.JsonNode, item.JsonNode),
                 id is not null && !locked && Capabilities.CanRemoveTimelineObject)
             {
                 CanSetBounds = id is not null && Capabilities.CanSetObjectBounds && ProjectEditor.CanSetBounds(layer.JsonNode, item.JsonNode),
