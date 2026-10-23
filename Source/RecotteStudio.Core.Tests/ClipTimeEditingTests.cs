@@ -114,6 +114,24 @@ public sealed class ClipTimeEditingTests : IDisposable
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(null)]
+    public void Resize_RejectsAVideoThatDoesNotStretchItsSourceRange(bool? speedStretch)
+    {
+        JsonObject root = Sample("005OneVideo");
+        (TimelineObjectId id, _, _) = First(root, "Video");
+        JsonObject properties = Object(root, id)["properties"]!.AsObject();
+        if (speedStretch is bool value) properties["SpeedStretch"]!["p-value"] = value;
+        else properties.Remove("SpeedStretch");
+        decimal length = Object(root, id)["end-time"]!.GetValue<decimal>() - Object(root, id)["start-time"]!.GetValue<decimal>();
+
+        // Only a new length depends on the stretch mode; moving the clip as it is still works.
+        Assert.True(Load(root).ApplyOperations(new ProjectOperation[]
+            { new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(2m), new(2m + length)) }).Success);
+        AssertRejected(root, new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(1m), new(1.5m)), "RC4304");
+    }
+
+    [Theory]
     [InlineData(1000)]
     [InlineData(1001)]
     public void Move_RejectsClipsJoinedByATransition(int key)

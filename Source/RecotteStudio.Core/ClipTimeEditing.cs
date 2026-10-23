@@ -49,6 +49,10 @@ public sealed partial class ProjectEditor
                     !JsonAccess.TryGetDecimal(sourceStart, "p-value", out sourceStartTime) ||
                     !JsonAccess.TryGetDecimal(endEntry, "p-value", out sourceEndTime) || sourceEndTime < sourceStartTime)
                     return EditResult.Failed("RC4304", "The video has no plain StartTime and EndTime source range, so its length cannot be changed.", $"{path}.properties");
+                // Scaling the source range below keeps the speed only when Recotte Studio stretches that range over the clip,
+                // the only mode seen in the samples (005, 009, 013), so another or a missing mode is left untouched.
+                if (!StretchesSourceRange(properties))
+                    return EditResult.Failed("RC4304", "The video does not stretch its source range over the clip (SpeedStretch is off or missing), so its length cannot be changed.", $"{path}.properties.SpeedStretch");
                 sourceEnd = endEntry;
             }
         }
@@ -106,4 +110,9 @@ public sealed partial class ProjectEditor
     }
 
     private static bool HasKeyframes(JsonObject property) => property["keyframes"] is JsonArray { Count: > 0 };
+
+    // SpeedStretch must be a plain true; a missing, non-boolean, false, or keyframed value counts as not stretching.
+    private static bool StretchesSourceRange(JsonObject properties) =>
+        properties["SpeedStretch"] is JsonObject stretch && !HasKeyframes(stretch) &&
+        stretch["p-value"] is JsonValue value && value.TryGetValue(out bool stretches) && stretches;
 }
