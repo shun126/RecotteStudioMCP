@@ -95,6 +95,7 @@ Recotte Studio は話者のコメントを所定の位置にテロップ表示�
 - 全要素の後ろに敷く下敷き画像は、`addAnnotationLayer` に `insertIndex: 0` と `layerName` を指定して最背面に注釈レイヤーを作り、そのレイヤーへ `addImageObject` で配置する。
 - 既にあるレイヤーの重なり順を変えるときは、`moveLayer` でレイヤーを移す。移したレイヤーとの間にあるレイヤーの番号がずれるため、同じ操作内ではレイヤーを名前で指定する。
 - 追加した画像・動画は画面全体に広がる。ワイプや挿絵のように一部に置く場合は、追加した後に `recotte_list_timeline` で `objectKey` と現在の `bounds` を確認し、`setObjectBounds` で位置と大きさを指定する。縦横比は素材に合わせ、字幕枠（`recotte_get_capabilities` の `layout`）と重ねない。
+- 置いた画像・スタンプ・注釈テキスト・動画の表示時間を変えるときは、削除して置き直さず、`moveTimelineObject` で `start` と `end` を指定する。
 - 画像や動画に字幕の台詞を焼き込まない。解説に不可欠な文字は、字幕とは独立した説明要素として扱う。
 
 ## MCP による静止画の動画化

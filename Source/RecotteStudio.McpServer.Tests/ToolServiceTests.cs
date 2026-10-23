@@ -354,6 +354,39 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task MoveTimelineObjectMovesAndLengthensAnImage()
+    {
+        string image = Path.Combine(root, "Sample.png");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Sample.png"), image);
+        string output = Path.Combine(root, "移動.ccproj");
+        McpToolResult<object> created = await service.CreateProjectAsync("移動", output, false, new[]
+        {
+            new ProjectOperationDto("addImageObject", Layer: new(LayerIndex: 2), AssetPath: image, ProjectPath: output,
+                DisplayName: "image", Start: 0m, End: 2m),
+        }, default);
+        Assert.True(created.Success, created.Message);
+        JsonElement entry = Assert.Single(JsonSerializer.SerializeToElement(service.ListTimeline(output).Data)
+            .GetProperty("entries").EnumerateArray(), item => item.GetProperty("ObjectType").GetString() == "Image");
+        Assert.True(entry.GetProperty("Capabilities").GetProperty("CanMove").GetBoolean());
+        TimelineObjectId id = new(entry.GetProperty("LayerIndex").GetInt32(), entry.GetProperty("objectKey").GetInt32());
+
+        McpToolResult<object> moved = await service.ApplyOperationsAndOverwriteAsync(output, new[]
+        {
+            new ProjectOperationDto("addFadeEffect", Target: new(LayerIndex: id.LayerIndex, ObjectKey: id.ObjectKey), EffectKey: "Alpha Fade Out", Duration: 1m),
+            new ProjectOperationDto("moveTimelineObject", Target: new(LayerIndex: id.LayerIndex, ObjectKey: id.ObjectKey), Start: 3m, End: 8m),
+        }, default);
+
+        Assert.True(moved.Success, moved.Message);
+        RecotteProjectDocument document = RecotteProject.Load(output);
+        TimelineEntryView clip = Assert.Single(document.GetTimelineEntries(), item => item.ObjectId == id);
+        Assert.Equal(3m, clip.StartTime!.Value.TotalSeconds);
+        Assert.Equal(8m, clip.EndTime!.Value.TotalSeconds);
+        Assert.Equal(4m, Assert.Single(document.GetFadeEffects(id)).Start);
+        Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
+            .GetProperty("capabilities").GetProperty("CanMoveClips").GetBoolean());
+    }
+
+    [Fact]
     public void FailedPreviewReportsTheFirstErrorDiagnosticAsItsErrorCode()
     {
         string image = Path.Combine(root, "Sample.png");
