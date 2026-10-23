@@ -1,5 +1,9 @@
 # RecotteStudio.McpServer
 
+音声未生成の台詞は `updateSpeakerText` 操作で差し替えられます。`recotte_list_timeline` の対象IDを指定し、既存の時刻やレイヤーを維持して保存できます。[台詞の差し替え例](../../Documents/RecotteStudioCore/DialogueReplacement.md)を参照してください。
+
+`recotte_extract_video_frames` で動画から解析用の画像と素材内の時刻を抽出できます。一定間隔、場面変化、両方の組み合わせに対応し、JPEG と JSON を保存します。[使用例と制限](../../Documents/RecotteStudioCore/VideoFrameExtraction.md)を参照してください。
+
 `recotte_get_generation_rules` は、実行ファイルと同じフォルダにある編集可能な `GenerationRules.md` を呼び出しのたびに読み込み、Markdownで返します。ワークスペースの場所には依存しません。ファイルがなくてもサーバーは停止せず、アクティビティに警告を記録して `available=false` と空の本文を返します。MCP初期指示と生成・編集ツールの説明から取得を案内します。リリースZIPにもファイルを収録します。
 
 エフェクトの一覧取得と画像・動画へのフェード追加・変更・削除に対応しています。[使用例と検証状況](../../Documents/RecotteStudioCore/Effects.md)を参照してください。

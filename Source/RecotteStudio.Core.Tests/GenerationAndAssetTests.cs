@@ -128,10 +128,15 @@ public sealed class GenerationAndAssetTests
             Assert.True(staged.Success);
             Assert.True(session.Commit().Success);
             document.SaveCopy(output);
-            TimelineObjectView video = RecotteProject.Load(output).Layers[0].Objects.Single();
+            RecotteProjectDocument loaded = RecotteProject.Load(output);
+            TimelineObjectView video = loaded.Layers[0].Objects.Single();
             Assert.Equal("Video", video.Type);
             Assert.Equal(1m, video.StartTime);
             Assert.Equal(4m, video.EndTime);
+            TimelineEntryView entry = Assert.Single(loaded.GetTimelineEntries());
+            Assert.False(entry.IsLocked);
+            Assert.True(entry.Capabilities.CanMove);
+            Assert.True(entry.Capabilities.CanRemove);
         }
         finally { Directory.Delete(directory, true); }
     }
@@ -221,7 +226,9 @@ public sealed class GenerationAndAssetTests
     [Fact]
     public void RemoveTimelineObject_RejectsLockedObject()
     {
-        RecotteProjectDocument document = RecotteProject.Load(Sample("005OneVideo", "005OneVideo.ccproj"));
+        string json = File.ReadAllText(Sample("005OneVideo", "005OneVideo.ccproj"))
+            .Replace("\"tl-locked\": false", "\"tl-locked\": true", StringComparison.Ordinal);
+        RecotteProjectDocument document = RecotteProject.Load(new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)));
         TimelineObjectView video = document.Layers.SelectMany(layer => layer.Objects).Single(item => item.Type == "Video");
         using ProjectEditSession session = document.BeginEdit();
 

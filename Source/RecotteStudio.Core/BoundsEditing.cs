@@ -24,8 +24,8 @@ public sealed partial class ProjectEditor
 {
     /// <summary>
     /// Rewrites the Bounds of an Image or Figure (a stamp or an annotation text box) on an Annot layer, or of a Video on a
-    /// Video layer. Only the layer lock and the object's timeline lock block the edit: Recotte Studio saves every video
-    /// with st-locked and pv-locked set, and those flags are kept as they are.
+    /// Video layer. Only the layer lock and the object's timeline lock block the edit.
+    /// The st-locked and pv-locked flags can occur on saved videos and are kept as they are.
     /// </summary>
     public EditResult SetObjectBounds(SetObjectBoundsRequest request)
     {
@@ -37,11 +37,11 @@ public sealed partial class ProjectEditor
         var found = Find(request.ObjectId);
         if (found is null) return EditResult.Failed("RC4201", "The target timeline object does not exist.");
         (JsonObject layer, JsonObject obj, _, string path) = found.Value;
-        if (!HasBoundsTarget(layer, obj) || !TryGetBounds(obj, out ObjectBounds current))
+        if (!IsVisualClip(layer, obj) || !TryGetBounds(obj, out ObjectBounds current))
             return EditResult.Failed("RC4911", "Only an Image or Figure on an Annot layer or a Video on a Video layer with a valid Bounds rectangle can be moved or resized.", path);
         if (HasBoundsKeyframes(obj))
             return EditResult.Failed("RC4912", "The Bounds of the target are animated with keyframes, which cannot be edited.", $"{path}.properties.Bounds");
-        if (IsBoundsLocked(layer, obj)) return EditResult.Failed("RC4207", "The target object or layer is locked.", path);
+        if (IsTimelineLocked(layer, obj)) return EditResult.Failed("RC4207", "The target object or layer is locked.", path);
 
         JsonObject entry = (JsonObject)obj["properties"]!["Bounds"]!;
         string before = entry["p-value"]!.ToJsonString();
@@ -54,8 +54,8 @@ public sealed partial class ProjectEditor
     }
 
     /// <summary>Returns whether SetObjectBounds accepts the object: a supported type and layer, a valid unanimated Bounds, and no lock.</summary>
-    internal static bool CanSetBounds(JsonObject layer, JsonObject obj) => HasBoundsTarget(layer, obj) && TryGetBounds(obj, out _) &&
-        !HasBoundsKeyframes(obj) && !IsBoundsLocked(layer, obj);
+    internal static bool CanSetBounds(JsonObject layer, JsonObject obj) => IsVisualClip(layer, obj) && TryGetBounds(obj, out _) &&
+        !HasBoundsKeyframes(obj) && !IsTimelineLocked(layer, obj);
 
     /// <summary>Reads an object's [x, y, width, height] Bounds.</summary>
     internal static bool TryGetBounds(JsonObject obj, out ObjectBounds bounds)
@@ -67,14 +67,15 @@ public sealed partial class ProjectEditor
         return true;
     }
 
-    private static bool HasBoundsTarget(JsonObject layer, JsonObject obj) =>
+    // The images, stamps, annotation texts, and videos that SetObjectBounds and MoveTimelineObject edit.
+    private static bool IsVisualClip(JsonObject layer, JsonObject obj) =>
         JsonAccess.TryGetString(layer, "type", out string layerType) && JsonAccess.TryGetString(obj, "type", out string objectType) &&
         (layerType, objectType) is ("Annot", "Image" or "Figure") or ("Video", "Video");
 
     // Writing p-value would not move an animated object, whose rectangle comes from its keyframes.
     private static bool HasBoundsKeyframes(JsonObject obj) => obj["properties"]?["Bounds"]?["keyframes"] is JsonArray { Count: > 0 };
 
-    // st-locked and pv-locked are left out: Recotte Studio sets both on every video it saves (005OneVideo, 013TwoVideos).
-    private static bool IsBoundsLocked(JsonObject layer, JsonObject obj) => new[] { (layer, "locked"), (obj, "locked"), (obj, "tl-locked") }
+    // st-locked and pv-locked are left out: preview locks do not prevent timeline or bounds editing.
+    private static bool IsTimelineLocked(JsonObject layer, JsonObject obj) => new[] { (layer, "locked"), (obj, "locked"), (obj, "tl-locked") }
         .Any(item => item.Item1[item.Item2] is JsonValue value && value.TryGetValue(out bool locked) && locked);
 }

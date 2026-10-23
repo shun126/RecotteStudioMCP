@@ -1,6 +1,6 @@
 {
-	"app_version":"1.8.5.0",
-	"time":"2026/07/23 02:12:06.25",
+	"app_version":"1.8.5.5",
+	"time":"2026/10/24 00:46:17.194",
 	"setting": {
 		"guid":"47E70424-741B-4F04-A223-479E4A6852BF",
 		"project-name":"掛け合い実況動画 2026-07-23",
@@ -12,12 +12,13 @@
 		"dpi": 72.0,
 		"auto-duration": true,
 		"pix-ser-sec": 250.0,
+		"time-line-height-scale": 1.0,
 		"auto-seek": false,
 		"editor-info":{"time-line-left":0.0,"object-move-mode":0,"object-snap":true,"pv-object-snap":true,"move-obj-key":true},
 		"voice-link":"VOICEROID2_Integration",
 		"export-video-size":[0,0],
-		"export-video-path":"",
-		"file-explorer-path":"file://C:/Users/shun1/Documents",
+		"export-video-path":"file://",
+		"file-explorer-path":"file://D:/Users/smoriya/Documents",
 		"frame-counter": 0,
 		"volume": 0.0,
 		"mute": false,
@@ -28,13 +29,13 @@
 			"key":"haruno_sora",
 			"name":"桜乃そら",
 			"file":"file://C:/Program Files/RecotteStudio/models/haruno_sora.rsp",
-			"r-path":"../../../../../../Program Files/RecotteStudio/models/haruno_sora.rsp"
+			"r-path":"../../../../../../C:/Program Files/RecotteStudio/models/haruno_sora.rsp"
 		},
 		{
 			"key":"yanderu_kiritan",
 			"name":"病ンデる東北きりたん",
-			"file":"file://E:/Users/shun1/OneDrive/動画素材/yanderu_kiritan.rsp",
-			"r-path":"../../../../../../../E:/Users/shun1/OneDrive/動画素材/yanderu_kiritan.rsp"
+			"file":"file://D:/Users/smoriya/Downloads/yanderu_kiritan.rsp",
+			"r-path":"../../../../../Users/smoriya/Downloads/yanderu_kiritan.rsp"
 		}
 	],
 	"ui-setting": {},
@@ -49,7 +50,7 @@
 			"loc": 0,
 			"ik":"fbf9956ed05bae946ce05ef9f0d6c723c065ba7ffba2e09a08aacc9630dc5e27",
 			"rpath":"../005OneVideo/Sample.mp4",
-			"apath":"file://C:/VisualStudio Projects/RecotteHelper/Samples/RecotteProjects/005OneVideo/Sample.mp4"
+			"apath":"file://D:/Visual Studio Projects/RecotteStudioMCP/Documents/RecotteProjects/005OneVideo/Sample.mp4"
 		}
 	],
 	"named-colors": [
@@ -1540,7 +1541,7 @@
 			"type":"Video",
 			"name":"映像・音声1",
 			"locked": false,
-			"selected": false,
+			"selected": true,
 			"visible": true,
 			"volume": 0.0,
 			"mute": false,
@@ -1567,8 +1568,8 @@
 					"type":"Video",
 					"name":"",
 					"tl-locked": false,
-					"st-locked": true,
-					"pv-locked": true,
+					"st-locked": false,
+					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
 					"selected": false,
@@ -1714,11 +1715,11 @@
 					"type":"Video",
 					"name":"",
 					"tl-locked": false,
-					"st-locked": true,
-					"pv-locked": true,
+					"st-locked": false,
+					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
-					"selected": false,
+					"selected": true,
 					"start-time": 0.4833333333333334,
 					"end-time": 1.2499833333333333,
 					"properties": {
@@ -2114,7 +2115,7 @@
 					"snap-to-end": false,
 					"fkft": false,
 					"selected": false,
-					"start-time": 0.43333333333333326,
+					"start-time": 0.4333333333333333,
 					"end-time": 4.183333333333334,
 					"properties": {
 						"Loop": {
@@ -2225,7 +2226,7 @@
 					"start-snap": 0,"voice-props":{
 						"properties": {}},"voice-hash":0
 				}
-			],"actions":[{"name":"haruno_sora:StandBy_1.vmd","pack":"haruno_sora","l-uk":"StandBy_1.vmd"},{"name":"haruno_sora:StandBy_2.vmd","pack":"haruno_sora","l-uk":"StandBy_2.vmd"},{"name":"haruno_sora:Talk_I.vmd","pack":"haruno_sora","l-uk":"Talk_I.vmd"},{"name":"haruno_sora:Talk_U.vmd","pack":"haruno_sora","l-uk":"Talk_U.vmd"},{"name":"haruno_sora:ThumbsUp.vmd","pack":"haruno_sora","l-uk":"ThumbsUp.vmd"},{"name":"haruno_sora:Point_R_UP_1.vmd","pack":"haruno_sora","l-uk":"Point_R_UP_1.vmd"},{"name":"haruno_sora:Point_R_UP_2.vmd","pack":"haruno_sora","l-uk":"Point_R_UP_2.vmd"},{"name":"haruno_sora:Point_L_UP_1.vmd","pack":"haruno_sora","l-uk":"Point_L_UP_1.vmd"},{"name":"haruno_sora:Point_L_UP_2.vmd","pack":"haruno_sora","l-uk":"Point_L_UP_2.vmd"},{"name":"haruno_sora:Point_DWN_DBL.vmd","pack":"haruno_sora","l-uk":"Point_DWN_DBL.vmd"},{"name":"haruno_sora:Point_UP_DBL.vmd","pack":"haruno_sora","l-uk":"Point_UP_DBL.vmd"},{"name":"haruno_sora:Smile_1.vmd","pack":"haruno_sora","l-uk":"Smile_1.vmd"},{"name":"haruno_sora:Smile_2.vmd","pack":"haruno_sora","l-uk":"Smile_2.vmd"},{"name":"haruno_sora:AHAHA.vmd","pack":"haruno_sora","l-uk":"AHAHA.vmd"},{"name":"haruno_sora:JITO.vmd","pack":"haruno_sora","l-uk":"JITO.vmd"},{"name":"haruno_sora:PUNSUKA!.vmd","pack":"haruno_sora","l-uk":"PUNSUKA!.vmd"},{"name":"haruno_sora:ANGRY!.vmd","pack":"haruno_sora","l-uk":"ANGRY!.vmd"},{"name":"haruno_sora:Lonely.vmd","pack":"haruno_sora","l-uk":"Lonely.vmd"},{"name":"haruno_sora:Disappointed.vmd","pack":"haruno_sora","l-uk":"Disappointed.vmd"},{"name":"haruno_sora:POROPORO.vmd","pack":"haruno_sora","l-uk":"POROPORO.vmd"},{"name":"haruno_sora:Surprise.vmd","pack":"haruno_sora","l-uk":"Surprise.vmd"},{"name":"haruno_sora:ColdSweat.vmd","pack":"haruno_sora","l-uk":"ColdSweat.vmd"},{"name":"haruno_sora:Blush.vmd","pack":"haruno_sora","l-uk":"Blush.vmd"},{"name":"haruno_sora:TEHEPERO.vmd","pack":"haruno_sora","l-uk":"TEHEPERO.vmd"},{"name":"haruno_sora:Hi.vmd","pack":"haruno_sora","l-uk":"Hi.vmd"},{"name":"haruno_sora:Bye.vmd","pack":"haruno_sora","l-uk":"Bye.vmd"},{"name":"haruno_sora:OJIGI.vmd","pack":"haruno_sora","l-uk":"OJIGI.vmd"},{"name":"haruno_sora:Salute.vmd","pack":"haruno_sora","l-uk":"Salute.vmd"},{"name":"haruno_sora:Uh-huh(Japanese).vmd","pack":"haruno_sora","l-uk":"Uh-huh(Japanese).vmd"},{"name":"haruno_sora:Point_1.vmd","pack":"haruno_sora","l-uk":"Point_1.vmd"}],"voice-props":{
+			],"voice-props":{
 				"properties": {
 					"ゆっくり霊夢_FileKey": {
 						"p-type": 10,
@@ -2240,7 +2241,7 @@
 			"type":"Speaker",
 			"name":"話者2",
 			"locked": false,
-			"selected": true,
+			"selected": false,
 			"visible": true,
 			"volume": 0.0,
 			"mute": false,
@@ -2493,7 +2494,7 @@
 					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
-					"selected": true,
+					"selected": false,
 					"start-time": 1.6,
 					"end-time": 2.8,
 					"properties": {
