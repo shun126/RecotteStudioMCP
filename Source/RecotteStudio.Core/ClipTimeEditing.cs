@@ -46,9 +46,12 @@ public sealed partial class ProjectEditor
             {
                 if (obj["properties"] is not JsonObject properties || properties["StartTime"] is not JsonObject sourceStart ||
                     properties["EndTime"] is not JsonObject endEntry || HasKeyframes(sourceStart) || HasKeyframes(endEntry) ||
+                    properties["SpeedStretch"] is not JsonObject speedStretch || HasKeyframes(speedStretch) ||
+                    speedStretch["p-value"] is not JsonValue speedStretchValue ||
+                    !speedStretchValue.TryGetValue<bool>(out bool enabled) || !enabled ||
                     !JsonAccess.TryGetDecimal(sourceStart, "p-value", out sourceStartTime) ||
                     !JsonAccess.TryGetDecimal(endEntry, "p-value", out sourceEndTime) || sourceEndTime < sourceStartTime)
-                    return EditResult.Failed("RC4304", "The video has no plain StartTime and EndTime source range, so its length cannot be changed.", $"{path}.properties");
+                    return EditResult.Failed("RC4304", "The video requires a plain StartTime and EndTime source range and plain SpeedStretch set to true to change its length.", $"{path}.properties");
                 sourceEnd = endEntry;
             }
         }

@@ -54,6 +54,39 @@ public sealed class ClipTimeEditingTests : IDisposable
         Assert.False(saved["pv-locked"]!.GetValue<bool>());
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("{}")]
+    [InlineData("{\"p-value\":false}")]
+    [InlineData("{\"p-value\":\"true\"}")]
+    [InlineData("{\"p-value\":true,\"keyframes\":[{}]}")]
+    public void Resize_RejectsUnsupportedSpeedStretchButAllowsMoving(string? speedStretchJson)
+    {
+        JsonObject root = Sample("005OneVideo");
+        (TimelineObjectId id, _, JsonObject original) = First(root, "Video");
+        JsonObject properties = Object(root, id)["properties"]!.AsObject();
+        if (speedStretchJson is null) properties.Remove("SpeedStretch");
+        else properties["SpeedStretch"] = JsonNode.Parse(speedStretchJson);
+        RecotteProjectDocument document = Load(root);
+        decimal start = original["start-time"]!.GetValue<decimal>();
+        decimal end = original["end-time"]!.GetValue<decimal>();
+
+        Assert.True(document.ApplyOperations(new ProjectOperation[]
+            { new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(start + 2m), new(end + 2m)) }).Success);
+        JsonObject expected = (JsonObject)Object(root, id).DeepClone();
+        expected["start-time"] = start + 2m;
+        expected["end-time"] = end + 2m;
+        Assert.True(JsonNode.DeepEquals(expected, Saved(document, id)));
+
+        long revision = document.Revision;
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+            { new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(1m), new(1.5m)) });
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4304");
+        Assert.Equal(revision, document.Revision);
+        Assert.True(JsonNode.DeepEquals(expected, Saved(document, id)));
+    }
+
     [Fact]
     public void Resize_KeepsAFadeInAtTheStartAndAFadeOutAtTheEnd()
     {
