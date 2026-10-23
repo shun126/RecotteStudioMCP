@@ -3,6 +3,12 @@
 Recotte Studio MCP の主な変更点を記録します。
 書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に、バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
+## [0.6.4] - 2026-10-24
+
+### 変更
+
+- サーバーのバージョンを `0.6.4` に更新しました。
+
 ## [0.6.3] - 2026-10-22
 
 ### 追加
