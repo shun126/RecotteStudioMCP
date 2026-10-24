@@ -58,6 +58,11 @@ public sealed class HttpServerTests
             Assert.Contains(tools, tool => tool.Name == "recotte_export_subtitles");
             Assert.Contains(tools, tool => tool.Name == "recotte_create_video_from_image");
             Assert.Contains(tools, tool => tool.Name == "recotte_create_flipbook_video");
+            Assert.Contains(tools, tool => tool.Name == "recotte_extract_video_frames");
+            var invalidExtraction = await client.CallToolAsync("recotte_extract_video_frames",
+                new Dictionary<string, object?> { ["videoPath"] = "unused.mp4", ["outputPath"] = "unused.json", ["mode"] = "unknown" });
+            Assert.Contains(invalidExtraction.Content, block => block is TextContentBlock text &&
+                text.Text.Contains("MCP_FRAME_ARGUMENT_INVALID", StringComparison.Ordinal));
             var result = await client.CallToolAsync("recotte_inspect_project",
                 new Dictionary<string, object?> { ["projectPath"] = project });
             Assert.NotEqual(true, result.IsError);

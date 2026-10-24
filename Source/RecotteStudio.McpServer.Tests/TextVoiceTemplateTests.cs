@@ -72,6 +72,57 @@ public sealed class TextVoiceTemplateTests : IDisposable
         Assert.Equal(3, keys.Distinct().Count());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ReplaceUngeneratedDialoguePreservesClipAndOtherLines(bool overwrite)
+    {
+        string source = Path.Combine(root, "original.ccproj");
+        Assert.True((await service.CreateProjectAsync("dialogue", source, false,
+            new[] { AddText("差し替え前", 1m, 4m), AddText("残す台詞", 5m, 7m) }, default)).Success);
+        byte[] original = File.ReadAllBytes(source);
+        JsonObject before = SpeakerVoices(source).Single(voice => (string?)voice["name"] == "差し替え前");
+        string otherBefore = SpeakerVoices(source).Single(voice => (string?)voice["name"] == "残す台詞").ToJsonString();
+        TimelineEntryView entry = RecotteProject.Load(source).GetTimelineEntries().Single(item => item.Text == "差し替え前");
+        Assert.False(entry.HasAudio);
+        Assert.True(entry.Capabilities.CanUpdateText);
+        const string replacement = "敵が来た！\n距離を取ろう。";
+        ProjectOperationDto[] operations =
+        [
+            new("updateSpeakerText", Target: new(LayerIndex: entry.LayerIndex, ObjectKey: entry.ObjectId!.Value.ObjectKey), Text: replacement),
+        ];
+        McpToolResult<object> preview = service.PreviewOperations(source, operations);
+        Assert.True(preview.Success, preview.Message);
+        Assert.Equal(original, File.ReadAllBytes(source));
+        string destination = overwrite ? source : Path.Combine(root, "replaced.ccproj");
+        McpToolResult<object> result = overwrite
+            ? await service.ApplyOperationsAndOverwriteAsync(source, operations, default)
+            : await service.ApplyOperationsAndSaveCopyAsync(source, destination, false, operations, default);
+
+        Assert.True(result.Success, result.Message);
+        foreach (var response in new[] { preview, result })
+        {
+            Assert.DoesNotContain(response.Diagnostics, diagnostic => diagnostic.Code == "RC4208");
+            Assert.Empty(JsonSerializer.SerializeToElement(response.Data).GetProperty("batch")
+                .GetProperty("audioRegenerationRequired").EnumerateArray());
+        }
+        if (!overwrite) Assert.Equal(original, File.ReadAllBytes(source));
+        RecotteProjectDocument reloaded = RecotteProject.Load(destination);
+        Assert.True(reloaded.Validate().IsValid);
+        Assert.Equal(2, reloaded.GetTimelineEntries().Count(item => item.ObjectType == "Speaker Voice"));
+        JsonObject after = SpeakerVoices(destination).Single(voice => (int?)voice["objkey"] == entry.ObjectId!.Value.ObjectKey);
+        Assert.Equal(replacement, (string?)after["name"]);
+        Assert.Equal(replacement, (string?)after["text"]!["text"]);
+        Assert.Equal(replacement, (string?)after["text"]!["stext"]!.AsArray().OfType<JsonObject>().Single(fragment => (string?)fragment["c"] == "t")["text"]);
+        // Normalize just the three updated fields to verify timing, styling, audio state, and other metadata are retained.
+        after["name"] = before["name"]!.DeepClone();
+        after["text"]!["text"] = before["text"]!["text"]!.DeepClone();
+        var fragment = after["text"]!["stext"]!.AsArray().OfType<JsonObject>().Single(item => (string?)item["c"] == "t");
+        fragment["text"] = "差し替え前";
+        Assert.True(JsonNode.DeepEquals(before, after));
+        Assert.Equal(otherBefore, SpeakerVoices(destination).Single(voice => (string?)voice["name"] == "残す台詞").ToJsonString());
+    }
+
     [Fact]
     public async Task ExistingLayerVoiceIsPreferredOverTheEmbeddedTemplate()
     {

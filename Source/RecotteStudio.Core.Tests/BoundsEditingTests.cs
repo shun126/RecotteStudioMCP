@@ -59,6 +59,9 @@ public sealed class BoundsEditingTests : IDisposable
     public void SetObjectBounds_MovesARecotteSavedVideoDespiteItsPreviewLocks()
     {
         JsonObject root = Sample("013TwoVideos");
+        JsonObject video = root["layers"]![1]!["layer-objects"]!.AsArray().OfType<JsonObject>().Single(item => (string?)item["type"] == "Video");
+        video["st-locked"] = true;
+        video["pv-locked"] = true;
         RecotteProjectDocument document = Load(root);
         TimelineEntryView wipe = Assert.Single(document.GetTimelineEntries(), item => item.LayerIndex == 1);
         Assert.True(wipe.IsLocked);

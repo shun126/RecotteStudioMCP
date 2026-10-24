@@ -46,13 +46,12 @@ public sealed partial class ProjectEditor
             {
                 if (obj["properties"] is not JsonObject properties || properties["StartTime"] is not JsonObject sourceStart ||
                     properties["EndTime"] is not JsonObject endEntry || HasKeyframes(sourceStart) || HasKeyframes(endEntry) ||
+                    properties["SpeedStretch"] is not JsonObject speedStretch || HasKeyframes(speedStretch) ||
+                    speedStretch["p-value"] is not JsonValue speedStretchValue ||
+                    !speedStretchValue.TryGetValue<bool>(out bool enabled) || !enabled ||
                     !JsonAccess.TryGetDecimal(sourceStart, "p-value", out sourceStartTime) ||
                     !JsonAccess.TryGetDecimal(endEntry, "p-value", out sourceEndTime) || sourceEndTime < sourceStartTime)
-                    return EditResult.Failed("RC4304", "The video has no plain StartTime and EndTime source range, so its length cannot be changed.", $"{path}.properties");
-                // Scaling the source range below keeps the speed only when Recotte Studio stretches that range over the clip,
-                // the only mode seen in the samples (005, 009, 013), so another or a missing mode is left untouched.
-                if (!StretchesSourceRange(properties))
-                    return EditResult.Failed("RC4304", "The video does not stretch its source range over the clip (SpeedStretch is off or missing), so its length cannot be changed.", $"{path}.properties.SpeedStretch");
+                    return EditResult.Failed("RC4304", "The video requires a plain StartTime and EndTime source range and plain SpeedStretch set to true to change its length.", $"{path}.properties");
                 sourceEnd = endEntry;
             }
         }
@@ -110,9 +109,4 @@ public sealed partial class ProjectEditor
     }
 
     private static bool HasKeyframes(JsonObject property) => property["keyframes"] is JsonArray { Count: > 0 };
-
-    // SpeedStretch must be a plain true; a missing, non-boolean, false, or keyframed value counts as not stretching.
-    private static bool StretchesSourceRange(JsonObject properties) =>
-        properties["SpeedStretch"] is JsonObject stretch && !HasKeyframes(stretch) &&
-        stretch["p-value"] is JsonValue value && value.TryGetValue(out bool stretches) && stretches;
 }

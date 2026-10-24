@@ -1,6 +1,6 @@
 {
 	"app_version":"1.8.5.5",
-	"time":"2026/09/29 01:25:34.644",
+	"time":"2026/10/24 00:45:45.244",
 	"setting": {
 		"guid":"FE157D8C-F502-4A6D-923A-F2BF4A3B0AC3",
 		"project-name":"005OneVideo",
@@ -18,7 +18,7 @@
 		"voice-link":"VOICEROID2_EachLayer",
 		"export-video-size":[0,0],
 		"export-video-path":"file://",
-		"file-explorer-path":"file://C:/Users/tele-018/Documents",
+		"file-explorer-path":"file://D:/Users/smoriya/Documents",
 		"frame-counter": 0,
 		"volume": 0.0,
 		"mute": false,
@@ -31,7 +31,7 @@
 			"loc": 0,
 			"ik":"05d73117e872e50a9058a4e683147bf86af1da5d455ca4559afa3cbf95b715ee",
 			"rpath":"Sample.mp4",
-			"apath":"file://D:/VisualStudio Project/RecotteStudioMCP/Samples/RecotteProjects/005OneVideo/Sample.mp4"
+			"apath":"file://D:/Visual Studio Projects/RecotteStudioMCP/Documents/RecotteProjects/005OneVideo/Sample.mp4"
 		}
 	],
 	"named-colors": [
@@ -1498,7 +1498,7 @@
 			"type":"Video",
 			"name":"映像・音声1",
 			"locked": false,
-			"selected": false,
+			"selected": true,
 			"visible": true,
 			"volume": 0.0,
 			"mute": false,
@@ -1525,12 +1525,12 @@
 					"type":"Video",
 					"name":"",
 					"tl-locked": false,
-					"st-locked": true,
-					"pv-locked": true,
+					"st-locked": false,
+					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
 					"selected": true,
-					"start-time": 8.881784197001255e-16,
+					"start-time": 8.881784197001257e-16,
 					"end-time": 0.7666500000000012,
 					"properties": {
 						"Bounds": {
@@ -1659,7 +1659,7 @@
 			"type":"Speaker",
 			"name":"話者1",
 			"locked": false,
-			"selected": true,
+			"selected": false,
 			"visible": true,
 			"volume": 0.0,
 			"mute": false,

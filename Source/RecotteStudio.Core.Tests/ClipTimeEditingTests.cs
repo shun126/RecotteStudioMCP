@@ -50,8 +50,41 @@ public sealed class ClipTimeEditingTests : IDisposable
         // The clip was 0.76665 seconds of a 0.76665-second range at normal speed, so 0.5 seconds plays 0.5 seconds of the file.
         Assert.Equal(0.5m, Math.Round(saved["properties"]!["EndTime"]!["p-value"]!.GetValue<decimal>(), 6));
         Assert.Equal(1.5m, document.Settings!.Duration);
-        Assert.True(saved["st-locked"]!.GetValue<bool>());
-        Assert.True(saved["pv-locked"]!.GetValue<bool>());
+        Assert.False(saved["st-locked"]!.GetValue<bool>());
+        Assert.False(saved["pv-locked"]!.GetValue<bool>());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("{}")]
+    [InlineData("{\"p-value\":false}")]
+    [InlineData("{\"p-value\":\"true\"}")]
+    [InlineData("{\"p-value\":true,\"keyframes\":[{}]}")]
+    public void Resize_RejectsUnsupportedSpeedStretchButAllowsMoving(string? speedStretchJson)
+    {
+        JsonObject root = Sample("005OneVideo");
+        (TimelineObjectId id, _, JsonObject original) = First(root, "Video");
+        JsonObject properties = Object(root, id)["properties"]!.AsObject();
+        if (speedStretchJson is null) properties.Remove("SpeedStretch");
+        else properties["SpeedStretch"] = JsonNode.Parse(speedStretchJson);
+        RecotteProjectDocument document = Load(root);
+        decimal start = original["start-time"]!.GetValue<decimal>();
+        decimal end = original["end-time"]!.GetValue<decimal>();
+
+        Assert.True(document.ApplyOperations(new ProjectOperation[]
+            { new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(start + 2m), new(end + 2m)) }).Success);
+        JsonObject expected = (JsonObject)Object(root, id).DeepClone();
+        expected["start-time"] = start + 2m;
+        expected["end-time"] = end + 2m;
+        Assert.True(JsonNode.DeepEquals(expected, Saved(document, id)));
+
+        long revision = document.Revision;
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+            { new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(1m), new(1.5m)) });
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, diagnostic => diagnostic.Code == "RC4304");
+        Assert.Equal(revision, document.Revision);
+        Assert.True(JsonNode.DeepEquals(expected, Saved(document, id)));
     }
 
     [Fact]
@@ -114,24 +147,6 @@ public sealed class ClipTimeEditingTests : IDisposable
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(null)]
-    public void Resize_RejectsAVideoThatDoesNotStretchItsSourceRange(bool? speedStretch)
-    {
-        JsonObject root = Sample("005OneVideo");
-        (TimelineObjectId id, _, _) = First(root, "Video");
-        JsonObject properties = Object(root, id)["properties"]!.AsObject();
-        if (speedStretch is bool value) properties["SpeedStretch"]!["p-value"] = value;
-        else properties.Remove("SpeedStretch");
-        decimal length = Object(root, id)["end-time"]!.GetValue<decimal>() - Object(root, id)["start-time"]!.GetValue<decimal>();
-
-        // Only a new length depends on the stretch mode; moving the clip as it is still works.
-        Assert.True(Load(root).ApplyOperations(new ProjectOperation[]
-            { new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(2m), new(2m + length)) }).Success);
-        AssertRejected(root, new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(1m), new(1.5m)), "RC4304");
-    }
-
-    [Theory]
     [InlineData(1000)]
     [InlineData(1001)]
     public void Move_RejectsClipsJoinedByATransition(int key)
@@ -146,6 +161,9 @@ public sealed class ClipTimeEditingTests : IDisposable
     public void Move_IgnoresPreviewLocksOfARecotteSavedVideo()
     {
         JsonObject root = Sample("013TwoVideos");
+        JsonObject video = root["layers"]![1]!["layer-objects"]!.AsArray().OfType<JsonObject>().Single(item => (string?)item["type"] == "Video");
+        video["st-locked"] = true;
+        video["pv-locked"] = true;
         RecotteProjectDocument document = Load(root);
         TimelineEntryView wipe = Assert.Single(document.GetTimelineEntries(), item => item.LayerIndex == 1);
         Assert.True(wipe.IsLocked);

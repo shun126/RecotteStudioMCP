@@ -24,8 +24,8 @@ public sealed partial class ProjectEditor
 {
     /// <summary>
     /// Rewrites the Bounds of an Image or Figure (a stamp or an annotation text box) on an Annot layer, or of a Video on a
-    /// Video layer. Only the layer lock and the object's timeline lock block the edit: Recotte Studio saves every video
-    /// with st-locked and pv-locked set, and those flags are kept as they are.
+    /// Video layer. Only the layer lock and the object's timeline lock block the edit.
+    /// The st-locked and pv-locked flags can occur on saved videos and are kept as they are.
     /// </summary>
     public EditResult SetObjectBounds(SetObjectBoundsRequest request)
     {
@@ -75,7 +75,7 @@ public sealed partial class ProjectEditor
     // Writing p-value would not move an animated object, whose rectangle comes from its keyframes.
     private static bool HasBoundsKeyframes(JsonObject obj) => obj["properties"]?["Bounds"]?["keyframes"] is JsonArray { Count: > 0 };
 
-    // st-locked and pv-locked are left out: Recotte Studio sets both on every video it saves (005OneVideo, 013TwoVideos).
+    // st-locked and pv-locked are left out: preview locks do not prevent timeline or bounds editing.
     private static bool IsTimelineLocked(JsonObject layer, JsonObject obj) => new[] { (layer, "locked"), (obj, "locked"), (obj, "tl-locked") }
         .Any(item => item.Item1[item.Item2] is JsonValue value && value.TryGetValue(out bool locked) && locked);
 }

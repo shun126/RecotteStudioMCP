@@ -2,7 +2,7 @@ using RecotteStudio.Core;
 
 namespace RecotteStudio.McpServer;
 
-public sealed class RecotteToolService(WorkspacePathPolicy paths, ProjectOperationMapper operationMapper,
+public sealed partial class RecotteToolService(WorkspacePathPolicy paths, ProjectOperationMapper operationMapper,
     OutputPathLockManager outputLocks, FigureCatalogProvider? figureCatalog = null, EffectCatalogProvider? effectCatalog = null,
     FfmpegLocator? ffmpeg = null, IFfmpegRunner? ffmpegRunner = null)
 {

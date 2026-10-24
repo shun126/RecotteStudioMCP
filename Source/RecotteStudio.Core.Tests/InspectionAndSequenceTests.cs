@@ -79,7 +79,7 @@ public sealed class InspectionAndSequenceTests
         Assert.True(document.Capabilities.CanRemoveTimelineObject);
         Assert.All(entries, entry => Assert.Equal(!entry.IsLocked, entry.Capabilities.CanRemove));
         Assert.Contains(entries, entry => entry.ObjectType == "Figure" && entry.Capabilities.CanRemove);
-        Assert.Contains(entries, entry => entry.ObjectType == "Video" && !entry.Capabilities.CanRemove);
+        Assert.Contains(entries, entry => entry.ObjectType == "Video" && entry.Capabilities.CanRemove);
     }
 
     [Fact]

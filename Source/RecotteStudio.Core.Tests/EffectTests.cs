@@ -22,6 +22,7 @@ public sealed class EffectTests : IDisposable
             .SelectMany(pair => pair.layer!["layer-objects"]!.AsArray().OfType<JsonObject>().Select(obj => (pair.index, obj)))
             .First(pair => pair.obj["type"]!.GetValue<string>() == type);
         if (unlock) foreach (string field in new[] { "tl-locked", "st-locked", "pv-locked" }) pair.obj[field] = false;
+        else pair.obj["tl-locked"] = true;
         pair.obj["sub-objects"] = new JsonArray(new JsonObject { ["future"] = "preserve" });
         return (Load(root), new(pair.index, pair.obj["objkey"]!.GetValue<int>()), (JsonObject)pair.obj.DeepClone());
     }

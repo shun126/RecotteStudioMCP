@@ -1,12 +1,12 @@
 {
 	"app_version":"1.8.5.5",
-	"time":"2026/10/16 01:09:02.427",
+	"time":"2026/10/24 00:46:38.433",
 	"setting": {
 		"guid":"FE157D8C-F502-4A6D-923A-F2BF4A3B0AC3",
 		"project-name":"013TwoVideos",
 		"bg-color":[0.0,0.0,0.0,1.0],
 		"duration": 1.5333166666666669,
-		"position": 1.2833333333333335,
+		"position": 1.2833333333333337,
 		"fps": 60.0,
 		"size":[1920,1080],
 		"dpi": 72.0,
@@ -18,7 +18,7 @@
 		"voice-link":"VOICEROID2_EachLayer",
 		"export-video-size":[0,0],
 		"export-video-path":"file://",
-		"file-explorer-path":"file://C:/Users/shun1/Documents",
+		"file-explorer-path":"file://D:/Users/smoriya/Documents",
 		"frame-counter": 0,
 		"volume": 0.0,
 		"mute": false,
@@ -31,7 +31,7 @@
 			"loc": 0,
 			"ik":"05d73117e872e50a9058a4e683147bf86af1da5d455ca4559afa3cbf95b715ee",
 			"rpath":"Sample.mp4",
-			"apath":"file://C:/VisualStudio Projects/RecotteStudioMCP/Documents/RecotteProjects/013TwoVideos/Sample.mp4"
+			"apath":"file://D:/Visual Studio Projects/RecotteStudioMCP/Documents/RecotteProjects/013TwoVideos/Sample.mp4"
 		}
 	],
 	"named-colors": [
@@ -1525,12 +1525,12 @@
 					"type":"Video",
 					"name":"",
 					"tl-locked": false,
-					"st-locked": true,
-					"pv-locked": true,
+					"st-locked": false,
+					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
 					"selected": false,
-					"start-time": 8.881784197001257e-16,
+					"start-time": 8.881784197001259e-16,
 					"end-time": 0.7666500000000012,
 					"properties": {
 						"Bounds": {
@@ -1686,8 +1686,8 @@
 					"type":"Video",
 					"name":"",
 					"tl-locked": false,
-					"st-locked": true,
-					"pv-locked": true,
+					"st-locked": false,
+					"pv-locked": false,
 					"snap-to-end": false,
 					"fkft": false,
 					"selected": true,
