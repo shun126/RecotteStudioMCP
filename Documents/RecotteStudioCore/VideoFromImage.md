@@ -14,12 +14,12 @@ ffmpeg は同梱していません。インストールして、設定画面の�
 | 項目 | 内容 |
 | --- | --- |
 | 画像 | Recotte Studio が対応する PNG、JPEG、BMP、GIF。アニメーション GIF は最初のコマだけを使います |
-| プロジェクト | 解像度とフレームレートを読むだけです。1920×1080 のプロジェクトに限ります |
+| プロジェクト | 解像度とフレームレートを読むだけです。動画はプロジェクトと同じ解像度で作ります |
 | 出力 | `.mp4`。H.264 Constrained Baseline、`yuv420p`、CRF 18、無音の AAC-LC 44.1 kHz ステレオ、`+faststart` |
 
 出力形式は、Recotte Studio で読み込めたサンプル `Documents/RecotteProjects/005OneVideo/Sample.mp4`（H.264 Constrained Baseline、レベル 4.2、`yuv420p`、AAC-LC 44.1 kHz ステレオ）に合わせています。H.264 と AAC は Recotte Studio の公式の対応コーデックです。High プロファイルと、音声トラックのない動画は、まだ Recotte Studio で確認していないため使いません。
 
-1920×1080 以外のプロジェクトは `MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED` で断ります。`addVideoObject` が使う動画のひな形は表示範囲が 1920×1080 に固定されており、Core は動画の解像度を読まないためです。
+対応するのは、幅と高さが偶数で、画素数が 1920×1080 以下のプロジェクトです。横長の 1920×1080 と、縦動画（ショート）の 1080×1920 はどちらも作れます。それ以外は `MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED` で断ります。`yuv420p` は幅と高さが偶数でなければならず、画素数の上限は確認済みのサンプルと同じ H.264 レベルに収めるためです。`addVideoObject` は動画をプロジェクトの画面いっぱいに置き、MP4 から読んだ動画の解像度を `CropBounds` に設定するため、プロジェクトと同じ解像度の動画は伸び縮みせずに表示されます。
 
 ## 引数
 
@@ -104,10 +104,10 @@ ffmpeg は同梱していません。インストールして、設定画面の�
 | `MCP_FFMPEG_TIMEOUT` | 時間切れ |
 | `MCP_VIDEO_ARGUMENT_INVALID` | `duration`、`motion`、`zoom`、`focusX`/`focusY`、`easing`、`fit`、`background`、`frames`、`frameDuration`、`loops` のいずれかが範囲外。パラパラアニメでは、繰り返しを含めて 60 秒を超える場合も含みます |
 | `MCP_VIDEO_IMAGE_UNSUPPORTED` | 画像が PNG、JPEG、BMP、GIF のどれでもない。パラパラアニメでは `frames[番号]` でどの画像かを示します |
-| `MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED` | プロジェクトが 1920×1080 ではない |
+| `MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED` | プロジェクトの幅か高さが奇数、または画素数が 1920×1080 を超える |
 | `MCP_PATH_EXTENSION`、`MCP_PATH_OUTPUT_EXISTS`、`MCP_PATH_FILE_NOT_FOUND`、`MCP_PATH_OUTSIDE_WORKSPACE` | パスの検証エラー |
 
 ## 検証状況
 
 - 自動テスト: 引数の検証と組み立て、失敗・時間切れ・キャンセル時の後始末、既存ファイルの扱いを確認しています。ffmpeg がある環境では、実際に作った動画が H.264 Constrained Baseline、1920×1080、60fps、AAC であることを ffprobe で確かめ、`addVideoObject` で配置して保存できることも確認します。パラパラアニメは、赤・緑・青の画像を 7・8・1 フレームずつ 2 回繰り返し、全 32 フレームの色が指定どおりの順に並ぶことを確認します。
-- 未確認: 作った動画を Recotte Studio で読み込み、再生し、書き出せること。
+- 未確認: 作った動画を Recotte Studio で読み込み、再生し、書き出せること。縦動画（1080×1920）のプロジェクトと動画を Recotte Studio で開いた場合の表示。

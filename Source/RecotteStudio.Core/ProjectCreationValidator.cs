@@ -21,14 +21,14 @@ internal static class ProjectCreationValidator
         RequireNonEmptyArray(root, "text-styles", "$.text-styles", diagnostics);
         JsonArray? layers = RequireArray(root, "layers", "$.layers", diagnostics);
 
-        if (setting is not null) ValidateSettings(setting, request, diagnostics);
+        if (setting is not null) ValidateSettings(setting, request, requireEmpty, diagnostics);
         if (layers is not null) ValidateInitialLayers(layers, requireEmpty, diagnostics);
         if (requireEmpty && speakers is { Count: > 0 }) diagnostics.Add(Error("RC2306", "A new empty project must not contain speakers.", "$.speakers"));
         if (requireEmpty && fileItems is { Count: > 0 }) diagnostics.Add(Error("RC2306", "A new empty project must not contain file items.", "$.file-items"));
         return diagnostics;
     }
 
-    private static void ValidateSettings(JsonObject setting, ProjectCreationRequest request, List<ProjectDiagnostic> diagnostics)
+    private static void ValidateSettings(JsonObject setting, ProjectCreationRequest request, bool requireEmpty, List<ProjectDiagnostic> diagnostics)
     {
         RequireString(setting, "guid", "$.setting.guid", diagnostics, value => Guid.TryParse(value, out _), "must be a GUID", "RC2303");
         RequireString(setting, "project-name", "$.setting.project-name", diagnostics,
@@ -43,6 +43,11 @@ internal static class ProjectCreationValidator
             diagnostics.Add(Error("RC2302", "frame-counter must be a non-negative integer.", "$.setting.frame-counter"));
         if (setting["size"] is not JsonArray size || size.Count != 2 || !TryPositiveNumber(size[0]) || !TryPositiveNumber(size[1]))
             diagnostics.Add(Error("RC2302", "size must contain two positive numbers.", "$.setting.size"));
+        // Only the new project must have the requested size; a later setProjectSize operation may change it.
+        else if (requireEmpty && (size[0] is not JsonValue width || !width.TryGetValue(out int actualWidth) ||
+            size[1] is not JsonValue height || !height.TryGetValue(out int actualHeight) ||
+            actualWidth != request.Width || actualHeight != request.Height))
+            diagnostics.Add(Error("RC2302", "size does not match the requested screen size.", "$.setting.size"));
 
         string expected = DirectoryUri(request.ProjectDirectory);
         RequireString(setting, "file-explorer-path", "$.setting.file-explorer-path", diagnostics,

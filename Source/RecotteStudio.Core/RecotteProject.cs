@@ -11,6 +11,8 @@ public static class RecotteProject
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.ProjectName)) throw new ArgumentException("A project name is required.", nameof(request));
+        if (!ProjectScreenSize.IsValid(request.Width, request.Height))
+            throw new ArgumentException($"The width and height must be from {ProjectScreenSize.Minimum} to {ProjectScreenSize.Maximum} pixels.", nameof(request));
         string directory = Path.GetFullPath(request.ProjectDirectory);
         if (!Directory.Exists(directory)) throw new DirectoryNotFoundException($"The project directory does not exist: {directory}");
         JsonObject root = ProjectTemplateResources.LoadRoot("RecotteStudio.Core.Templates.Empty.ccproj");
@@ -21,6 +23,9 @@ public static class RecotteProject
         setting["file-explorer-path"] = ProjectCreationValidator.DirectoryUri(directory);
         setting["duration"] = 0m;
         setting["position"] = 0m;
+        if (ScreenLayout.TryGetSize(root, out int templateWidth, out int templateHeight) &&
+            (templateWidth != request.Width || templateHeight != request.Height))
+            ScreenLayout.Resize(root, request.Width, request.Height, ScreenFit.Cover, respectLocks: false, new(), new());
         ProjectCreationRequest normalizedRequest = request with { ProjectDirectory = directory };
         IReadOnlyList<ProjectDiagnostic> diagnostics = ProjectCreationValidator.Validate(root, normalizedRequest, true);
         if (diagnostics.Any(item => item.Severity == DiagnosticSeverity.Error))

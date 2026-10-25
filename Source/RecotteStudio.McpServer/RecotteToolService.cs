@@ -325,15 +325,18 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
         try
         {
             RecotteProjectDocument document = RecotteProject.Load(project.FullPath!);
-            // The verified Video template is 1920x1080, and Core does not resize it to the clip.
-            if (document.Settings is not { Width: 1920, Height: 1080, FramesPerSecond: decimal fps } || fps is < 1m or > 120m)
-                return Fail("unsupported", "MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED", "Only 1920x1080 projects with a frame rate of 1 to 120 are supported.");
+            // The clip is made at the project's screen size, so addVideoObject fills the screen with it. H.264 in yuv420p needs
+            // even sides, and the size is capped at 1920x1080 worth of pixels, such as 1080x1920 for a vertical short.
+            if (document.Settings is not { Width: int width, Height: int height, FramesPerSecond: decimal fps } ||
+                !VideoClip.SupportsScreen(width, height) || fps is < 1m or > 120m)
+                return Fail("unsupported", "MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED",
+                    "Only projects with even width and height, at most 1920x1080 pixels in all (such as 1920x1080 or 1080x1920), and a frame rate of 1 to 120 are supported.");
             if (!allowOverwrite && File.Exists(output.FullPath!))
                 return Fail("path", "MCP_PATH_OUTPUT_EXISTS", "The output file exists; set allowOverwrite to replace it.");
             FfmpegProbeResult probe = await FfmpegLocator.ProbeAsync(ffmpegRunner, resolution.ExecutablePath!, cancellationToken);
             if (!probe.Success) return FfmpegUnavailable(probe.Message!);
 
-            VideoFrameFormat format = new(1920, 1080, fps);
+            VideoFrameFormat format = new(width, height, fps);
             temporary = Path.Combine(Path.GetDirectoryName(output.FullPath!)!, $".{Path.GetFileName(output.FullPath!)}.{Guid.NewGuid():N}.tmp");
             long started = Environment.TickCount64;
             VideoJob job;
@@ -533,8 +536,11 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
         ApplyOperationsAndSaveCopyAsync(templatePath, outputPath, allowOverwrite, operations, cancellationToken);
 
     public async Task<McpToolResult<object>> CreateProjectAsync(string projectName, string outputPath,
-        bool allowOverwrite, IReadOnlyList<ProjectOperationDto>? operations, CancellationToken cancellationToken)
+        bool allowOverwrite, IReadOnlyList<ProjectOperationDto>? operations, CancellationToken cancellationToken,
+        int width = ProjectScreenSize.DefaultWidth, int height = ProjectScreenSize.DefaultHeight)
     {
+        if (!ProjectScreenSize.IsValid(width, height))
+            return Fail("argument", "MCP_PROJECT_SIZE_INVALID", $"width and height must be whole numbers from {ProjectScreenSize.Minimum} to {ProjectScreenSize.Maximum}.");
         PathPolicyResult output = paths.ValidateOutput(outputPath);
         if (!output.Success) return PathFailure(output);
         OperationMapResult map = operationMapper.Map(operations);
@@ -546,7 +552,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
         await using IAsyncDisposable held = await outputLocks.AcquireAsync(output.FullPath!, cancellationToken);
         try
         {
-            RecotteProjectDocument document = RecotteProject.Create(new(projectName, directory));
+            RecotteProjectDocument document = RecotteProject.Create(new(projectName, directory, width, height));
             ProjectBatchSaveResult result = document.ApplyOperationsAndSaveCopy(output.FullPath!, map.Operations,
                 new() { SaveOptions = new() { AllowOverwrite = allowOverwrite } });
             return BatchSave(string.Empty, output.FullPath!, result);

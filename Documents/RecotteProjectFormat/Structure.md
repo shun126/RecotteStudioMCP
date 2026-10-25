@@ -41,7 +41,7 @@ JSONのキー順序、インデント、数値の表記は意味の一部とし�
 | `duration` | number | プロジェクト全体の長さ（秒） |
 | `position` | number | 編集位置（秒）と推定 |
 | `fps` | number | フレームレート。現在は `60.0` |
-| `size` | number[2] | プロジェクトの幅と高さ。現在は `[1920,1080]` |
+| `size` | number[2] | プロジェクトの幅と高さ（画面サイズ）。サンプルはすべて `[1920,1080]`。RecotteStudio.Core は縦動画の `[1080,1920]` なども書き込むが、Recotte Studio 本体で開いた場合の表示は未確認 |
 | `dpi` | number | DPI。現在は `72.0` |
 | `auto-duration` | boolean | 長さの自動調整設定 |
 | `pix-ser-sec` | number | タイムラインの表示倍率と推定 |

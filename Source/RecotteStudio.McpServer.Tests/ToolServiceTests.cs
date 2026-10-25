@@ -71,6 +71,56 @@ public sealed class ToolServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateProjectMakesAVerticalProject()
+    {
+        string output = Path.Combine(root, "short.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("short", output, false,
+            Array.Empty<ProjectOperationDto>(), default, 1080, 1920);
+
+        Assert.True(result.Success, result.Message);
+        RecotteProjectDocument created = RecotteProject.Load(output);
+        Assert.Equal((1080, 1920), (created.Settings?.Width, created.Settings?.Height));
+        Assert.All(created.TelopFrames, frame => Assert.True(frame.X + frame.Width <= 1080));
+        Assert.True(created.Validate().IsValid);
+    }
+
+    [Fact]
+    public async Task CreateProjectRejectsAnInvalidSize()
+    {
+        string output = Path.Combine(root, "bad.ccproj");
+        McpToolResult<object> result = await service.CreateProjectAsync("bad", output, false,
+            Array.Empty<ProjectOperationDto>(), default, 1080, 10000);
+
+        Assert.False(result.Success);
+        Assert.Equal("MCP_PROJECT_SIZE_INVALID", result.ErrorCode);
+        Assert.False(File.Exists(output));
+    }
+
+    [Fact]
+    public async Task SetProjectSizeTurnsAProjectVertical()
+    {
+        string output = Path.Combine(root, "vertical.ccproj");
+        McpToolResult<object> result = await service.ApplyOperationsAndSaveCopyAsync(project, output, false,
+            new[] { new ProjectOperationDto("setProjectSize", Width: 1080m, Height: 1920m, Fit: "contain") }, default);
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal((1080, 1920), (RecotteProject.Load(output).Settings?.Width, RecotteProject.Load(output).Settings?.Height));
+    }
+
+    [Theory]
+    [InlineData(1080.5, 1920.0, null)]
+    [InlineData(1080.0, null, null)]
+    [InlineData(1080.0, 1920.0, "stretch")]
+    public void SetProjectSizeRejectsInvalidArguments(double width, double? height, string? fit)
+    {
+        McpToolResult<object> result = service.PreviewOperations(project,
+            new[] { new ProjectOperationDto("setProjectSize", Width: (decimal)width, Height: (decimal?)height, Fit: fit) });
+
+        Assert.False(result.Success);
+        Assert.Equal("MCP_OPERATION_INVALID", result.ErrorCode);
+    }
+
+    [Fact]
     public async Task CreateProjectCanAddAnnotationEditingHint()
     {
         string output = Path.Combine(root, "注釈付き.ccproj");

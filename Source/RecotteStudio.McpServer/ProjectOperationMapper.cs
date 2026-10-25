@@ -15,7 +15,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
-        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction",
+        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction", "setProjectSize",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
@@ -48,6 +48,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "addSpeakerLayer" => new AddSpeakerLayerOperation(value.LayerName, value.InsertIndex),
                     "addSpeakerAction" => new AddSpeakerActionOperation(Layer(value.Layer), Required(value.Action, "action"), Time(value.Start, "start"), Time(value.End, "end"), value.Loop ?? false),
                     "moveLayer" => new MoveLayerOperation(Layer(value.Layer), value.InsertIndex ?? throw new ArgumentException("insertIndex is required.")),
+                    "setProjectSize" => new SetProjectSizeOperation(Pixels(value.Width, "width"), Pixels(value.Height, "height"), ScreenFitOf(value.Fit)),
                     "importCharacter" => new ImportCharacterOperation(Donor(value.DonorProjectPath, donors), Required(value.SpeakerKey, "speakerKey"), Time(value.Start, "start"), Time(value.End, "end"), value.LayerName),
                     _ => throw new ArgumentException($"Unsupported operation '{value.Type}'. Supported operations: {string.Join(", ", SupportedTypes)}."),
                 });
@@ -106,6 +107,16 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
         if (value.LayerName is not null) throw new ArgumentException("target.layerName cannot be combined with object identity.");
         return value.LayerIndex is int layer ? new TimelineObjectIdReference(new(layer, key)) : new ObjectKeyReference(key);
     }
+    private static int Pixels(decimal? value, string name) =>
+        value is decimal number && number == decimal.Truncate(number) && number >= ProjectScreenSize.Minimum && number <= ProjectScreenSize.Maximum
+            ? (int)number
+            : throw new ArgumentException($"{name} must be a whole number from {ProjectScreenSize.Minimum} to {ProjectScreenSize.Maximum}.");
+    private static ScreenFit ScreenFitOf(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        null or "" or "cover" => ScreenFit.Cover,
+        "contain" => ScreenFit.Contain,
+        _ => throw new ArgumentException("fit must be cover or contain."),
+    };
     private static ProjectTime Time(decimal? value, string name) => value is decimal number && number >= 0
         ? new(number) : throw new ArgumentException($"{name} must be a non-negative number.");
     private static string Required(string? value, string name) => !string.IsNullOrWhiteSpace(value)
