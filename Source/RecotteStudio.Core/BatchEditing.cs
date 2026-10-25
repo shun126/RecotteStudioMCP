@@ -26,6 +26,7 @@ public enum ProjectOperationKind
     MoveLayer,
     SetObjectBounds,
     AddSpeakerAction,
+    SetProjectSize,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -427,6 +428,7 @@ public sealed partial class ProjectEditor
                 SpeakerVoiceMoveResult move = MoveSpeakerVoiceToLayer(new(id, new(layerIndex)));
                 return new(move.EditResult, (move.ObjectId ?? id).ToString(), MovedVoice: move.Relocation);
             })),
+            SetProjectSizeOperation value => new(SetProjectSize(new(value.Width, value.Height, value.Fit)), "project"),
             AddVideoLayerOperation value => LayerAdded(AddVideoLayer(new(value.Name, value.Index))),
             AddSpeakerLayerOperation value => LayerAdded(AddSpeakerLayer(new(value.Name, value.Index))),
             MoveLayerOperation value => WithLayer(value.Layer, layerIndex =>

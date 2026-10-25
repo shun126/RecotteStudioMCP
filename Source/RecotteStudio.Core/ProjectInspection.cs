@@ -101,6 +101,8 @@ public sealed record ProjectCapabilities(
     public bool CanMoveClips { get; init; }
     /// <summary>Gets whether a Speaker Action, an expression or gesture of a layer's character, can be added.</summary>
     public bool CanAddSpeakerAction { get; init; }
+    /// <summary>Gets whether SetProjectSize can change the screen size and relay out what is placed on it.</summary>
+    public bool CanSetProjectSize { get; init; }
 }
 
 /// <summary>Reports operations safe for one particular timeline entry.</summary>
@@ -198,6 +200,8 @@ public sealed partial class RecotteProjectDocument
         CanSetObjectBounds = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanMoveClips = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanAddSpeakerAction = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
+        CanSetProjectSize = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported &&
+            ScreenLayout.TryGetSize(root, out _, out _),
     };
 
     /// <summary>Gets whether a clonable text-only Speaker Voice is reachable for at least one Speaker layer.</summary>

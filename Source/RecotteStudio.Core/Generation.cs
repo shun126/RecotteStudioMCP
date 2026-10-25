@@ -4,8 +4,13 @@ using System.Text.Json.Nodes;
 
 namespace RecotteStudio.Core;
 
-/// <summary>Requests a new empty project based on the verified Recotte Studio 1.8.5.0 template.</summary>
-public sealed record ProjectCreationRequest(string ProjectName, string ProjectDirectory);
+/// <summary>
+/// Requests a new empty project based on the verified Recotte Studio 1.8.5.0 template. The screen is
+/// <paramref name="Width"/> by <paramref name="Height"/> pixels; for a vertical short, use 1080 by 1920. A size other than
+/// the template's 1920 by 1080 relays out the template's telop frames as <see cref="ProjectEditor.SetProjectSize"/> does.
+/// </summary>
+public sealed record ProjectCreationRequest(string ProjectName, string ProjectDirectory,
+    int Width = ProjectScreenSize.DefaultWidth, int Height = ProjectScreenSize.DefaultHeight);
 
 /// <summary>Allocates opaque file-item keys independently from asset editing behavior.</summary>
 public interface IFileItemKeyAllocator
@@ -138,6 +143,9 @@ internal static class AnnotationTextTemplateResources
 
     internal static bool Exists => Source.Value is not null;
 
+    /// <summary>Gets the screen size the template's text box was placed on, or null when the template is unavailable.</summary>
+    internal static (int Width, int Height)? Screen => Source.Value?.Screen;
+
     internal static bool TryClone(JsonObject targetRoot, out JsonObject? annotation, out JsonObject? missingStyle,
         out string? error)
     {
@@ -189,12 +197,14 @@ internal static class AnnotationTextTemplateResources
             ? styles.OfType<JsonObject>()
                 .SingleOrDefault(item => JsonAccess.TryGetString(item, "StyleName", out string name) && name == styleName)
             : null;
-        return annotation is null || style is null || styleName is null ? null : new(annotation, style, styleName);
+        if (annotation is null || style is null || styleName is null || !ScreenLayout.TryGetSize(root, out int width, out int height))
+            return null;
+        return new(annotation, style, styleName, (width, height));
     }
 
     private static bool IsAnnotationText(JsonObject value) =>
         JsonAccess.TryGetString(value, "type", out string type) && type == "Figure" &&
         JsonAccess.GetPropertyString(value, "FigureKey") == "text-box" && value["text"] is JsonObject;
 
-    private sealed record TemplateSource(JsonObject Annotation, JsonObject Style, string StyleName);
+    private sealed record TemplateSource(JsonObject Annotation, JsonObject Style, string StyleName, (int Width, int Height) Screen);
 }

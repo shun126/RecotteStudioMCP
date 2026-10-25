@@ -12,6 +12,8 @@
 
 キャラクターは、Recotte Studio で保存した別のプロジェクト（ドナー）から操作 `importCharacter` で取り込めます。`recotte_list_characters` でドナーのキャラクターと `speakerKey` を確認してください。キャラクターを新しく作ることはできません。
 
+縦動画（ショート）にも対応しています。`recotte_create_project` に `width: 1080`、`height: 1920` を指定すると縦長のプロジェクトを作れます。作成済みのプロジェクトは操作 `setProjectSize` で画面サイズを変えられ、字幕枠・キャラクター・画像・動画が新しい画面に合わせて配置し直されます。配置の規則は[生成ルール](../../Documents/RecotteStudioCore/GenerationRules.md)を参照してください。
+
 ffmpeg を指定すると、`recotte_create_video_from_image` で静止画にズームやパンを付けた動画素材（`.mp4`）を、`recotte_create_flipbook_video` で複数の静止画をつないだパラパラアニメを作れます。[仕様とエラーコード](../../Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。
 
 `RecotteStudio.McpServer` は、[RecotteStudio.Core](../RecotteStudio.Core/README.md) の機能を Streamable HTTP MCP ツールとして公開する WinUI 3 アプリです。ウィンドウを閉じるとサーバーは停止します。

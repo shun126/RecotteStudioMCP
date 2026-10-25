@@ -130,14 +130,34 @@ public sealed class VideoToolTests : IDisposable
     }
 
     [Fact]
-    public async Task OnlyFullHdProjectsAreSupported()
+    public async Task AVerticalProjectGetsAVerticalClip()
     {
-        JsonNode document = JsonNode.Parse(File.ReadAllText(project))!;
-        document["setting"]!["size"] = new JsonArray(1280, 720);
-        File.WriteAllText(project, document.ToJsonString());
+        SetProjectSize(1080, 1920);
+
+        McpToolResult<object> result = await Create(Service());
+
+        Assert.True(result.Success, result.Message);
+        JsonObject data = Data(result);
+        Assert.Equal((1080, 1920), ((int)data["width"]!, (int)data["height"]!));
+        Assert.Contains(":s=1080x1920:", runner.Calls[^1][runner.Calls[^1].ToList().IndexOf("-filter_complex") + 1]);
+    }
+
+    [Theory]
+    [InlineData(1081, 1920)]
+    [InlineData(3840, 2160)]
+    public async Task ScreensVideoCannotBeMadeForAreRejected(int width, int height)
+    {
+        SetProjectSize(width, height);
 
         Assert.Equal("MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED", (await Create(Service())).ErrorCode);
         Assert.Empty(runner.Calls);
+    }
+
+    private void SetProjectSize(int width, int height)
+    {
+        JsonNode document = JsonNode.Parse(File.ReadAllText(project))!;
+        document["setting"]!["size"] = new JsonArray(width, height);
+        File.WriteAllText(project, document.ToJsonString());
     }
 
     [Fact]

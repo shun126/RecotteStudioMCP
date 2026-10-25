@@ -34,6 +34,12 @@ RecotteProjectDocument empty = RecotteProject.Create(new ProjectCreationRequest(
 empty.SaveCopy(Path.Combine(destinationDirectory, "New Project.ccproj"));
 ```
 
+The screen is 1920 by 1080 unless the request gives another `Width` and `Height` (256 to 7680 each). For a vertical short, request 1080 by 1920; the template's telop frames are relaid out for that screen as `SetProjectSize` does:
+
+```csharp
+RecotteProjectDocument vertical = RecotteProject.Create(new ProjectCreationRequest("Short", destinationDirectory, 1080, 1920));
+```
+
 Creation fails before a document is returned when the embedded template or generated settings do not satisfy the
 verified 1.8.5.0 creation contract. `ValidateCreatedProject` combines normal validation with the required version,
 timestamp, GUID, project name, directory URI, canvas, initial layers, and style invariants. `SaveCopy` repeats these
@@ -97,6 +103,15 @@ TimelineObjectId wipe = layered.OperationResults[1].CreatedObjectId!.Value;
 document.ApplyOperations(
 [
     new SetObjectBoundsOperation(new TimelineObjectIdReference(wipe), 1380m, 60m, 480m, 270m),
+]);
+```
+
+Change the screen size of a project with `SetProjectSize` (batch: `SetProjectSizeOperation`), for example to turn a landscape project into a vertical short. It writes `setting.size` (and a non-zero `export-video-size`) and relays out the screen. An Image or Video that filled the old screen fills the new one: with `ScreenFit.Cover` (default) its `CropBounds` is narrowed to the centered part the new screen shows, and with `ScreenFit.Contain` it keeps the whole picture, centered with bands. Telop frames scale with the screen width and keep their height. Characters (`CharBounds` on the character and on its Speaker layer), stamps, annotation texts, and other images and videos keep their shape, scale with the shorter screen side (so a landscape-portrait swap keeps their size), and shrink only to fit. Every rectangle keeps how its free space is split before and after it, so whatever touched an edge still touches it. Locked layers, `locked` or `tl-locked` objects, and keyframe-animated rectangles are left as they are with an `RC4932` warning; a size outside 256 to 7680 fails with `RC4931`. `ImportCharacter` relays out a donor of another screen size the same way before comparing it, and new images, videos, and annotation texts are placed for the project's screen. `Capabilities.CanSetProjectSize` reports availability.
+
+```csharp
+ProjectBatchResult vertical = document.ApplyOperations(
+[
+    new SetProjectSizeOperation(1080, 1920, ScreenFit.Cover),
 ]);
 ```
 
@@ -211,7 +226,7 @@ All public views and diagnostic collections are immutable snapshots; mutable `Js
 
 `RecotteProjectDocument`, `ProjectEditSession`, and their views are not thread-safe. Do not concurrently use one instance. The SDK enforces one active edit session and refuses Save/SaveCopy while it is active; it does not claim general thread safety through partial locking.
 
-Asset registration supports only PNG images and MP4 videos. When a PNG image is added, its `CropBounds` uses the original image width and height. File-item keys are opaque random 256-bit identifiers, not content hashes; this rule remains provisional until verified by opening and re-saving generated projects in Recotte Studio. `InspectAssets(figuresDirectory)` reports every file item with the objects referencing it and whether its stored relative and absolute paths exist; it resolves `loc` 0 against the project directory and `loc` 1 against the given figures directory, and reports any other `loc` as `Unresolved` rather than guessing its base. Not supported: audio voice generation, general character creation without a verified donor, `voice-hash` generation, arbitrary file types, `.rsp` parsing, keyframe authoring, `additional-actions`, version migration, or forced unsupported-version saves. The SDK does not infer unknown Recotte Studio structures.
+Asset registration supports only PNG images and MP4 videos. A new image or video fills the project's screen. When a PNG image is added, its `CropBounds` uses the original image width and height; when an MP4 video is added, its `CropBounds` uses the width and height of its first video track, unless that track is rotated or cannot be read, in which case the template's 1920 by 1080 is kept. File-item keys are opaque random 256-bit identifiers, not content hashes; this rule remains provisional until verified by opening and re-saving generated projects in Recotte Studio. `InspectAssets(figuresDirectory)` reports every file item with the objects referencing it and whether its stored relative and absolute paths exist; it resolves `loc` 0 against the project directory and `loc` 1 against the given figures directory, and reports any other `loc` as `Unresolved` rather than guessing its base. Not supported: audio voice generation, general character creation without a verified donor, `voice-hash` generation, arbitrary file types, `.rsp` parsing, keyframe authoring, `additional-actions`, version migration, or forced unsupported-version saves. The SDK does not infer unknown Recotte Studio structures.
 
 Diagnostic codes are the machine-readable contract; do not parse message text. See [Diagnostics](../../Documents/RecotteStudioCore/Diagnostics.md).
 

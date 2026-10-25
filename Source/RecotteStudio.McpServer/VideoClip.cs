@@ -31,6 +31,13 @@ public static partial class VideoClip
 
     public const decimal MinDuration = 0.5m, MaxDuration = 60m, MinZoom = 1.05m, MaxZoom = 1.5m;
 
+    /// <summary>The most pixels a clip may have: those of 1920x1080, in either orientation.</summary>
+    public const int MaxPixels = 1920 * 1080;
+
+    /// <summary>Returns whether clips can be made for a screen: even sides, as yuv420p needs, and at most <see cref="MaxPixels"/>.</summary>
+    public static bool SupportsScreen(int width, int height) =>
+        width >= 2 && height >= 2 && width % 2 == 0 && height % 2 == 0 && (long)width * height <= MaxPixels;
+
     // Pan and zoom run on a frame twice the output size, so zoompan's whole-pixel crop does not make the motion shake.
     private const int Oversample = 2;
 

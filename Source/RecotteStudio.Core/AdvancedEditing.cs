@@ -90,6 +90,11 @@ public sealed partial class ProjectEditor
         catch (Exception exception) when (exception is OverflowException or InvalidOperationException)
         { return EditResult.Failed("RC4705", exception.Message); }
         annotation!["objkey"] = objectKey;
+        if (annotation["properties"] is JsonObject annotationProperties && annotationProperties["Bounds"] is JsonObject annotationBounds &&
+            annotationBounds["p-value"] is JsonArray templateBounds && AnnotationTextTemplateResources.Screen is (int fromWidth, int fromHeight) &&
+            ScreenLayout.TryGetSize(root, out int toWidth, out int toHeight) && (fromWidth, fromHeight) != (toWidth, toHeight) &&
+            ScreenLayout.AdaptBox(templateBounds, fromWidth, fromHeight, toWidth, toHeight) is JsonArray adapted)
+            annotationBounds["p-value"] = adapted;
         annotation["start-time"] = request.StartTime.TotalSeconds;
         annotation["end-time"] = request.EndTime.TotalSeconds;
         JsonObject text = (JsonObject)annotation["text"]!;
@@ -224,6 +229,12 @@ public sealed partial class ProjectEditor
         if (request.StartTime.TotalSeconds >= request.EndTime.TotalSeconds) return CharacterFailed("RC4605", "The character time range is invalid.");
 
         JsonObject donorRoot = request.Donor.CloneRoot();
+        // A donor made for another screen size is first relaid out for this one, as SetProjectSize does. The layout is
+        // deterministic, so characters imported from the same donor earlier still match it.
+        if (ScreenLayout.TryGetSize(donorRoot, out int donorWidth, out int donorHeight) &&
+            ScreenLayout.TryGetSize(root, out int targetWidth, out int targetHeight) &&
+            (donorWidth, donorHeight) != (targetWidth, targetHeight))
+            ScreenLayout.Resize(donorRoot, targetWidth, targetHeight, ScreenFit.Cover, respectLocks: false, new(), new());
         if (donorRoot["speakers"] is not JsonArray donorSpeakers || donorRoot["layers"] is not JsonArray donorLayers)
             return CharacterFailed("RC4601", "The donor project has no valid speaker registry or layers.");
         JsonObject[] speakerMatches = donorSpeakers.OfType<JsonObject>()
@@ -449,8 +460,14 @@ public sealed partial class ProjectEditor
         added["start-time"] = start.TotalSeconds;
         added["end-time"] = end.TotalSeconds;
         SetPropertyValue(added, "File", fileKey);
+        // The templates fill a 1920x1080 screen; a new image or video fills this project's screen, whatever its size.
+        if (ScreenLayout.TryGetSize(root, out int screenWidth, out int screenHeight))
+            SetPropertyValue(added, "Bounds", new JsonArray(0m, 0m, screenWidth, screenHeight));
         if (imageSize is { } size)
             SetPropertyValue(added, "CropBounds", new JsonArray(0m, 0m, size.Width, size.Height));
+        // CropBounds is the part of the source shown, in source pixels; a video the size cannot be read from keeps the template's.
+        if (objectType == "Video" && Mp4VideoSize.TryRead(fullAsset, out int videoWidth, out int videoHeight))
+            SetPropertyValue(added, "CropBounds", new JsonArray(0m, 0m, videoWidth, videoHeight));
         if (objectType == "Video")
         {
             SetPropertyValue(added, "StartTime", 0m);
