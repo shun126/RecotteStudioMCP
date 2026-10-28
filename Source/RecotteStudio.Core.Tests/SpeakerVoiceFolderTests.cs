@@ -69,6 +69,36 @@ public sealed class SpeakerVoiceFolderTests : IDisposable
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Save_InvalidExistingLinkWarnsAndStillCreatesValidVoiceFolders(bool overwrite)
+    {
+        const string invalidLink = "file:///C:/old/%00";
+        JsonObject source = JsonNode.Parse(File.ReadAllText(TestProjects.EmptyProject))!.AsObject();
+        source["layers"]![1]!["properties"]!["LinkFolder"]!["p-value"] = invalidLink;
+        string path = Path.Combine(directory, "Source.ccproj");
+        File.WriteAllText(path, source.ToJsonString());
+        RecotteProjectDocument document = RecotteProject.Load(path);
+        Assert.True(document.ApplyOperations(new[] { new AddSpeakerLayerOperation("追加") }).Success);
+
+        ProjectSaveResult result = overwrite ? document.Save() : document.SaveCopy(Path.Combine(directory, "Copy.ccproj"));
+
+        ProjectDiagnostic warning = Assert.Single(result.Warnings);
+        Assert.Equal("RC5402", warning.Code);
+        Assert.Equal(DiagnosticSeverity.Warning, warning.Severity);
+        Assert.Equal("$.layers[1].properties.LinkFolder.p-value", warning.JsonPath);
+        JsonObject saved = JsonNode.Parse(File.ReadAllText(result.DestinationPath))!.AsObject();
+        Assert.Equal(invalidLink, Link(saved, 1));
+        Assert.True(RecotteProject.Load(result.DestinationPath).Validate().IsValid);
+        Assert.True(Directory.Exists(Path.Combine(directory, "voice", "追加")));
+        if (overwrite)
+        {
+            Assert.True(File.Exists(result.BackupPath));
+            Assert.True(document.PreviewSave().CanSave);
+        }
+    }
+
+    [Theory]
     [InlineData("聞き手", "聞き手")]
     [InlineData("../案内\\役:*?\"<>|", ".._案内_役_______")]
     [InlineData("...", "_")]

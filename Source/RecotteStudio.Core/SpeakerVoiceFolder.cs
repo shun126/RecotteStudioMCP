@@ -42,10 +42,15 @@ internal static class SpeakerVoiceFolder
                 JsonAccess.GetPropertyString(layer, "LinkFolder") is not { Length: > 0 } link ||
                 !Uri.TryCreate(link, UriKind.Absolute, out Uri? uri) || !uri.IsFile)
                 continue;
-            string path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(uri.LocalPath));
-            if (!string.Equals(Path.GetDirectoryName(path), voiceRoot, comparison) || Directory.Exists(path)) continue;
-            try { Directory.CreateDirectory(path); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            string path = link;
+            try
+            {
+                // Existing file URIs may decode to invalid paths even when URI parsing succeeds.
+                path = Path.TrimEndingDirectorySeparator(Path.GetFullPath(uri.LocalPath));
+                if (!string.Equals(Path.GetDirectoryName(path), voiceRoot, comparison) || Directory.Exists(path)) continue;
+                Directory.CreateDirectory(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
             {
                 warnings.Add(new("RC5402", DiagnosticSeverity.Warning, $"The voice folder could not be created: {path}: {ex.Message}",
                     $"$.layers[{index}].properties.LinkFolder.p-value"));
