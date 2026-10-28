@@ -305,8 +305,8 @@ public sealed partial class ProjectEditor
         character["end-time"] = request.EndTime.TotalSeconds;
         importedObjects.Add(character);
         importedLayer["name"] = layerName;
-        // Recotte Studio writes this layer's generated voices into LinkFolder, which still names the donor's folder.
-        SetPropertyValue(importedLayer, "LinkFolder", string.Empty);
+        // Use this project's voice folder rather than the donor's generated-audio destination.
+        SpeakerVoiceFolder.SetDefault(importedLayer, projectDirectory);
         // TelopTargetLayer names a layer: keep it only when it resolves to the same character's layer in this project.
         string? telopTarget = JsonAccess.GetPropertyString(importedLayer, "TelopTargetLayer");
         if (!string.IsNullOrEmpty(telopTarget))

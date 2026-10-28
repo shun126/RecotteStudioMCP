@@ -139,7 +139,10 @@ public sealed class SpeakerVoiceMoveTests : IDisposable
     [Fact]
     public void Move_TwiceReportsTheStaleAudioWhereTheLineEndsUp()
     {
-        RecotteProjectDocument document = RecotteProject.Load(TwoVoices);
+        // Saving creates the new layer's voice folder beside the project, so work on a copy of the sample.
+        string path = Path.Combine(directory, "011TwoVoices.ccproj");
+        File.Copy(TwoVoices, path);
+        RecotteProjectDocument document = RecotteProject.Load(path);
 
         ProjectBatchResult batch = document.ApplyOperations(new ProjectOperation[]
         {

@@ -282,6 +282,13 @@ public sealed class ToolServiceTests : IDisposable
         RecotteProjectDocument created = RecotteProject.Load(output);
         Assert.Equal(new[] { "映像・音声1", "話者1", "聞き手", "注釈1" }, created.Layers.Select(layer => layer.Name));
         Assert.All(created.Layers.OfType<SpeakerLayerView>(), layer => Assert.Single(layer.Objects));
+        using JsonDocument saved = JsonDocument.Parse(File.ReadAllText(output));
+        foreach (JsonElement layer in saved.RootElement.GetProperty("layers").EnumerateArray()
+            .Where(layer => layer.GetProperty("type").GetString() == "Speaker"))
+        {
+            string link = layer.GetProperty("properties").GetProperty("LinkFolder").GetProperty("p-value").GetString()!;
+            Assert.Equal(Path.Combine(root, "voice", layer.GetProperty("name").GetString()!), new Uri(link).LocalPath);
+        }
         Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
             .GetProperty("capabilities").GetProperty("CanAddSpeakerLayer").GetBoolean());
     }

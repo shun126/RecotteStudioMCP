@@ -133,6 +133,7 @@ public sealed partial class ProjectEditor
         added["name"] = name;
         added["selected"] = false;
         added["layer-objects"] = new JsonArray();
+        if (type == "Speaker") SpeakerVoiceFolder.SetDefault(added, projectDirectory);
 
         int[] sameType = Layers().Where(item => JsonAccess.TryGetString(item.layer, "type", out string layerType) && layerType == type)
             .Select(item => item.index).ToArray();
