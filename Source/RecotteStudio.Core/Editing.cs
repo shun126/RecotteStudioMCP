@@ -112,7 +112,8 @@ public sealed partial class ProjectEditSession : IDisposable
         this.workingRoot = workingRoot;
         Changes = changes.AsReadOnly();
         Editor = new ProjectEditor(workingRoot, changes, allocator ?? new ProvisionalObjectKeyAllocator(),
-            durationPolicy ?? new AutoExtendProjectDurationPolicy(), fileItemKeyAllocator ?? new CryptographicFileItemKeyAllocator());
+            durationPolicy ?? new AutoExtendProjectDurationPolicy(), fileItemKeyAllocator ?? new CryptographicFileItemKeyAllocator(),
+            document.ProjectDirectory);
     }
 
     /// <summary>Gets the editor operating on the session's private JSON clone.</summary>
@@ -162,15 +163,17 @@ public sealed partial class ProjectEditor
     private readonly IObjectKeyAllocator allocator;
     private readonly IProjectDurationPolicy durationPolicy;
     private readonly IFileItemKeyAllocator fileItemKeyAllocator;
+    private readonly string? projectDirectory;
 
     internal ProjectEditor(JsonObject root, List<ProjectChange> changes, IObjectKeyAllocator allocator,
-        IProjectDurationPolicy durationPolicy, IFileItemKeyAllocator fileItemKeyAllocator)
+        IProjectDurationPolicy durationPolicy, IFileItemKeyAllocator fileItemKeyAllocator, string? projectDirectory)
     {
         this.root = root;
         this.changes = changes;
         this.allocator = allocator;
         this.durationPolicy = durationPolicy;
         this.fileItemKeyAllocator = fileItemKeyAllocator;
+        this.projectDirectory = projectDirectory;
     }
 
     /// <summary>Enumerates Speaker Voice objects without exposing mutable JSON.</summary>

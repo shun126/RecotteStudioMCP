@@ -16,7 +16,10 @@ public sealed class SpeakerLayerTests : IDisposable
     [Fact]
     public void AddSpeakerLayer_AddsTheCharacterlessLayerOfANewProjectAfterTheLastSpeakerLayer()
     {
-        RecotteProjectDocument document = RecotteProject.Load(Sample("006OneCharacter"));
+        // Saving creates the new layer's voice folder beside the project, so work on a copy of the sample.
+        string path = Path.Combine(directory, "006OneCharacter.ccproj");
+        File.Copy(Sample("006OneCharacter"), path);
+        RecotteProjectDocument document = RecotteProject.Load(path);
 
         ProjectBatchResult batch = document.ApplyOperations(new ProjectOperation[]
         {
@@ -28,9 +31,13 @@ public sealed class SpeakerLayerTests : IDisposable
         Assert.Equal(2, batch.OperationResults[0].CreatedLayerIndex);
         JsonArray layers = SavedLayers(document);
         Assert.Equal(new[] { "映像・音声1", "話者1", "話者2", "注釈1" }, layers.Select(layer => (string?)layer!["name"]));
-        // Apart from its name and the line placed on it, the layer is the one Recotte Studio writes for a new project.
+        // Apart from its name, audio folder link, and the line placed on it, this is the new-project template layer.
         JsonObject expected = Layer(Sample("001EmptyProject"), 1);
         JsonObject actual = (JsonObject)layers[2]!.DeepClone();
+        string projectDirectory = Path.GetDirectoryName(document.SourcePath!)!;
+        Assert.Equal(Path.Combine(projectDirectory, "voice", "話者2"),
+            new Uri((string)actual["properties"]!["LinkFolder"]!["p-value"]!).LocalPath);
+        expected["properties"]!["LinkFolder"]!["p-value"] = actual["properties"]!["LinkFolder"]!["p-value"]!.DeepClone();
         Assert.Equal("Speaker Voice", (string?)Assert.Single(actual["layer-objects"]!.AsArray())!["type"]);
         foreach (JsonObject layer in new[] { expected, actual })
         {

@@ -38,7 +38,8 @@ public sealed class CharacterImportTests : IDisposable
         Assert.Equal(new[] { "Video", "Speaker", "Speaker", "Annot" }, layers.Select(layer => (string?)layer!["type"]));
         Assert.Equal(new[] { "話者1", "話者2" }, new[] { Name(layers[1]), Name(layers[2]) });
         Assert.Equal(new[] { "話者2", "話者2" }, new[] { Property(layers[1], "TelopTargetLayer"), Property(layers[2], "TelopTargetLayer") });
-        Assert.All(new[] { layers[1], layers[2] }, layer => Assert.Equal(string.Empty, Property(layer, "LinkFolder")));
+        Assert.All(new[] { layers[1], layers[2] }, layer => Assert.Equal(Path.Combine(directory, "voice", Name(layer)!),
+            new Uri(Property(layer, "LinkFolder")!).LocalPath));
         Assert.All(new[] { layers[1], layers[2] }, layer => Assert.Equal("Speaker Character",
             (string?)Assert.Single(layer!["layer-objects"]!.AsArray())!["type"]));
     }

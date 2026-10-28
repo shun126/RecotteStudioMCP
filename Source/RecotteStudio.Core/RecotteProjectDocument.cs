@@ -28,6 +28,7 @@ public sealed partial class RecotteProjectDocument
 
     /// <summary>Gets the absolute source path, or null when loaded from a stream.</summary>
     public string? SourcePath { get; }
+    internal string? ProjectDirectory => SourcePath is not null ? Path.GetDirectoryName(SourcePath) : creationRequest?.ProjectDirectory;
     /// <summary>Gets the source state captured at load or after the latest successful overwrite Save.</summary>
     public SourceFileState? SourceFileState { get; private set; }
     /// <summary>Gets the unmodified app_version text.</summary>
@@ -189,7 +190,9 @@ public sealed partial class RecotteProjectDocument
 
             DateTime now = DateTime.UtcNow;
             if (overwriteSource) SourceFileState = SourceFileState.Capture(current.DestinationPath);
-            return new(current.DestinationPath, backupPath, current.Validation, after, Revision, now, Array.Empty<ProjectDiagnostic>(), false);
+            // Only after a successful save, so previews and failed saves leave the disk untouched.
+            IReadOnlyList<ProjectDiagnostic> warnings = SpeakerVoiceFolder.EnsureDirectories(root, ProjectDirectory);
+            return new(current.DestinationPath, backupPath, current.Validation, after, Revision, now, warnings, false);
         }
         catch (RecotteProjectSaveException failure)
         {

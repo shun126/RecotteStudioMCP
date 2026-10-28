@@ -23,6 +23,10 @@ public static class RecotteProject
         setting["file-explorer-path"] = ProjectCreationValidator.DirectoryUri(directory);
         setting["duration"] = 0m;
         setting["position"] = 0m;
+        if (root["layers"] is JsonArray layers)
+            foreach (JsonObject layer in layers.OfType<JsonObject>())
+                if (JsonAccess.TryGetString(layer, "type", out string type) && type == "Speaker")
+                    SpeakerVoiceFolder.SetDefault(layer, directory);
         if (ScreenLayout.TryGetSize(root, out int templateWidth, out int templateHeight) &&
             (templateWidth != request.Width || templateHeight != request.Height))
             ScreenLayout.Resize(root, request.Width, request.Height, ScreenFit.Cover, respectLocks: false, new(), new());
