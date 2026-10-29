@@ -46,7 +46,7 @@ public sealed class ProjectSizeTests : IDisposable
         JsonObject saved = JsonNode.Parse(File.ReadAllText(output))!.AsObject();
         Assert.True(JsonNode.DeepEquals(template["telop-frames"], saved["telop-frames"]));
         template["layers"]![1]!["properties"]!["LinkFolder"]!["p-value"] =
-            new Uri(Path.Combine(directory, "voice", "話者1")).AbsoluteUri;
+            "file://" + Path.Combine(directory, "voice", "話者1").Replace('\\', '/');
         Assert.True(JsonNode.DeepEquals(template["layers"], saved["layers"]));
     }
 
