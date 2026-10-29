@@ -23,7 +23,12 @@ internal static class SpeakerVoiceFolder
                 (stem.Length == 4 && (stem.StartsWith("COM", StringComparison.OrdinalIgnoreCase) ||
                     stem.StartsWith("LPT", StringComparison.OrdinalIgnoreCase)) && "123456789¹²³".Contains(stem[3])))
                 folder = "_" + folder;
-            value = new Uri(Path.Combine(projectDirectory, "voice", folder)).AbsoluteUri;
+            Uri uri = new(Path.Combine(projectDirectory, "voice", folder));
+            // Recotte Studio writes readable paths and uses file://D:/... for drive paths.
+            // Keep URI delimiters such as # and literal % escaped so LocalPath still round-trips.
+            value = uri.GetComponents(UriComponents.AbsoluteUri, UriFormat.SafeUnescaped);
+            if (value.StartsWith("file:///", StringComparison.Ordinal) && uri.LocalPath.Length >= 2 && uri.LocalPath[1] == ':')
+                value = "file://" + value["file:///".Length..];
         }
         entry["p-value"] = value;
     }
