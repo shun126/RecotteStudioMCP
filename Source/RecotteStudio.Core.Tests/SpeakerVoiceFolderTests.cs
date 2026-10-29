@@ -11,6 +11,24 @@ public sealed class SpeakerVoiceFolderTests : IDisposable
     public void Dispose() => Directory.Delete(directory, true);
 
     [Fact]
+    public void Save_WritesReadableJapaneseLinkInRecotteStudioFormat()
+    {
+        string projectDirectory = Directory.CreateDirectory(Path.Combine(directory, "チケットドリブンのすすめ")).FullName;
+        RecotteProjectDocument document = RecotteProject.Create(new("Example", projectDirectory));
+        string output = Path.Combine(projectDirectory, "Example.ccproj");
+
+        document.SaveCopy(output);
+
+        string json = File.ReadAllText(output);
+        string expectedPath = Path.Combine(projectDirectory, "voice", "話者1").Replace('\\', '/');
+        string expected = "file://" + expectedPath;
+        Assert.Equal(expected, Link(JsonNode.Parse(json)!.AsObject(), 1));
+        Assert.Contains(expected, json);
+        Assert.True(Directory.Exists(Path.Combine(projectDirectory, "voice", "話者1")));
+        Assert.True(RecotteProject.Load(output).Validate().IsValid);
+    }
+
+    [Fact]
     public void Create_SetsTheInitialSpeakersLinkAndCreatesTheDirectoryOnSave()
     {
         RecotteProjectDocument document = RecotteProject.Create(new("Example", directory));
