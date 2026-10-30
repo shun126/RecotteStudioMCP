@@ -62,7 +62,8 @@ public static partial class VideoClip
     }
 
     /// <summary>Builds the ffmpeg arguments that write the clip to <paramref name="outputPath"/> as MP4.</summary>
-    public static IReadOnlyList<string> BuildArguments(string imagePath, string outputPath, VideoClipSettings settings, VideoFrameFormat format)
+    public static IReadOnlyList<string> BuildArguments(string imagePath, string outputPath, VideoClipSettings settings, VideoFrameFormat format,
+        VideoEncoder encoder = VideoEncoder.Software)
     {
         long frames = format.FrameCount(settings.Duration);
         int wide = format.Width * Oversample, high = format.Height * Oversample;
@@ -74,14 +75,15 @@ public static partial class VideoClip
         // trim keeps only the first frame, so an animated GIF yields exactly the requested number of frames.
         string filter = $"[0:v]trim=end_frame=1,{fit},zoompan=z='{zoom}':x='{x}':y='{y}':d={frames}:s={format.Width}x{format.Height}:fps={fps}," +
             "format=yuv420p,setsar=1[v]";
-        return EncodeArguments(new[] { "-i", FileUrl(imagePath) }, filter, frames, format.FramesPerSecond, outputPath);
+        return EncodeArguments(new[] { "-i", FileUrl(imagePath) }, filter, frames, format.FramesPerSecond, outputPath, encoder);
     }
 
     /// <summary>
     /// Wraps one video input and a filter graph labelling its result [v] into the fixed encoding: the format in
     /// <see cref="OutputFormat"/>, exactly <paramref name="frames"/> frames, and a silent track of the same length.
     /// </summary>
-    internal static IReadOnlyList<string> EncodeArguments(IEnumerable<string> videoInput, string filter, long frames, decimal fps, string outputPath) =>
+    internal static IReadOnlyList<string> EncodeArguments(IEnumerable<string> videoInput, string filter, long frames, decimal fps, string outputPath,
+        VideoEncoder encoder) =>
         new[] { "-nostdin", "-hide_banner", "-loglevel", "error", "-y" }
             .Concat(videoInput)
             .Concat(new[]
@@ -90,7 +92,10 @@ public static partial class VideoClip
                 "-filter_complex", filter,
                 "-map", "[v]", "-map", "1:a",
                 "-frames:v", Number(frames), "-t", Number(Math.Round(frames / fps, 6)),
-                "-c:v", "libx264", "-profile:v", "baseline", "-preset", "medium", "-crf", "18",
+            })
+            .Concat(VideoEncoders.Arguments(encoder))
+            .Concat(new[]
+            {
                 "-c:a", "aac", "-b:a", "128k", "-ar", "44100", "-ac", "2",
                 "-f", "mp4", "-movflags", "+faststart", FileUrl(outputPath),
             }).ToArray();

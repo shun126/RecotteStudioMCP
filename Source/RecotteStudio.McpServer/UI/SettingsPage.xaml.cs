@@ -10,6 +10,8 @@ namespace RecotteStudio.McpServer.UI;
 public sealed partial class SettingsPage : Page
 {
     private MainWindow? owner;
+    private bool refreshing;
+    private int encoderStatusRequest;
 
     public SettingsPage()
     {
@@ -17,6 +19,7 @@ public sealed partial class SettingsPage : Page
         VersionText.Text = $"Recotte Studio MCP {AppVersion.Version}";
         BuildText.Text = AppVersion.BuildDescription;
         UserRulesPathText.Text = UserRulesProvider.DefaultPath;
+        foreach (HardwareEncoding value in HardwareEncodingLabels.Settings) HardwareEncodingBox.Items.Add(HardwareEncodingLabels.Name(value));
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -32,6 +35,10 @@ public sealed partial class SettingsPage : Page
         WorkspaceBox.Text = owner.WorkspaceRoot ?? string.Empty;
         FfmpegBox.Text = owner.Ffmpeg.ConfiguredPath ?? string.Empty;
         _ = ShowFfmpegStatusAsync(owner.Ffmpeg.ConfiguredPath);
+        refreshing = true;
+        HardwareEncodingBox.SelectedIndex = Array.IndexOf(HardwareEncodingLabels.Settings, owner.VideoEncoders.Preference);
+        refreshing = false;
+        _ = ShowEncoderStatusAsync();
         if (owner.AccessToken is string token)
         {
             CodexBox.Text = ConnectionSnippets.Codex(token);
@@ -72,6 +79,7 @@ public sealed partial class SettingsPage : Page
             await owner.ApplyFfmpegPathAsync(requested);
             FfmpegBox.Text = owner.Ffmpeg.ConfiguredPath ?? string.Empty;
             await ShowFfmpegStatusAsync(owner.Ffmpeg.ConfiguredPath);
+            await ShowEncoderStatusAsync();
         }
         catch (Exception exception) { FfmpegStatusText.Text = exception.Message; }
         finally { ApplyFfmpegButton.IsEnabled = true; }
@@ -107,6 +115,49 @@ public sealed partial class SettingsPage : Page
         FfmpegStatusText.Text = probe.Success
             ? $"ffmpeg {probe.Version} を使用できます（{source}: {resolution.ExecutablePath}）"
             : $"{probe.Message}（{source}: {resolution.ExecutablePath}）";
+    }
+
+    private void HardwareEncoding_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (owner is null || refreshing || HardwareEncodingBox.SelectedIndex < 0) return;
+        try
+        {
+            owner.ApplyHardwareEncoding(HardwareEncodingLabels.Settings[HardwareEncodingBox.SelectedIndex]);
+            _ = ShowEncoderStatusAsync();
+        }
+        catch (Exception exception) { EncoderStatusText.Text = exception.Message; }
+    }
+
+    private async void CheckEncoder_Click(object sender, RoutedEventArgs e)
+    {
+        if (owner is null) return;
+        owner.VideoEncoders.Forget();
+        CheckEncoderButton.IsEnabled = false;
+        try { await ShowEncoderStatusAsync(); }
+        finally { CheckEncoderButton.IsEnabled = true; }
+    }
+
+    // Reports the encoder the next clip will use. Each GPU encoder is tested once with the ffmpeg in use and remembered.
+    private async Task ShowEncoderStatusAsync()
+    {
+        if (owner is null) return;
+        int request = ++encoderStatusRequest;
+        HardwareEncoding preference = owner.VideoEncoders.Preference;
+        if (preference == HardwareEncoding.Off) { EncoderStatusText.Text = $"{HardwareEncodingLabels.Name(VideoEncoder.Software)} でエンコードします。"; return; }
+        FfmpegResolution resolution = owner.Ffmpeg.Resolve();
+        if (!resolution.Found) { EncoderStatusText.Text = $"ffmpeg が見つからないため確認できません。{resolution.Message}"; return; }
+        EncoderStatusText.Text = "GPU エンコーダーを確認しています…";
+        string text;
+        try
+        {
+            VideoEncoder chosen = await owner.VideoEncoders.ChooseAsync(new FfmpegProcess(), resolution.ExecutablePath!, CancellationToken.None);
+            text = chosen != VideoEncoder.Software ? $"{HardwareEncodingLabels.Name(chosen)} でエンコードします。"
+                : preference == HardwareEncoding.Auto ? $"使える GPU エンコーダーが無いため、{HardwareEncodingLabels.Name(VideoEncoder.Software)} でエンコードします。"
+                : $"{HardwareEncodingLabels.Name(preference)} は使えないため、{HardwareEncodingLabels.Name(VideoEncoder.Software)} でエンコードします。";
+        }
+        catch (Exception exception) { text = exception.Message; }
+        // A later check, such as after changing the setting, replaces this one.
+        if (request == encoderStatusRequest) EncoderStatusText.Text = text;
     }
 
     // Selects UserRules.md in Explorer when it exists; otherwise opens the folder where the user creates it.

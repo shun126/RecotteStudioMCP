@@ -17,10 +17,13 @@ public sealed partial class MainWindow : Window
     private readonly ActivityLog activity = new();
     // Shared with every server instance, so changing the ffmpeg path takes effect without restarting the server.
     private readonly FfmpegLocator ffmpeg = new();
+    // Shared the same way, so the hardware encoding setting also applies without a restart.
+    private readonly VideoEncoderSelector videoEncoders = new(HardwareEncoding.Auto);
 
     internal string? WorkspaceRoot { get; private set; }
     internal string? AccessToken => token;
     internal FfmpegLocator Ffmpeg => ffmpeg;
+    internal VideoEncoderSelector VideoEncoders => videoEncoders;
     internal Uri? ServerEndpoint => server?.Endpoint;
 
     internal ObservableCollection<ActivityItem> Activity { get; } = new();
@@ -69,6 +72,7 @@ public sealed partial class MainWindow : Window
         {
             WorkspaceRoot = LocalSettings.LoadWorkspace();
             ffmpeg.ConfiguredPath = LocalSettings.LoadFfmpegPath();
+            videoEncoders.Preference = LocalSettings.LoadHardwareEncoding();
             token = LocalSettings.LoadOrCreateToken();
             RefreshPage();
             await RestartServerAsync();
@@ -99,6 +103,15 @@ public sealed partial class MainWindow : Window
         return probe;
     }
 
+    /// <summary>Saves the hardware encoding setting; the next clip tests the encoders again.</summary>
+    internal void ApplyHardwareEncoding(HardwareEncoding value)
+    {
+        if (value == videoEncoders.Preference) return;
+        LocalSettings.SaveHardwareEncoding(value);
+        videoEncoders.Preference = value;
+        activity.Record(ActivityKind.Info, "ハードウェアエンコードの設定を変更しました", HardwareEncodingLabels.Name(value));
+    }
+
     internal async Task RegenerateTokenAsync()
     {
         token = LocalSettings.RegenerateToken();
@@ -120,7 +133,8 @@ public sealed partial class MainWindow : Window
                 RefreshPage();
             }
             SetStatus(InfoBarSeverity.Informational, "起動中", "MCPサーバーを開始しています。");
-            server = await RecotteHttpServer.StartAsync(WorkspaceRoot, token!, activity: activity, ffmpeg: ffmpeg);
+            server = await RecotteHttpServer.StartAsync(WorkspaceRoot, token!, activity: activity, ffmpeg: ffmpeg,
+                videoEncoders: videoEncoders);
             activity.Record(ActivityKind.Info, "サーバーを開始しました", server.Endpoint.ToString());
             SetStatus(InfoBarSeverity.Success, "稼働中", "このウィンドウを閉じると接続を停止します。");
             RefreshPage();

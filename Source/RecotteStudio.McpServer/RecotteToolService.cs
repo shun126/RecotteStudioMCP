@@ -4,12 +4,13 @@ namespace RecotteStudio.McpServer;
 
 public sealed partial class RecotteToolService(WorkspacePathPolicy paths, ProjectOperationMapper operationMapper,
     OutputPathLockManager outputLocks, FigureCatalogProvider? figureCatalog = null, EffectCatalogProvider? effectCatalog = null,
-    FfmpegLocator? ffmpeg = null, IFfmpegRunner? ffmpegRunner = null)
+    FfmpegLocator? ffmpeg = null, IFfmpegRunner? ffmpegRunner = null, VideoEncoderSelector? videoEncoders = null)
 {
     private readonly FigureCatalogProvider figureCatalog = figureCatalog ?? new();
     private readonly EffectCatalogProvider effectCatalog = effectCatalog ?? new();
     private readonly FfmpegLocator ffmpeg = ffmpeg ?? new();
     private readonly IFfmpegRunner ffmpegRunner = ffmpegRunner ?? new FfmpegProcess();
+    private readonly VideoEncoderSelector videoEncoders = videoEncoders ?? new();
     // Encoding uses every core, so clips are made one at a time.
     private readonly SemaphoreSlim videoJobs = new(1, 1);
 
@@ -226,9 +227,9 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
         PathPolicyResult image = paths.ValidateInput(imagePath, VideoClip.ImageExtensions);
         if (ImageFailure(image, null) is McpToolResult<object> rejected) return Task.FromResult(rejected);
         return MakeVideoAsync(projectPath, outputPath, allowOverwrite, Path.GetFileNameWithoutExtension(image.FullPath!),
-            async (executable, format, temporary, token) =>
+            async (executable, format, temporary, encoding, token) =>
             {
-                FfmpegRunResult run = await ffmpegRunner.RunAsync(executable, VideoClip.BuildArguments(image.FullPath!, temporary, settings, format),
+                FfmpegRunResult run = await encoding.RunAsync(encoder => VideoClip.BuildArguments(image.FullPath!, temporary, settings, format, encoder),
                     VideoTimeout(settings.Duration), token);
                 return EncodingFailure(run, null) is McpToolResult<object> failed ? new(failed) : new(null, format.FrameCount(settings.Duration),
                     new() { ["imagePath"] = image.FullPath, ["motion"] = settings.Motion.ToString() });
@@ -260,7 +261,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
         int[] imageIndexes = imagePaths.Select(path => Array.FindIndex(distinct, other => string.Equals(other, path, StringComparison.OrdinalIgnoreCase))).ToArray();
 
         return MakeVideoAsync(projectPath, outputPath, allowOverwrite, Path.GetFileNameWithoutExtension(outputPath),
-            async (executable, format, temporary, token) =>
+            async (executable, format, temporary, encoding, token) =>
             {
                 decimal fps = format.FramesPerSecond;
                 int[] holds = frames.Select(frame => FlipbookVideo.Hold(frame.Duration ?? settings.FrameDuration, fps)).ToArray();
@@ -281,7 +282,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
                     string list = Path.Combine(work, "frames.ffconcat");
                     await File.WriteAllTextAsync(list, FlipbookVideo.ConcatList(imageIndexes, holds, settings.Loops, fps),
                         new System.Text.UTF8Encoding(false), token);
-                    FfmpegRunResult run = await ffmpegRunner.RunAsync(executable, FlipbookVideo.EncodeArguments(list, temporary, total, format),
+                    FfmpegRunResult run = await encoding.RunAsync(encoder => FlipbookVideo.EncodeArguments(list, temporary, total, format, encoder),
                         VideoTimeout(total / fps), token);
                     if (EncodingFailure(run, null) is McpToolResult<object> encodeFailed) return new(encodeFailed);
                 }
@@ -309,10 +310,36 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
 
     private sealed record VideoJob(McpToolResult<object>? Failure, long FrameCount = 0, Dictionary<string, object?>? Details = null);
 
+    /// <summary>
+    /// Runs the encoding step of one clip with the chosen encoder. When a GPU encoder fails, the step is run again with
+    /// libx264; only if that succeeds is the GPU encoder recorded as broken, so a bad input does not disable it.
+    /// </summary>
+    private sealed class VideoEncoding(VideoEncoderSelector selector, IFfmpegRunner runner, string executable, VideoEncoder chosen)
+    {
+        public VideoEncoder Used { get; private set; } = chosen;
+        public VideoEncoder? Failed { get; private set; }
+
+        public async Task<FfmpegRunResult> RunAsync(Func<VideoEncoder, IReadOnlyList<string>> arguments, TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            FfmpegRunResult run = await runner.RunAsync(executable, arguments(Used), timeout, cancellationToken);
+            // A timeout is not retried: a second run would double an already long wait.
+            if (run.Succeeded || run.TimedOut || Used == VideoEncoder.Software) return run;
+            FfmpegRunResult fallback = await runner.RunAsync(executable, arguments(VideoEncoder.Software), timeout, cancellationToken);
+            if (fallback.Succeeded)
+            {
+                selector.MarkFailed(executable, Used);
+                Failed = Used;
+                Used = VideoEncoder.Software;
+            }
+            return fallback;
+        }
+    }
+
     // Shared by the video tools: checks the project and output, finds ffmpeg, lets encode write the clip to a temporary
     // file beside the output, and publishes that file only when encoding succeeded.
     private async Task<McpToolResult<object>> MakeVideoAsync(string projectPath, string outputPath, bool allowOverwrite, string displayName,
-        Func<string, VideoFrameFormat, string, CancellationToken, Task<VideoJob>> encode, CancellationToken cancellationToken)
+        Func<string, VideoFrameFormat, string, VideoEncoding, CancellationToken, Task<VideoJob>> encode, CancellationToken cancellationToken)
     {
         PathPolicyResult project = paths.ValidateInput(projectPath);
         if (!project.Success) return PathFailure(project);
@@ -340,8 +367,15 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
             temporary = Path.Combine(Path.GetDirectoryName(output.FullPath!)!, $".{Path.GetFileName(output.FullPath!)}.{Guid.NewGuid():N}.tmp");
             long started = Environment.TickCount64;
             VideoJob job;
+            VideoEncoding encoding;
             await videoJobs.WaitAsync(cancellationToken);
-            try { job = await encode(resolution.ExecutablePath!, format, temporary, cancellationToken); }
+            try
+            {
+                // Chosen inside the queue, so encoders are tested one at a time and never alongside a clip.
+                VideoEncoder chosen = await videoEncoders.ChooseAsync(ffmpegRunner, resolution.ExecutablePath!, cancellationToken);
+                encoding = new(videoEncoders, ffmpegRunner, resolution.ExecutablePath!, chosen);
+                job = await encode(resolution.ExecutablePath!, format, temporary, encoding, cancellationToken);
+            }
             finally { videoJobs.Release(); }
             if (job.Failure is not null) return job.Failure;
             if (!File.Exists(temporary)) return Fail("ffmpeg", "MCP_FFMPEG_FAILED", "ffmpeg reported success but wrote no file.");
@@ -355,8 +389,11 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
                 ["projectPath"] = project.FullPath, ["outputPath"] = output.FullPath,
                 ["width"] = format.Width, ["height"] = format.Height, ["fps"] = fps, ["duration"] = actual, ["frameCount"] = job.FrameCount,
                 ["videoFormat"] = VideoClip.OutputFormat, ["ffmpegPath"] = resolution.ExecutablePath, ["ffmpegVersion"] = probe.Version,
+                ["videoEncoder"] = VideoEncoders.CodecName(encoding.Used),
                 ["elapsedSeconds"] = Math.Round((Environment.TickCount64 - started) / 1000m, 1),
             };
+            if (encoding.Failed is VideoEncoder failed)
+                data["videoEncoderFallback"] = $"{VideoEncoders.CodecName(failed)} failed, so the clip was encoded with libx264.";
             foreach ((string key, object? value) in job.Details ?? new()) data[key] = value;
             // Ready for recotte_apply_operations_and_save_copy: set start and end to where the clip belongs.
             data["suggestedOperation"] = new

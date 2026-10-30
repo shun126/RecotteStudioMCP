@@ -3,6 +3,16 @@
 Recotte Studio MCP の主な変更点を記録します。
 書式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に、バージョン番号は [セマンティック バージョニング](https://semver.org/lang/ja/) に従います。
 
+## [Unreleased]
+
+### 追加
+
+- **動画素材の作成で GPU のハードウェアエンコードに対応しました。** 設定画面の「ハードウェアエンコード」で、自動・使わない・NVIDIA（NVENC）・Intel（Quick Sync Video）・AMD（AMF）から選べます。既定は自動です。
+  - 自動では、NVIDIA、Intel、AMD の順に数フレームの試しエンコードを行い、最初に成功したものを使います。ffmpeg の一覧に載っていても GPU やドライバーが無いと使えないため、実際に試して判定します。結果は ffmpeg ごとに覚え、設定の変更、「再確認」、ffmpeg の差し替えで判定し直します。
+  - GPU でのエンコードが失敗した場合は、CPU（libx264）で作り直します。CPU では成功した場合だけ、その GPU エンコーダーを以後使いません。時間切れは作り直しません。
+  - `recotte_create_video_from_image` と `recotte_create_flipbook_video` の結果に、使ったエンコーダー `videoEncoder` を追加しました。作り直した場合は `videoEncoderFallback` に理由が入ります。
+  - 動画のフレーム抽出は CPU のままです。GPU でのデコードを試したところ、フレームを CPU に戻す処理で、かえって遅くなりました。
+
 ## [0.6.8] - 2026-10-30
 
 ### 変更
