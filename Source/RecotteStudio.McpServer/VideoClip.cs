@@ -14,7 +14,7 @@ public sealed record VideoClipSettings(decimal Duration, VideoMotion Motion, dec
 /// <summary>The output frame size and rate, taken from the project.</summary>
 public sealed record VideoFrameFormat(int Width, int Height, decimal FramesPerSecond)
 {
-    public int FrameCount(decimal duration) => (int)Math.Round(duration * FramesPerSecond, MidpointRounding.AwayFromZero);
+    public long FrameCount(decimal duration) => (long)Math.Round(duration * FramesPerSecond, MidpointRounding.AwayFromZero);
 }
 
 /// <summary>
@@ -29,7 +29,7 @@ public static partial class VideoClip
     /// <summary>Describes the output, which matches the video verified in Documents/RecotteProjects/005OneVideo.</summary>
     public const string OutputFormat = "H.264 Constrained Baseline, yuv420p, with a silent AAC-LC 44.1 kHz stereo track";
 
-    public const decimal MinDuration = 0.5m, MaxDuration = 60m, MinZoom = 1.05m, MaxZoom = 1.5m;
+    public const decimal MinDuration = 1m, MinZoom = 1.05m, MaxZoom = 1.5m;
 
     /// <summary>The most pixels a clip may have: those of 1920x1080, in either orientation.</summary>
     public const int MaxPixels = 1920 * 1080;
@@ -48,7 +48,7 @@ public static partial class VideoClip
         bool motionValid = TryParse(motion, VideoMotion.ZoomIn, out VideoMotion parsedMotion);
         bool easingValid = TryParse(easing, VideoEasing.EaseInOut, out VideoEasing parsedEasing);
         bool fitValid = TryParse(fit, VideoFit.Cover, out VideoFit parsedFit);
-        error = duration is < MinDuration or > MaxDuration ? $"duration must be between {MinDuration} and {MaxDuration} seconds."
+        error = duration < MinDuration ? $"duration must be at least {MinDuration} seconds."
             : !motionValid ? $"motion must be one of {Names<VideoMotion>()}."
             : zoom is < MinZoom or > MaxZoom ? $"zoom must be between {MinZoom} and {MaxZoom}."
             : focusX is < 0m or > 1m || focusY is < 0m or > 1m ? "focusX and focusY must be between 0 and 1."
@@ -64,7 +64,7 @@ public static partial class VideoClip
     /// <summary>Builds the ffmpeg arguments that write the clip to <paramref name="outputPath"/> as MP4.</summary>
     public static IReadOnlyList<string> BuildArguments(string imagePath, string outputPath, VideoClipSettings settings, VideoFrameFormat format)
     {
-        int frames = format.FrameCount(settings.Duration);
+        long frames = format.FrameCount(settings.Duration);
         int wide = format.Width * Oversample, high = format.Height * Oversample;
         string fit = settings.Fit == VideoFit.Cover
             ? $"scale={wide}:{high}:force_original_aspect_ratio=increase:flags=lanczos,crop={wide}:{high}"
@@ -81,7 +81,7 @@ public static partial class VideoClip
     /// Wraps one video input and a filter graph labelling its result [v] into the fixed encoding: the format in
     /// <see cref="OutputFormat"/>, exactly <paramref name="frames"/> frames, and a silent track of the same length.
     /// </summary>
-    internal static IReadOnlyList<string> EncodeArguments(IEnumerable<string> videoInput, string filter, int frames, decimal fps, string outputPath) =>
+    internal static IReadOnlyList<string> EncodeArguments(IEnumerable<string> videoInput, string filter, long frames, decimal fps, string outputPath) =>
         new[] { "-nostdin", "-hide_banner", "-loglevel", "error", "-y" }
             .Concat(videoInput)
             .Concat(new[]
@@ -99,7 +99,7 @@ public static partial class VideoClip
     internal static string FileUrl(string path) => "file:" + Path.GetFullPath(path);
 
     // zoompan's x and y are the top-left of the visible part of the oversampled frame and are clamped to the frame.
-    private static (string Zoom, string X, string Y) Motion(VideoClipSettings settings, int frames)
+    private static (string Zoom, string X, string Y) Motion(VideoClipSettings settings, long frames)
     {
         string last = Number(Math.Max(frames - 1, 1));
         string progress = settings.Easing == VideoEasing.Linear ? $"on/{last}" : $"(1-cos(PI*on/{last}))/2";
@@ -135,6 +135,7 @@ public static partial class VideoClip
 
     internal static string Number(decimal value) => value.ToString("0.######", CultureInfo.InvariantCulture);
     internal static string Number(int value) => value.ToString(CultureInfo.InvariantCulture);
+    internal static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
     internal static bool IsColor(string value) => ColorPattern().IsMatch(value);
 
     [GeneratedRegex("^#[0-9A-Fa-f]{6}$")]
