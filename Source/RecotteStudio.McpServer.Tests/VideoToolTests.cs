@@ -166,7 +166,7 @@ public sealed class VideoToolTests : IDisposable
         if (InstalledFfmpeg.Find() is not string installed) return; // ffmpeg is optional and absent on CI.
         RecotteToolService service = new(new WorkspacePathPolicy(new(root)), new(), new(), ffmpeg: new FfmpegLocator(installed));
 
-        McpToolResult<object> result = await service.CreateVideoFromImageAsync(project, image, output, false, 1m, "zoomIn", 1.2m,
+        McpToolResult<object> result = await service.CreateVideoFromImageAsync(project, image, output, false, 5m, "zoomIn", 1.2m,
             0.5m, 0.5m, null, null, null, default);
 
         Assert.True(result.Success, result.Message);
@@ -176,7 +176,7 @@ public sealed class VideoToolTests : IDisposable
             FfmpegRunResult probe = await new FfmpegProcess().RunAsync(ffprobe, new[] { "-v", "error", "-show_entries",
                 "stream=codec_name,profile,pix_fmt,width,height,r_frame_rate,nb_frames", "-of", "compact", output },
                 TimeSpan.FromSeconds(30), default);
-            Assert.Contains("codec_name=h264|profile=Constrained Baseline|width=1920|height=1080|pix_fmt=yuv420p|r_frame_rate=60/1|nb_frames=60", probe.StandardOutput);
+            Assert.Contains("codec_name=h264|profile=Constrained Baseline|width=1920|height=1080|pix_fmt=yuv420p|r_frame_rate=60/1|nb_frames=300", probe.StandardOutput);
             Assert.Contains("codec_name=aac", probe.StandardOutput);
         }
 
@@ -200,7 +200,7 @@ public sealed class VideoToolTests : IDisposable
         McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[]
         {
             new(image), new(second, 0.25m), new(image),
-        }, loops: 2);
+        }, loops: 10);
 
         Assert.True(result.Success, result.Message);
         Assert.Equal(FakeRunner.Encoded, File.ReadAllBytes(output));
@@ -210,7 +210,7 @@ public sealed class VideoToolTests : IDisposable
         Assert.False(Directory.Exists(runner.WorkDirectory));
         Assert.Empty(Directory.EnumerateFiles(root, "*.tmp"));
         JsonObject data = Data(result);
-        Assert.Equal((8 + 15 + 8) * 2, (int?)data["frameCount"]);
+        Assert.Equal((8 + 15 + 8) * 10, (int?)data["frameCount"]);
         Assert.Equal(2, (int?)data["distinctImageCount"]);
         JsonArray frames = data["frames"]!.AsArray();
         Assert.Equal(new[] { 0m, 0.133333m, 0.383333m }, frames.Select(frame => (decimal)frame!["start"]!));
@@ -239,14 +239,51 @@ public sealed class VideoToolTests : IDisposable
     }
 
     [Fact]
-    public async Task FlipbookLongerThanSixtySecondsIsRejected()
+    public async Task FlipbookOfOneSecondIsAccepted()
+    {
+        McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[] { new(image, 1m) });
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(1m, (decimal?)Data(result)["duration"]);
+        Assert.Equal(TimeSpan.FromSeconds(70), runner.Timeouts[^1]);
+    }
+
+    [Fact]
+    public async Task FlipbookShorterThanOneSecondIsRejected()
+    {
+        McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[] { new(image, 0.98m) });
+
+        Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", result.ErrorCode);
+        Assert.Contains("at least 1 second", result.Message);
+        Assert.Single(runner.Calls);
+        AssertNoOutput();
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(60.1)]
+    [InlineData(3600)]
+    [InlineData(500000)]
+    public async Task VideoDurationHasNoUpperPolicyLimitAndExtendsEncodingTimeout(double seconds)
+    {
+        decimal duration = (decimal)seconds;
+
+        McpToolResult<object> result = await Create(Service(), duration);
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(duration, (decimal?)Data(result)["duration"]);
+        Assert.Equal(TimeSpan.FromSeconds(60 + seconds * 10), runner.Timeouts[^1]);
+    }
+
+    [Fact]
+    public async Task FlipbookLongerThanSixtySecondsUsesALongerEncodingTimeout()
     {
         McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[] { new(image, 10m), new(image, 10m) }, loops: 4);
 
-        Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", result.ErrorCode);
-        Assert.Contains("80", result.Message);
-        Assert.Single(runner.Calls);
-        AssertNoOutput();
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(80m, (decimal?)Data(result)["duration"]);
+        Assert.Equal(TimeSpan.FromSeconds(860), runner.Timeouts[^1]);
     }
 
     [Fact]
@@ -254,7 +291,7 @@ public sealed class VideoToolTests : IDisposable
     {
         runner.Encode = arguments => arguments.Contains("concat") ? Succeed(arguments) : new(1, "", "Invalid PNG signature", false);
 
-        McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[] { new(image) });
+        McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[] { new(image, 5m) });
 
         Assert.Equal("MCP_FFMPEG_FAILED", result.ErrorCode);
         Assert.Contains(image, result.Message);
@@ -268,6 +305,8 @@ public sealed class VideoToolTests : IDisposable
     {
         if (InstalledFfmpeg.Find() is not string installed) return; // ffmpeg is optional and absent on CI.
         FfmpegProcess process = new();
+        FfmpegRunResult version = await process.RunAsync(installed, new[] { "-version" }, TimeSpan.FromDays(60), default);
+        Assert.True(version.Succeeded, version.StandardError);
         string[] colors = { "red", "lime", "blue" };
         foreach (string color in colors)
         {
@@ -277,11 +316,11 @@ public sealed class VideoToolTests : IDisposable
         }
         RecotteToolService service = new(new WorkspacePathPolicy(new(root)), new(), new(), ffmpeg: new FfmpegLocator(installed));
 
-        // 7, 8, and 1 frames at 60 fps, twice.
+        // 7, 8, and 1 frames at 60 fps, repeated to make at least five seconds.
         McpToolResult<object> result = await service.CreateFlipbookVideoAsync(project, new FlipbookFrameDto[]
         {
             new(Path.Combine(root, "red.png"), 7m / 60m), new(Path.Combine(root, "lime.png"), 8m / 60m), new(Path.Combine(root, "blue.png"), 1m / 60m),
-        }, output, false, 0.125m, 2, null, null, default);
+        }, output, false, 0.125m, 20, null, null, default);
 
         Assert.True(result.Success, result.Message);
         string raw = Path.Combine(root, "frames.rgb");
@@ -290,7 +329,7 @@ public sealed class VideoToolTests : IDisposable
         Assert.True(decoded.Succeeded, decoded.StandardError);
         string shown = string.Concat(File.ReadAllBytes(raw).Chunk(3).Select(pixel =>
             pixel[0] > 150 && pixel[1] < 80 ? 'R' : pixel[1] > 150 && pixel[0] < 80 ? 'G' : pixel[2] > 150 && pixel[0] < 80 ? 'B' : '?'));
-        Assert.Equal("RRRRRRRGGGGGGGGBRRRRRRRGGGGGGGGB", shown);
+        Assert.Equal(string.Concat(Enumerable.Repeat("RRRRRRRGGGGGGGGB", 20)), shown);
     }
 
     private Task<McpToolResult<object>> Flipbook(RecotteToolService service, IReadOnlyList<FlipbookFrameDto> frames, int loops = 1) =>
@@ -331,6 +370,7 @@ public sealed class VideoToolTests : IDisposable
     {
         public static readonly byte[] Encoded = { 0, 0, 0, 24, (byte)'f', (byte)'t', (byte)'y', (byte)'p' };
         public List<IReadOnlyList<string>> Calls { get; } = new();
+        public List<TimeSpan> Timeouts { get; } = new();
         public string Version { get; set; } = "ffmpeg version 7.1-test Copyright (c) 2000-2024 the FFmpeg developers";
         public Func<IReadOnlyList<string>, FfmpegRunResult>? Encode { get; set; }
         public string? ConcatList { get; private set; }
@@ -340,6 +380,7 @@ public sealed class VideoToolTests : IDisposable
             CancellationToken cancellationToken)
         {
             Calls.Add(arguments);
+            Timeouts.Add(timeout);
             if (arguments.Contains("-update")) WorkDirectory = Path.GetDirectoryName(arguments[^1]["file:".Length..]);
             if (arguments.Contains("concat")) ConcatList = File.ReadAllText(arguments[arguments.ToList().IndexOf("concat") + 4]["file:".Length..]);
             if (arguments.SequenceEqual(new[] { "-version" })) return Task.FromResult(new FfmpegRunResult(0, Version + "\n", "", false));

@@ -37,8 +37,25 @@ public sealed class FfmpegProcess : IFfmpegRunner
         Task<string> output = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
         Task<string> error = process.StandardError.ReadToEndAsync(CancellationToken.None);
         using CancellationTokenSource limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        limit.CancelAfter(timeout);
-        try { await process.WaitForExitAsync(limit.Token); }
+        // CancelAfter accepts at most about 49 days. Split longer budgets into supported waits.
+        Task exited = process.WaitForExitAsync(limit.Token);
+        try
+        {
+            TimeSpan remaining = timeout;
+            TimeSpan maxWait = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
+            while (true)
+            {
+                TimeSpan wait = remaining > maxWait ? maxWait : remaining;
+                try { await exited.WaitAsync(wait, cancellationToken); break; }
+                catch (TimeoutException) when (remaining > wait) { remaining -= wait; }
+            }
+        }
+        catch (TimeoutException)
+        {
+            process.Kill(true);
+            await exited;
+            return new(process.ExitCode, await output, await error, true);
+        }
         catch (OperationCanceledException)
         {
             process.Kill(true);

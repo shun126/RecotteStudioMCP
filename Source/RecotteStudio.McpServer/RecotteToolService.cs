@@ -264,10 +264,10 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
             {
                 decimal fps = format.FramesPerSecond;
                 int[] holds = frames.Select(frame => FlipbookVideo.Hold(frame.Duration ?? settings.FrameDuration, fps)).ToArray();
-                int total = holds.Sum() * settings.Loops;
-                if (total > format.FrameCount(VideoClip.MaxDuration))
+                long total = (long)holds.Sum() * settings.Loops;
+                if (total < format.FrameCount(VideoClip.MinDuration))
                     return new(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID",
-                        $"The flipbook lasts {Math.Round(total / fps, 3)} seconds including loops; the limit is {VideoClip.MaxDuration}."));
+                        $"The flipbook lasts {Math.Round(total / fps, 3)} seconds including loops; it must be at least {VideoClip.MinDuration} seconds."));
                 string work = Path.Combine(Path.GetTempPath(), "RecotteStudioMCP", Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(work);
                 try
@@ -307,7 +307,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
             }, cancellationToken);
     }
 
-    private sealed record VideoJob(McpToolResult<object>? Failure, int FrameCount = 0, Dictionary<string, object?>? Details = null);
+    private sealed record VideoJob(McpToolResult<object>? Failure, long FrameCount = 0, Dictionary<string, object?>? Details = null);
 
     // Shared by the video tools: checks the project and output, finds ffmpeg, lets encode write the clip to a temporary
     // file beside the output, and publishes that file only when encoding succeeded.
@@ -390,8 +390,9 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
 
     private static McpToolResult<object> FfmpegUnavailable(string reason) => Fail("unsupported", "MCP_FFMPEG_UNAVAILABLE",
         $"{reason} Ask the user to install ffmpeg and set it in the ffmpeg section of the Recotte Studio MCP settings window.");
-    // Encoding a 60-second clip can take minutes on a machine with few cores.
-    private static TimeSpan VideoTimeout(decimal duration) => TimeSpan.FromSeconds(60 + (double)duration * 10);
+    // Allow ten seconds of encoding per second of video, plus startup time, even for long clips.
+    private static TimeSpan VideoTimeout(decimal duration) =>
+        TimeSpan.FromSeconds((double)Math.Min(60m + duration * 10m, TimeSpan.MaxValue.Ticks / (decimal)TimeSpan.TicksPerSecond - 1m));
     private static string Excerpt(string text)
     {
         text = text.Trim();

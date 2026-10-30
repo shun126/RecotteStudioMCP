@@ -28,7 +28,7 @@ ffmpeg は同梱していません。インストールして、設定画面の�
 | `projectPath` | 解像度とフレームレートを読むプロジェクト | 必須 |
 | `imagePath` | 元の画像 | 必須 |
 | `outputPath` | 書き出す動画。拡張子は `.mp4` | 必須 |
-| `duration` | 動画の長さ（秒）。フレーム数は「秒数 × フレームレート」を四捨五入した値です | 0.5〜60 |
+| `duration` | 動画の長さ（秒）。フレーム数は「秒数 × フレームレート」を四捨五入した値です | 1 秒以上、上限なし |
 | `allowOverwrite` | true の場合だけ既存ファイルを置き換えます | false |
 | `motion` | `none`、`zoomIn`、`zoomOut`、`panLeft`、`panRight`、`panUp`、`panDown`。パンは見ている位置が動く向きで、`panRight` では画像が左へ流れます | `zoomIn` |
 | `zoom` | ズームの最大倍率。パンではこの倍率に拡大してから動かします | 1.2（1.05〜1.5） |
@@ -59,7 +59,7 @@ ffmpeg は同梱していません。インストールして、設定画面の�
   "projectPath": "D:\\Movies\\MyMovie.ccproj",
   "outputPath": "D:\\Movies\\Assets\\walk.mp4",
   "frameDuration": 0.125,
-  "loops": 3,
+  "loops": 10,
   "frames": [
     { "imagePath": "D:\\Movies\\Assets\\walk1.png" },
     { "imagePath": "D:\\Movies\\Assets\\walk2.png" },
@@ -79,7 +79,7 @@ ffmpeg は同梱していません。インストールして、設定画面の�
 | `projectPath`、`outputPath`、`allowOverwrite` | 1 枚の場合と同じです | |
 
 - 各画像の表示時間は、プロジェクトのフレーム数に四捨五入します。最短は 1 フレームです。60fps のプロジェクトで `frameDuration` が 0.125 秒なら、1 枚あたり 8 フレームになります。
-- 繰り返しを含めた長さは 60 秒までです。
+- 繰り返しを含めた長さは 1 秒以上で、総時間の上限はありません。
 - 結果の `frames` には、1 回目の繰り返しで各画像が始まる時刻（`start`）、表示時間（`duration`）、フレーム数（`frameCount`）が入ります。台詞のタイミングに合わせるときに使えます。
 - 既定の `fit` と `background` が 1 枚の場合と違うのは、線画など透明な部分を持つ画像が多いためです。切り抜かずに、紙のような白い背景に描きます。
 
@@ -90,7 +90,7 @@ ffmpeg は同梱していません。インストールして、設定画面の�
 - 入力と出力のパスには `file:` を付け、パスが URL などとして解釈されないようにします。
 - ズーム／パンは、出力の 2 倍の大きさに拡大した画像に `zoompan` をかけます。拡大量が整数に丸められて映像ががたつくのを防ぐためです。
 - 同じフォルダの一時ファイルに書き、成功したときだけ出力先に移動します。失敗、時間切れ、キャンセルのときは一時ファイルを消します。
-- 動画の作成は同時に 1 つだけ行います。時間切れは「60 秒 + 動画の長さ × 10」です。
+- 動画の作成は同時に 1 つだけ行います。時間切れは「60 秒 + 動画の長さ × 10」で、動画が長くなるほど圧縮処理の待ち時間も延びます。
 - 実行前に `ffmpeg -version` で、指定されたファイルが ffmpeg であることを確かめます。
 - パラパラアニメは 2 段階で作ります。まず異なる画像ごとに 1 回ずつ、画面サイズの背景に描いた PNG を一時フォルダ（`%TEMP%\RecotteStudioMCP`）に作ります。次に、その PNG を表示時間付きで並べた concat の一覧から動画を作ります。一時フォルダは成功しても失敗しても消します。
 - concat の一覧では、各画像の時間の単位をプロジェクトのフレームレートにそろえます（`option framerate`）。表示時間がフレームの境目にぴったり合い、指定したフレーム数どおりに切り替わります。この指定には concat の safe モードを外す必要があります（`-safe 0`）が、一覧に書くのはツールが作った `0001.png` のようなファイル名だけです。
@@ -102,7 +102,7 @@ ffmpeg は同梱していません。インストールして、設定画面の�
 | `MCP_FFMPEG_UNAVAILABLE` | ffmpeg が設定されておらず PATH にもない、または指定されたファイルが ffmpeg ではない |
 | `MCP_FFMPEG_FAILED` | ffmpeg が失敗した。終了コードと ffmpeg のエラー出力の末尾を含みます |
 | `MCP_FFMPEG_TIMEOUT` | 時間切れ |
-| `MCP_VIDEO_ARGUMENT_INVALID` | `duration`、`motion`、`zoom`、`focusX`/`focusY`、`easing`、`fit`、`background`、`frames`、`frameDuration`、`loops` のいずれかが範囲外。パラパラアニメでは、繰り返しを含めて 60 秒を超える場合も含みます |
+| `MCP_VIDEO_ARGUMENT_INVALID` | `duration`、`motion`、`zoom`、`focusX`/`focusY`、`easing`、`fit`、`background`、`frames`、`frameDuration`、`loops` のいずれかが範囲外。パラパラアニメでは、繰り返しを含めた長さが 1 秒未満の場合も含みます |
 | `MCP_VIDEO_IMAGE_UNSUPPORTED` | 画像が PNG、JPEG、BMP、GIF のどれでもない。パラパラアニメでは `frames[番号]` でどの画像かを示します |
 | `MCP_VIDEO_PROJECT_SIZE_UNSUPPORTED` | プロジェクトの幅か高さが奇数、または画素数が 1920×1080 を超える |
 | `MCP_PATH_EXTENSION`、`MCP_PATH_OUTPUT_EXISTS`、`MCP_PATH_FILE_NOT_FOUND`、`MCP_PATH_OUTSIDE_WORKSPACE` | パスの検証エラー |

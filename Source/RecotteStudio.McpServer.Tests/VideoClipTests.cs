@@ -16,7 +16,7 @@ public sealed class VideoClipTests
 
     [Theory]
     [InlineData(0.4, null, 1.2, 0.5, null, null, null, "duration")]
-    [InlineData(60.1, null, 1.2, 0.5, null, null, null, "duration")]
+    [InlineData(0.999, null, 1.2, 0.5, null, null, null, "duration")]
     [InlineData(5, "spin", 1.2, 0.5, null, null, null, "motion")]
     [InlineData(5, "1", 1.2, 0.5, null, null, null, "motion")]
     [InlineData(5, "none,zoomIn", 1.2, 0.5, null, null, null, "motion")]
@@ -92,11 +92,20 @@ public sealed class VideoClipTests
     [Fact]
     public void FrameCountRoundsDurationTimesRate()
     {
-        IReadOnlyList<string> arguments = VideoClip.BuildArguments("in.png", "out.tmp", Parse(duration: 1.01m)!, new(1920, 1080, 29.97m));
+        IReadOnlyList<string> arguments = VideoClip.BuildArguments("in.png", "out.tmp", Parse(duration: 5.01m)!, new(1920, 1080, 29.97m));
 
-        Assert.Equal("30", After(arguments, "-frames:v"));
-        Assert.Equal("1.001001", After(arguments, "-t"));
+        Assert.Equal("150", After(arguments, "-frames:v"));
+        Assert.Equal("5.005005", After(arguments, "-t"));
         Assert.Contains(":fps=29.97,", After(arguments, "-filter_complex"));
+    }
+
+    [Fact]
+    public void LongClipFrameCountDoesNotOverflowThirtyTwoBits()
+    {
+        IReadOnlyList<string> arguments = Build(Parse(duration: 40000000m)!);
+
+        Assert.Equal("2400000000", After(arguments, "-frames:v"));
+        Assert.Equal("40000000", After(arguments, "-t"));
     }
 
     [Fact]
