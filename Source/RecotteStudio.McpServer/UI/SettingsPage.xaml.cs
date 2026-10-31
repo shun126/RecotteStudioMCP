@@ -131,14 +131,13 @@ public sealed partial class SettingsPage : Page
     private async void CheckEncoder_Click(object sender, RoutedEventArgs e)
     {
         if (owner is null) return;
-        owner.VideoEncoders.Forget();
         CheckEncoderButton.IsEnabled = false;
-        try { await ShowEncoderStatusAsync(); }
+        try { await ShowEncoderStatusAsync(recheck: true); }
         finally { CheckEncoderButton.IsEnabled = true; }
     }
 
     // Reports the encoder the next clip will use. Each GPU encoder is tested once with the ffmpeg in use and remembered.
-    private async Task ShowEncoderStatusAsync()
+    private async Task ShowEncoderStatusAsync(bool recheck = false)
     {
         if (owner is null) return;
         int request = ++encoderStatusRequest;
@@ -150,7 +149,7 @@ public sealed partial class SettingsPage : Page
         string text;
         try
         {
-            VideoEncoder chosen = await owner.VideoEncoders.ChooseAsync(new FfmpegProcess(), resolution.ExecutablePath!, CancellationToken.None);
+            VideoEncoder chosen = await owner.VideoEncoders.CheckAsync(new FfmpegProcess(), resolution.ExecutablePath!, CancellationToken.None, recheck);
             text = chosen != VideoEncoder.Software ? $"{HardwareEncodingLabels.Name(chosen)} でエンコードします。"
                 : preference == HardwareEncoding.Auto ? $"使える GPU エンコーダーが無いため、{HardwareEncodingLabels.Name(VideoEncoder.Software)} でエンコードします。"
                 : $"{HardwareEncodingLabels.Name(preference)} は使えないため、{HardwareEncodingLabels.Name(VideoEncoder.Software)} でエンコードします。";

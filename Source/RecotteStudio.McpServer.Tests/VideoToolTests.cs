@@ -235,6 +235,76 @@ public sealed class VideoToolTests : IDisposable
         Assert.Null(Data(second)["videoEncoderFallback"]);
     }
 
+    [Theory]
+    [InlineData(false, VideoEncoder.Software, 1)]
+    [InlineData(true, VideoEncoder.Nvidia, 2)]
+    public async Task SettingsChecksWaitForFallbackAndOnlyExplicitRechecksClearItsFailure(bool recheck,
+        VideoEncoder expected, int probes)
+    {
+        runner.WorkingEncoders.Add("h264_nvenc");
+        VideoEncoderSelector selector = new(HardwareEncoding.Nvidia);
+        RecotteToolService service = new(new WorkspacePathPolicy(new(root)), new(), new(),
+            ffmpeg: new FfmpegLocator(Path.Combine(root, "ffmpeg.exe")), ffmpegRunner: runner, videoEncoders: selector);
+        TaskCompletionSource started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource finish = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        runner.Intercept = async arguments =>
+        {
+            if (IsProbe(arguments)) return new(0, "", "", false);
+            if (Codec(arguments) == "libx264") return Succeed(arguments);
+            started.SetResult();
+            await finish.Task;
+            return new(1, "", "GPU encode failed", false);
+        };
+
+        Task<McpToolResult<object>> clip = Create(service);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Task<VideoEncoder> check = selector.CheckAsync(runner, Path.Combine(root, "ffmpeg.exe"), default, recheck);
+        try
+        {
+            Assert.False(check.IsCompleted);
+            Assert.Single(runner.Calls, IsProbe);
+        }
+        finally { finish.TrySetResult(); }
+
+        Assert.True((await clip.WaitAsync(TimeSpan.FromSeconds(10))).Success);
+        Assert.Equal(expected, await check.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(probes, runner.Calls.Count(IsProbe));
+    }
+
+    [Fact]
+    public async Task VideoJobsWaitForSettingsProbesAndReuseTheirResult()
+    {
+        VideoEncoderSelector selector = new(HardwareEncoding.Nvidia);
+        RecotteToolService service = new(new WorkspacePathPolicy(new(root)), new(), new(),
+            ffmpeg: new FfmpegLocator(Path.Combine(root, "ffmpeg.exe")), ffmpegRunner: runner, videoEncoders: selector);
+        TaskCompletionSource started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource finish = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        runner.Intercept = async arguments =>
+        {
+            if (!IsProbe(arguments)) return Succeed(arguments);
+            started.TrySetResult();
+            await finish.Task;
+            return new(0, "", "", false);
+        };
+
+        Task<VideoEncoder> check = selector.CheckAsync(runner, Path.Combine(root, "ffmpeg.exe"), default);
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Task<McpToolResult<object>> clip = Create(service);
+        try
+        {
+            Assert.False(clip.IsCompleted);
+            Assert.Single(runner.Calls, IsProbe);
+            Assert.DoesNotContain(runner.Calls, call => !IsProbe(call) && call.Contains("-c:v"));
+        }
+        finally { finish.TrySetResult(); }
+
+        Assert.Equal(VideoEncoder.Nvidia, await check.WaitAsync(TimeSpan.FromSeconds(10)));
+        McpToolResult<object> result = await clip.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(result.Success, result.Message);
+        Assert.Equal("h264_nvenc", (string?)Data(result)["videoEncoder"]);
+        Assert.Single(runner.Calls, IsProbe);
+    }
+
     [Fact]
     public async Task AnInputThatNoEncoderCanReadKeepsTheGpuEncoder()
     {
@@ -488,6 +558,7 @@ public sealed class VideoToolTests : IDisposable
         public List<TimeSpan> Timeouts { get; } = new();
         public string Version { get; set; } = "ffmpeg version 7.1-test Copyright (c) 2000-2024 the FFmpeg developers";
         public Func<IReadOnlyList<string>, FfmpegRunResult>? Encode { get; set; }
+        public Func<IReadOnlyList<string>, Task<FfmpegRunResult>>? Intercept { get; set; }
         public HashSet<string> WorkingEncoders { get; } = new();
         public string? ConcatList { get; private set; }
         public string? WorkDirectory { get; private set; }
@@ -500,6 +571,7 @@ public sealed class VideoToolTests : IDisposable
             if (arguments.Contains("-update")) WorkDirectory = Path.GetDirectoryName(arguments[^1]["file:".Length..]);
             if (arguments.Contains("concat")) ConcatList = File.ReadAllText(arguments[arguments.ToList().IndexOf("concat") + 4]["file:".Length..]);
             if (arguments.SequenceEqual(new[] { "-version" })) return Task.FromResult(new FfmpegRunResult(0, Version + "\n", "", false));
+            if (Intercept is not null) return Intercept(arguments);
             if (IsProbe(arguments)) return Task.FromResult(new FfmpegRunResult(WorkingEncoders.Contains(Codec(arguments)) ? 0 : 1, "", "", false));
             if (Encode is not null) return Task.FromResult(Encode(arguments));
             WriteOutput(arguments);

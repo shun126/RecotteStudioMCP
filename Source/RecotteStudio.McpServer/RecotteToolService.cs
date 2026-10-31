@@ -12,7 +12,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
     private readonly IFfmpegRunner ffmpegRunner = ffmpegRunner ?? new FfmpegProcess();
     private readonly VideoEncoderSelector videoEncoders = videoEncoders ?? new();
     // Encoding uses every core, so clips are made one at a time.
-    private readonly SemaphoreSlim videoJobs = new(1, 1);
+    private SemaphoreSlim videoJobs => videoEncoders.Jobs;
 
     public McpToolResult<object> ListEffects(string? kind = null, string? tag = null, string? nameContains = null, int limit = 100)
     {

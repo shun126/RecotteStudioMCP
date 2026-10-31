@@ -48,6 +48,8 @@ public static class VideoEncoders
 /// </summary>
 public sealed class VideoEncoderSelector
 {
+    // Shared by the settings window and every service using this selector, including after a server restart.
+    internal SemaphoreSlim Jobs { get; } = new(1, 1);
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(20);
     private readonly ConcurrentDictionary<string, bool> works = new(StringComparer.OrdinalIgnoreCase);
     private volatile HardwareEncoding preference;
@@ -64,6 +66,19 @@ public sealed class VideoEncoderSelector
 
     /// <summary>Forgets which encoders work, so the next clip tests them again.</summary>
     public void Forget() => works.Clear();
+
+    /// <summary>Checks from the settings window, waiting for video jobs before probing or clearing cached results.</summary>
+    public async Task<VideoEncoder> CheckAsync(IFfmpegRunner runner, string executablePath,
+        CancellationToken cancellationToken, bool recheck = false)
+    {
+        await Jobs.WaitAsync(cancellationToken);
+        try
+        {
+            if (recheck) Forget();
+            return await ChooseAsync(runner, executablePath, cancellationToken);
+        }
+        finally { Jobs.Release(); }
+    }
 
     /// <summary>Returns the first encoder the setting allows that works, or libx264.</summary>
     public async Task<VideoEncoder> ChooseAsync(IFfmpegRunner runner, string executablePath, CancellationToken cancellationToken)
