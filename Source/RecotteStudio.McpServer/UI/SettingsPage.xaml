@@ -43,6 +43,18 @@
             </StackPanel>
 
             <StackPanel Spacing="8">
+                <TextBlock Text="ハードウェアエンコード" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="画像から動画素材やパラパラ漫画を作るとき、GPU でエンコードします。自動では NVIDIA、Intel、AMD の順に実際に試し、使えるものが無ければ CPU（libx264）を使います。GPU でのエンコードに失敗した場合も CPU で作り直します。" TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ComboBox x:Name="HardwareEncodingBox" MinWidth="260" SelectionChanged="HardwareEncoding_SelectionChanged" />
+                    <Button x:Name="CheckEncoderButton" Content="再確認" Click="CheckEncoder_Click" />
+                </StackPanel>
+                <TextBlock x:Name="EncoderStatusText" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
                 <TextBlock Text="ユーザールール" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock Text="独自の生成ルールは、次の UserRules.md に Markdown で書きます。配布の GenerationRules.md と違い、更新しても上書きされません。ルールが食い違う場合は UserRules.md が優先されます。ファイルが無くても動作します。" TextWrapping="Wrap" />
                 <TextBlock x:Name="UserRulesPathText" IsTextSelectionEnabled="True" TextWrapping="Wrap"

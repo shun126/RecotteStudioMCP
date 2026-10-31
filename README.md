@@ -75,7 +75,7 @@ walk1.png から walk4.png を 1 秒に 8 枚のパラパラアニメにして�
 - 解像度とフレームレートはプロジェクトに合わせ、Recotte Studio が読み込める形式（H.264 / AAC）で書き出します。
 - 画像とプロジェクトは変更しません。配置は既存の編集ツールで行うので、保存前に変更内容を確認できます。
 
-この機能には [ffmpeg](https://ffmpeg.org/) が必要です。ffmpeg は同梱していないため、`winget install Gyan.FFmpeg` などでインストールし、設定画面の「ffmpeg」で `ffmpeg.exe` を指定してください。PATH に ffmpeg がある場合は指定不要です。詳しくは[画像から動画素材を作る](Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。
+この機能には [ffmpeg](https://ffmpeg.org/) が必要です。ffmpeg は同梱していないため、`winget install Gyan.FFmpeg` などでインストールし、設定画面の「ffmpeg」で `ffmpeg.exe` を指定してください。PATH に ffmpeg がある場合は指定不要です。GPU があれば、設定画面の「ハードウェアエンコード」（既定は自動）で圧縮に GPU を使います。詳しくは[画像から動画素材を作る](Documents/RecotteStudioCore/VideoFromImage.md)を参照してください。
 
 ## LLM向け動画制作ルール
 

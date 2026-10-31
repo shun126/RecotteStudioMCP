@@ -72,7 +72,8 @@ public static class FlipbookVideo
     }
 
     /// <summary>Encodes the listed frames at the project frame rate into the fixed MP4 format.</summary>
-    public static IReadOnlyList<string> EncodeArguments(string listPath, string outputPath, long frames, VideoFrameFormat format) =>
+    public static IReadOnlyList<string> EncodeArguments(string listPath, string outputPath, long frames, VideoFrameFormat format,
+        VideoEncoder encoder = VideoEncoder.Software) =>
         VideoClip.EncodeArguments(new[] { "-f", "concat", "-safe", "0", "-i", VideoClip.FileUrl(listPath) },
-            $"[0:v]fps={VideoClip.Number(format.FramesPerSecond)},format=yuv420p,setsar=1[v]", frames, format.FramesPerSecond, outputPath);
+            $"[0:v]fps={VideoClip.Number(format.FramesPerSecond)},format=yuv420p,setsar=1[v]", frames, format.FramesPerSecond, outputPath, encoder);
 }
