@@ -15,7 +15,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
-        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction", "setProjectSize",
+        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction", "updateSpeakerAction", "setObjectAppearance", "setProjectSize",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
@@ -34,11 +34,12 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "updateFadeEffect" => new UpdateFadeEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required."), Required(value.EffectKey, "effectKey"), Time(value.Duration, "duration")),
                     "removeFadeEffect" => new RemoveFadeEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required.")),
                     "updateSpeakerText" => new UpdateSpeakerTextOperation(Object(value.Target), Required(value.Text, "text")),
-                    "moveTimelineObject" => new MoveTimelineObjectOperation(Object(value.Target), Time(value.Start, "start"), Time(value.End, "end")),
+                    "moveTimelineObject" => new MoveTimelineObjectOperation(Object(value.Target), Time(value.Start, "start"), Time(value.End, "end"), value.MoveActions ?? true),
                     "moveSpeakerVoiceToLayer" => new MoveSpeakerVoiceToLayerOperation(Object(value.Target), Layer(value.Layer)),
                     "addTextOnlySpeakerVoice" => new AddTextOnlySpeakerVoiceOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
                     "removeTimelineObject" => new RemoveTimelineObjectOperation(Object(value.Target)),
                     "setObjectBounds" => new SetObjectBoundsOperation(Object(value.Target), value.X, value.Y, value.Width, value.Height),
+                    "setObjectAppearance" => new SetObjectAppearanceOperation(Object(value.Target), value.Opacity, value.Angle, FlipOf(value.Flip), Whole(value.Brightness, "brightness"), Whole(value.Contrast, "contrast"), value.Gamma, value.DefaultAction),
                     "addImageObject" => new AddImageAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addVideoObject" => new AddVideoAssetOperation(Layer(value.Layer), Required(value.AssetPath, "assetPath"), Required(value.ProjectPath, "projectPath"), Required(value.DisplayName, "displayName"), Time(value.Start, "start"), Time(value.End, "end")),
                     "addAnnotationText" => new AddAnnotationTextOperation(Layer(value.Layer), Required(value.Text, "text"), Time(value.Start, "start"), Time(value.End, "end")),
@@ -47,6 +48,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
                     "addAnnotationLayer" => new AddAnnotationLayerOperation(value.LayerName, value.InsertIndex),
                     "addSpeakerLayer" => new AddSpeakerLayerOperation(value.LayerName, value.InsertIndex),
                     "addSpeakerAction" => new AddSpeakerActionOperation(Layer(value.Layer), Required(value.Action, "action"), Time(value.Start, "start"), Time(value.End, "end"), value.Loop ?? false),
+                    "updateSpeakerAction" => value.Action is null && value.Loop is null ? throw new ArgumentException("action or loop is required.") : new UpdateSpeakerActionOperation(Object(value.Target), value.Action, value.Loop),
                     "moveLayer" => new MoveLayerOperation(Layer(value.Layer), value.InsertIndex ?? throw new ArgumentException("insertIndex is required.")),
                     "setProjectSize" => new SetProjectSizeOperation(Pixels(value.Width, "width"), Pixels(value.Height, "height"), ScreenFitOf(value.Fit)),
                     "importCharacter" => new ImportCharacterOperation(Donor(value.DonorProjectPath, donors), Required(value.SpeakerKey, "speakerKey"), Time(value.Start, "start"), Time(value.End, "end"), value.LayerName),
@@ -111,6 +113,18 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
         value is decimal number && number == decimal.Truncate(number) && number >= ProjectScreenSize.Minimum && number <= ProjectScreenSize.Maximum
             ? (int)number
             : throw new ArgumentException($"{name} must be a whole number from {ProjectScreenSize.Minimum} to {ProjectScreenSize.Maximum}.");
+    private static ObjectFlip? FlipOf(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        null => null,
+        "none" => ObjectFlip.None,
+        "horizontal" => ObjectFlip.Horizontal,
+        "vertical" => ObjectFlip.Vertical,
+        "both" => ObjectFlip.Both,
+        _ => throw new ArgumentException("flip must be none, horizontal, vertical, or both."),
+    };
+    private static int? Whole(decimal? value, string name) => value is not decimal number ? null
+        : number == decimal.Truncate(number) && number >= int.MinValue && number <= int.MaxValue ? (int)number
+        : throw new ArgumentException($"{name} must be a whole number.");
     private static ScreenFit ScreenFitOf(string? value) => value?.Trim().ToLowerInvariant() switch
     {
         null or "" or "cover" => ScreenFit.Cover,

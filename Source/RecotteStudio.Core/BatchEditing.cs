@@ -27,6 +27,8 @@ public enum ProjectOperationKind
     SetObjectBounds,
     AddSpeakerAction,
     SetProjectSize,
+    UpdateSpeakerAction,
+    SetObjectAppearance,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -57,7 +59,8 @@ public sealed record UpdateSpeakerTextOperation(TimelineObjectReference Target, 
     public override ProjectOperationKind Kind => ProjectOperationKind.UpdateSpeakerText;
 }
 
-public sealed record MoveTimelineObjectOperation(TimelineObjectReference Target, ProjectTime StartTime, ProjectTime EndTime) : ProjectOperation
+public sealed record MoveTimelineObjectOperation(TimelineObjectReference Target, ProjectTime StartTime, ProjectTime EndTime,
+    bool MoveActions = true) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.MoveTimelineObject;
 }
@@ -392,7 +395,7 @@ public sealed partial class ProjectEditor
             UpdateSpeakerTextOperation value => WithObject(value.Target,
                 id => new(UpdateSpeakerText(new(id, value.Text)), id.ToString())),
             MoveTimelineObjectOperation value => WithObject(value.Target,
-                id => new(MoveTimelineObject(new(id, value.StartTime, value.EndTime)), id.ToString())),
+                id => new(MoveTimelineObject(new(id, value.StartTime, value.EndTime, value.MoveActions)), id.ToString())),
             RemoveTimelineObjectOperation value => WithObject(value.Target,
                 id => new(RemoveTimelineObject(id), id.ToString())),
             SetObjectBoundsOperation value => WithObject(value.Target,
@@ -443,6 +446,11 @@ public sealed partial class ProjectEditor
                     value.EndTime, value.Loop));
                 return new(action.EditResult, $"layer:{layerIndex}", action.ObjectId);
             }),
+            UpdateSpeakerActionOperation value => WithObject(value.Target,
+                id => new(UpdateSpeakerAction(new(id, value.Action, value.Loop)), id.ToString())),
+            SetObjectAppearanceOperation value => WithObject(value.Target,
+                id => new(SetObjectAppearance(new(id, value.Opacity, value.Angle, value.Flip, value.Brightness, value.Contrast,
+                    value.Gamma, value.DefaultAction)), id.ToString())),
             AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name, value.Index))),
             ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
                 value.StartTime, value.EndTime, value.LayerName))),

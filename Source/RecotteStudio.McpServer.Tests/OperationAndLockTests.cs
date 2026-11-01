@@ -88,6 +88,52 @@ public sealed class OperationAndLockTests
     }
 
     [Fact]
+    public void MapperMapsAppearanceAndMoveActions()
+    {
+        ProjectOperationMapper mapper = new();
+        OperationMapResult result = mapper.Map(new[]
+        {
+            new ProjectOperationDto("setObjectAppearance", Target: new(LayerIndex: 1, ObjectKey: 1000), Opacity: 0.5m, Flip: "Horizontal",
+                Brightness: -30m, DefaultAction: "smile"),
+            new ProjectOperationDto("moveTimelineObject", Target: new(LayerIndex: 1, ObjectKey: 1002), Start: 1m, End: 2m, MoveActions: false),
+            new ProjectOperationDto("moveTimelineObject", Target: new(LayerIndex: 1, ObjectKey: 1002), Start: 1m, End: 2m),
+        });
+
+        Assert.True(result.Success, result.Message);
+        Assert.Equal(new ProjectOperation[]
+        {
+            new SetObjectAppearanceOperation(new TimelineObjectIdReference(new(1, 1000)), Opacity: 0.5m, Flip: ObjectFlip.Horizontal,
+                Brightness: -30, DefaultAction: "smile"),
+            new MoveTimelineObjectOperation(new TimelineObjectIdReference(new(1, 1002)), new(1m), new(2m), MoveActions: false),
+            new MoveTimelineObjectOperation(new TimelineObjectIdReference(new(1, 1002)), new(1m), new(2m)),
+        }, result.Operations);
+        Assert.Equal("MCP_OPERATION_INVALID", mapper.Map(new[]
+            { new ProjectOperationDto("setObjectAppearance", Target: new(LayerIndex: 1, ObjectKey: 1000), Flip: "left") }).ErrorCode);
+        Assert.Equal("MCP_OPERATION_INVALID", mapper.Map(new[]
+            { new ProjectOperationDto("setObjectAppearance", Target: new(LayerIndex: 1, ObjectKey: 1000), Brightness: 1.5m) }).ErrorCode);
+    }
+
+    [Fact]
+    public void MapperMapsSpeakerActionUpdatesAndRequiresAChange()
+    {
+        ProjectOperationMapper mapper = new();
+        OperationMapResult result = mapper.Map(new[]
+        {
+            new ProjectOperationDto("updateSpeakerAction", Target: new(LayerIndex: 1, ObjectKey: 1004), Action: "smile"),
+            new ProjectOperationDto("updateSpeakerAction", Target: new(LayerIndex: 1, ObjectKey: 1004), Loop: true),
+        });
+
+        Assert.True(result.Success);
+        Assert.Equal(new ProjectOperation[]
+        {
+            new UpdateSpeakerActionOperation(new TimelineObjectIdReference(new(1, 1004)), "smile"),
+            new UpdateSpeakerActionOperation(new TimelineObjectIdReference(new(1, 1004)), Loop: true),
+        }, result.Operations);
+        Assert.Equal("MCP_OPERATION_INVALID", mapper.Map(new[]
+            { new ProjectOperationDto("updateSpeakerAction", Target: new(LayerIndex: 1, ObjectKey: 1004)) }).ErrorCode);
+    }
+
+    [Fact]
     public async Task SameOutputPathIsSerialized()
     {
         OutputPathLockManager manager = new();

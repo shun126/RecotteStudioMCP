@@ -54,10 +54,11 @@ internal static class JsonAccess
     }
 
     /// <summary>Reads the [x, y, width, height] Bounds entry of a property bag.</summary>
-    internal static bool TryGetBounds(JsonObject properties, out decimal x, out decimal y, out decimal width, out decimal height)
+    internal static bool TryGetBounds(JsonObject properties, out decimal x, out decimal y, out decimal width, out decimal height,
+        string property = "Bounds")
     {
         x = y = width = height = default;
-        if (properties["Bounds"] is not JsonObject bounds || bounds["p-value"] is not JsonArray values || values.Count != 4)
+        if (properties[property] is not JsonObject bounds || bounds["p-value"] is not JsonArray values || values.Count != 4)
         {
             return false;
         }

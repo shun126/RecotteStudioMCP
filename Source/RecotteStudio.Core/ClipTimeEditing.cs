@@ -83,8 +83,9 @@ public sealed partial class ProjectEditor
         return EditResult.Succeeded(made);
     }
 
-    /// <summary>Returns whether MoveTimelineObject can move and resize the Image, Figure, or Video in time.</summary>
-    internal static bool CanMoveClip(JsonObject layer, JsonObject obj) => IsVisualClip(layer, obj) && !IsTimelineLocked(layer, obj) &&
+    /// <summary>Returns whether MoveTimelineObject can move and resize the Image, Figure, Video, or Speaker Action in time.</summary>
+    internal static bool CanMoveClip(JsonObject layer, JsonObject obj) => (IsVisualClip(layer, obj) || IsSpeakerAction(layer, obj)) &&
+        !IsTimelineLocked(layer, obj) &&
         TryGetTimeRange(obj, out decimal start, out decimal end) && JoiningObject(layer, obj, start, end) is null;
 
     private static bool TryGetTimeRange(JsonObject obj, out decimal start, out decimal end)

@@ -97,10 +97,14 @@ public sealed record ProjectCapabilities(
     public bool CanMoveSpeakerVoiceToLayer { get; init; }
     /// <summary>Gets whether Images, Figures, and Videos on Annot and Video layers can be moved and resized.</summary>
     public bool CanSetObjectBounds { get; init; }
-    /// <summary>Gets whether MoveTimelineObject can change the time range of Images, Figures, and Videos on Annot and Video layers.</summary>
+    /// <summary>Gets whether MoveTimelineObject can change the time range of Images, Figures, and Videos on Annot and Video layers, and of Speaker Actions.</summary>
     public bool CanMoveClips { get; init; }
     /// <summary>Gets whether a Speaker Action, an expression or gesture of a layer's character, can be added.</summary>
     public bool CanAddSpeakerAction { get; init; }
+    /// <summary>Gets whether UpdateSpeakerAction can change the action an existing Speaker Action plays, or its Loop.</summary>
+    public bool CanUpdateSpeakerAction { get; init; }
+    /// <summary>Gets whether SetObjectAppearance can change the opacity, angle, flip, brightness, contrast, gamma, or default action of images, videos, figures, and characters.</summary>
+    public bool CanSetObjectAppearance { get; init; }
     /// <summary>Gets whether SetProjectSize can change the screen size and relay out what is placed on it.</summary>
     public bool CanSetProjectSize { get; init; }
 }
@@ -110,6 +114,10 @@ public sealed record TimelineEntryCapabilities(bool CanUpdateText, bool CanMove,
 {
     /// <summary>Gets whether SetObjectBounds can move and resize the entry.</summary>
     public bool CanSetBounds { get; init; }
+    /// <summary>Gets whether UpdateSpeakerAction can change the action a Speaker Action plays and its Loop.</summary>
+    public bool CanUpdateAction { get; init; }
+    /// <summary>Gets whether SetObjectAppearance can change how the entry looks.</summary>
+    public bool CanSetAppearance { get; init; }
 }
 
 /// <summary>Provides a flattened immutable timeline entry.</summary>
@@ -134,6 +142,8 @@ public sealed record TimelineEntryView(
     public ObjectBounds? Bounds { get; init; }
     /// <summary>Gets the action a Speaker Action plays (pack:name), or null for other objects.</summary>
     public string? Action { get; init; }
+    /// <summary>Gets how an Image, Video, Figure, or Speaker Character looks, or null for other objects.</summary>
+    public ObjectAppearance? Appearance { get; init; }
 }
 
 /// <summary>Filters flattened timeline entries. Range matching uses half-open intervals.</summary>
@@ -200,6 +210,8 @@ public sealed partial class RecotteProjectDocument
         CanSetObjectBounds = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanMoveClips = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanAddSpeakerAction = ProjectCompatibility.CanAddObjects && Compatibility == CompatibilityLevel.Supported,
+        CanUpdateSpeakerAction = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
+        CanSetObjectAppearance = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported,
         CanSetProjectSize = ProjectCompatibility.CanEdit && Compatibility == CompatibilityLevel.Supported &&
             ScreenLayout.TryGetSize(root, out _, out _),
     };
@@ -365,11 +377,14 @@ public sealed partial class RecotteProjectDocument
                 id is not null && !locked && Capabilities.CanRemoveTimelineObject)
             {
                 CanSetBounds = id is not null && Capabilities.CanSetObjectBounds && ProjectEditor.CanSetBounds(layer.JsonNode, item.JsonNode),
+                CanUpdateAction = id is not null && Capabilities.CanUpdateSpeakerAction && ProjectEditor.CanUpdateSpeakerAction(layer.JsonNode, item.JsonNode),
+                CanSetAppearance = id is not null && Capabilities.CanSetObjectAppearance && ProjectEditor.CanSetAppearance(layer.JsonNode, item.JsonNode),
             })
         {
             HasAudio = hasAudio,
             Bounds = ProjectEditor.TryGetBounds(item.JsonNode, out ObjectBounds bounds) ? bounds : null,
             Action = item.Type == "Speaker Action" ? JsonAccess.GetPropertyString(item.JsonNode, "Emotion") : null,
+            Appearance = ProjectEditor.ReadAppearance(layer.JsonNode, item.JsonNode),
         };
     }
 

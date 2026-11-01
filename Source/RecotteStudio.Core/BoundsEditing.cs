@@ -6,13 +6,14 @@ namespace RecotteStudio.Core;
 public readonly record struct ObjectBounds(decimal X, decimal Y, decimal Width, decimal Height);
 
 /// <summary>
-/// Requests a new screen rectangle, in project pixels, for an Image or Figure on an Annot layer or a Video on a Video
-/// layer. A null value keeps that part of the current rectangle, so an object can be moved without resizing it.
+/// Requests a new screen rectangle, in project pixels, for an Image or Figure on an Annot layer, a Video on a Video
+/// layer, or a Speaker Character (the character drawn by a Speaker layer). A null value keeps that part of the current
+/// rectangle, so an object can be moved without resizing it.
 /// </summary>
 public sealed record SetObjectBoundsRequest(TimelineObjectId ObjectId, decimal? X = null, decimal? Y = null,
     decimal? Width = null, decimal? Height = null);
 
-/// <summary>Moves or resizes an Image or Figure on an Annot layer or a Video on a Video layer; null values keep the current ones.</summary>
+/// <summary>Moves or resizes an Image or Figure on an Annot layer, a Video on a Video layer, or a Speaker Character; null values keep the current ones.</summary>
 public sealed record SetObjectBoundsOperation(TimelineObjectReference Target, decimal? X = null, decimal? Y = null,
     decimal? Width = null, decimal? Height = null) : ProjectOperation
 {
@@ -23,9 +24,11 @@ public sealed record SetObjectBoundsOperation(TimelineObjectReference Target, de
 public sealed partial class ProjectEditor
 {
     /// <summary>
-    /// Rewrites the Bounds of an Image or Figure (a stamp or an annotation text box) on an Annot layer, or of a Video on a
-    /// Video layer. Only the layer lock and the object's timeline lock block the edit.
-    /// The st-locked and pv-locked flags can occur on saved videos and are kept as they are.
+    /// Rewrites the Bounds of an Image or Figure (a stamp or an annotation text box) on an Annot layer or of a Video on a
+    /// Video layer, or the CharBounds of a Speaker Character, which places the character on screen. The Speaker layer also
+    /// keeps a CharBounds, the default for characters added later in Recotte Studio, which is left as it is. Only the
+    /// layer lock and the object's timeline lock block the edit. The st-locked and pv-locked flags can occur on saved
+    /// videos and are kept as they are.
     /// </summary>
     public EditResult SetObjectBounds(SetObjectBoundsRequest request)
     {
@@ -37,32 +40,33 @@ public sealed partial class ProjectEditor
         var found = Find(request.ObjectId);
         if (found is null) return EditResult.Failed("RC4201", "The target timeline object does not exist.");
         (JsonObject layer, JsonObject obj, _, string path) = found.Value;
-        if (!IsVisualClip(layer, obj) || !TryGetBounds(obj, out ObjectBounds current))
-            return EditResult.Failed("RC4911", "Only an Image or Figure on an Annot layer or a Video on a Video layer with a valid Bounds rectangle can be moved or resized.", path);
+        if (!HasScreenBounds(layer, obj) || !TryGetBounds(obj, out ObjectBounds current))
+            return EditResult.Failed("RC4911", "Only an Image or Figure on an Annot layer, a Video on a Video layer, or a Speaker Character with a valid Bounds rectangle can be moved or resized.", path);
+        string property = BoundsProperty(obj);
         if (HasBoundsKeyframes(obj))
-            return EditResult.Failed("RC4912", "The Bounds of the target are animated with keyframes, which cannot be edited.", $"{path}.properties.Bounds");
+            return EditResult.Failed("RC4912", $"The {property} of the target are animated with keyframes, which cannot be edited.", $"{path}.properties.{property}");
         if (IsTimelineLocked(layer, obj)) return EditResult.Failed("RC4207", "The target object or layer is locked.", path);
 
-        JsonObject entry = (JsonObject)obj["properties"]!["Bounds"]!;
+        JsonObject entry = (JsonObject)obj["properties"]![property]!;
         string before = entry["p-value"]!.ToJsonString();
         JsonArray bounds = new(request.X ?? current.X, request.Y ?? current.Y, request.Width ?? current.Width, request.Height ?? current.Height);
         entry["p-value"] = bounds;
         ProjectChange change = new("SetObjectBounds", request.ObjectId.ToString(), before, bounds.ToJsonString(),
-            $"{path}.properties.Bounds.p-value");
+            $"{path}.properties.{property}.p-value");
         changes.Add(change);
         return EditResult.Succeeded(new[] { change });
     }
 
     /// <summary>Returns whether SetObjectBounds accepts the object: a supported type and layer, a valid unanimated Bounds, and no lock.</summary>
-    internal static bool CanSetBounds(JsonObject layer, JsonObject obj) => IsVisualClip(layer, obj) && TryGetBounds(obj, out _) &&
+    internal static bool CanSetBounds(JsonObject layer, JsonObject obj) => HasScreenBounds(layer, obj) && TryGetBounds(obj, out _) &&
         !HasBoundsKeyframes(obj) && !IsTimelineLocked(layer, obj);
 
-    /// <summary>Reads an object's [x, y, width, height] Bounds.</summary>
+    /// <summary>Reads an object's [x, y, width, height] Bounds, or a Speaker Character's CharBounds.</summary>
     internal static bool TryGetBounds(JsonObject obj, out ObjectBounds bounds)
     {
         bounds = default;
         if (obj["properties"] is not JsonObject properties ||
-            !JsonAccess.TryGetBounds(properties, out decimal x, out decimal y, out decimal width, out decimal height)) return false;
+            !JsonAccess.TryGetBounds(properties, out decimal x, out decimal y, out decimal width, out decimal height, BoundsProperty(obj))) return false;
         bounds = new(x, y, width, height);
         return true;
     }
@@ -72,8 +76,17 @@ public sealed partial class ProjectEditor
         JsonAccess.TryGetString(layer, "type", out string layerType) && JsonAccess.TryGetString(obj, "type", out string objectType) &&
         (layerType, objectType) is ("Annot", "Image" or "Figure") or ("Video", "Video");
 
+    // The objects SetObjectBounds places on screen: the visual clips and the character a Speaker layer draws.
+    private static bool HasScreenBounds(JsonObject layer, JsonObject obj) => IsVisualClip(layer, obj) ||
+        JsonAccess.TryGetString(layer, "type", out string layerType) && layerType == "Speaker" &&
+        JsonAccess.TryGetString(obj, "type", out string objectType) && objectType == "Speaker Character";
+
+    // A Speaker Character keeps its rectangle in CharBounds, as setProjectSize also reads it.
+    private static string BoundsProperty(JsonObject obj) =>
+        JsonAccess.TryGetString(obj, "type", out string type) && type == "Speaker Character" ? "CharBounds" : "Bounds";
+
     // Writing p-value would not move an animated object, whose rectangle comes from its keyframes.
-    private static bool HasBoundsKeyframes(JsonObject obj) => obj["properties"]?["Bounds"]?["keyframes"] is JsonArray { Count: > 0 };
+    private static bool HasBoundsKeyframes(JsonObject obj) => obj["properties"]?[BoundsProperty(obj)]?["keyframes"] is JsonArray { Count: > 0 };
 
     // st-locked and pv-locked are left out: preview locks do not prevent timeline or bounds editing.
     private static bool IsTimelineLocked(JsonObject layer, JsonObject obj) => new[] { (layer, "locked"), (obj, "locked"), (obj, "tl-locked") }

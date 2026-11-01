@@ -93,16 +93,42 @@ public sealed class BoundsEditingTests : IDisposable
         AssertRejected(root, new SetObjectBoundsOperation(new TimelineObjectIdReference(id), x, y, width, height), code);
     }
 
+    // A character is placed by its own CharBounds; the layer's CharBounds is only the default for characters added later.
+    [Fact]
+    public void SetObjectBounds_PlacesASpeakerCharacterByItsCharBounds()
+    {
+        JsonObject root = Sample("006OneCharacter");
+        (TimelineObjectId id, int objectIndex, JsonObject original) = First(root, "Speaker Character");
+        JsonNode layerDefault = root["layers"]![id.LayerIndex]!["properties"]!["CharBounds"]!.DeepClone();
+        RecotteProjectDocument document = Load(root);
+        TimelineEntryView before = Assert.Single(document.GetTimelineEntries(), item => item.ObjectId == id);
+        Assert.True(before.Capabilities.CanSetBounds);
+        Assert.Equal(new ObjectBounds(1560m, 720m, 360m, 360m), before.Bounds);
+
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[]
+            { new SetObjectBoundsOperation(new TimelineObjectIdReference(id), 1500m, null, 400m, 400m) });
+
+        Assert.True(result.Success, Messages(result));
+        Assert.Equal($"$.layers[{id.LayerIndex}].layer-objects[{objectIndex}].properties.CharBounds.p-value", Assert.Single(result.Changes).JsonPath);
+        string output = Path.Combine(directory, "character.ccproj");
+        document.SaveCopy(output);
+        JsonObject savedRoot = JsonNode.Parse(File.ReadAllText(output))!.AsObject();
+        JsonObject saved = Object(savedRoot, id);
+        Assert.Equal(new[] { 1500m, 720m, 400m, 400m }, saved["properties"]!["CharBounds"]!["p-value"]!.AsArray().Select(item => item!.GetValue<decimal>()));
+        JsonObject expected = (JsonObject)original.DeepClone();
+        expected["properties"]!["CharBounds"]!["p-value"] = saved["properties"]!["CharBounds"]!["p-value"]!.DeepClone();
+        Assert.True(JsonNode.DeepEquals(expected, saved), saved.ToJsonString());
+        Assert.True(JsonNode.DeepEquals(layerDefault, savedRoot["layers"]![id.LayerIndex]!["properties"]!["CharBounds"]));
+        Assert.Equal(new ObjectBounds(1500m, 720m, 400m, 400m),
+            Assert.Single(RecotteProject.Load(output).GetTimelineEntries(), item => item.ObjectId == id).Bounds);
+    }
+
     [Fact]
     public void SetObjectBounds_RejectsObjectsWithoutEditableBounds()
     {
         JsonObject voice = Sample("002OneText");
         (TimelineObjectId voiceId, _, _) = First(voice, "Speaker Voice");
         AssertRejected(voice, new SetObjectBoundsOperation(new TimelineObjectIdReference(voiceId), 0m), "RC4911");
-
-        JsonObject character = Sample("006OneCharacter");
-        (TimelineObjectId characterId, _, _) = First(character, "Speaker Character");
-        AssertRejected(character, new SetObjectBoundsOperation(new TimelineObjectIdReference(characterId), 0m), "RC4911");
 
         JsonObject animated = Sample("004OneImage");
         (TimelineObjectId imageId, _, _) = First(animated, "Image");
