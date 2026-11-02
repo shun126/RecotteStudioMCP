@@ -156,8 +156,9 @@ YouTube ショート、TikTok、Instagram リールなど縦長の動画は、�
 ## 図形・エフェクトの利用
 
 - 矢印、記号、漫符などの図形は `recotte_list_figures` で確認し、`placeable` なものに限り `addFigureObject` で配置する。
-- MCP で編集できる画像・動画のフェードは `Alpha Fade` / `Alpha Fade Out`。`recotte_list_effects` の `editable` と、`recotte_list_object_effects` の結果を確認する。
+- クリップのエフェクトは `addClipEffect`・`updateClipEffect`・`removeClipEffect` で操作する。動画・挿絵・図形・話者のキャラクター（`Speaker Character`）が対象で、台詞・話者アクション・トラック全体は対象外。種類は `Alpha Fade` / `Alpha Fade Out` / `Vibration`。`recotte_list_effects` の `editable` と `recotte_list_clip_effects` の `CanEdit` を確認する。
 - Recotte Studio 本体は多様なエフェクト、トランジション、キーフレーム編集に対応するが、**MCP での操作対応とは別**である。列挙できるだけのエフェクトを編集可能と解釈しない。
+- エフェクトの `start` はクリップ先頭からの相対秒、`duration` は正の秒数で、全体をクリップ内に収める。移動は `updateClipEffect` の `start` で行い、省略した設定は保持する。振動の `effectProperties` は `SwingWidth`（揺れ幅、0以上）と `cycle`（周期秒、0より大きい値）。削除後は番号が変わるため一覧を取得し直す。振動の本体保存形式・描画は未確認のため、本体での互換性を断定しない。
 - 演出は要点、場面転換、説明上の区切りなど意味がある場合に付ける。情報を読む邪魔になる演出を避ける。
 
 ## 検証と完了報告

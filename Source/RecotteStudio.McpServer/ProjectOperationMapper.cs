@@ -15,7 +15,7 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
     {
         "updateSpeakerText", "moveTimelineObject", "addTextOnlySpeakerVoice", "removeTimelineObject",
         "addImageObject", "addVideoObject", "addAnnotationText", "addFigureObject",
-        "addFadeEffect", "updateFadeEffect", "removeFadeEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction", "updateSpeakerAction", "setObjectAppearance", "setProjectSize",
+        "addClipEffect", "updateClipEffect", "removeClipEffect", "addVideoLayer", "importCharacter", "addAnnotationLayer", "addSpeakerLayer", "moveLayer", "moveSpeakerVoiceToLayer", "setObjectBounds", "addSpeakerAction", "updateSpeakerAction", "setObjectAppearance", "setProjectSize",
     };
 
     public OperationMapResult Map(IReadOnlyList<ProjectOperationDto>? values)
@@ -30,9 +30,10 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
             {
                 mapped.Add(value.Type switch
                 {
-                    "addFadeEffect" => new AddFadeEffectOperation(Object(value.Target), Required(value.EffectKey, "effectKey"), Time(value.Duration, "duration")),
-                    "updateFadeEffect" => new UpdateFadeEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required."), Required(value.EffectKey, "effectKey"), Time(value.Duration, "duration")),
-                    "removeFadeEffect" => new RemoveFadeEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required.")),
+                    "addClipEffect" => new AddClipEffectOperation(Object(value.Target), Required(value.EffectKey, "effectKey"), Time(value.Duration, "duration"),
+                        value.Start is decimal effectStart ? new ProjectTime(effectStart) : null, value.EffectProperties),
+                    "updateClipEffect" => UpdateEffect(value),
+                    "removeClipEffect" => new RemoveClipEffectOperation(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required.")),
                     "updateSpeakerText" => new UpdateSpeakerTextOperation(Object(value.Target), Required(value.Text, "text")),
                     "moveTimelineObject" => new MoveTimelineObjectOperation(Object(value.Target), Time(value.Start, "start"), Time(value.End, "end"), value.MoveActions ?? true),
                     "moveSpeakerVoiceToLayer" => new MoveSpeakerVoiceToLayerOperation(Object(value.Target), Layer(value.Layer)),
@@ -58,6 +59,16 @@ public sealed class ProjectOperationMapper(FigureCatalogProvider? figureCatalog 
             catch (ArgumentException exception) { return Failure(exception is CodedArgumentException coded ? coded.Code : "MCP_OPERATION_INVALID", $"Operation {index}: {exception.Message}"); }
         }
         return new(true, mapped, null, null);
+    }
+
+    private UpdateClipEffectOperation UpdateEffect(ProjectOperationDto value)
+    {
+        if (value.EffectKey is not null) throw new ArgumentException("effectKey cannot be changed; remove the effect and add a new one.");
+        if (value.Start is null && value.Duration is null && (value.EffectProperties is null || value.EffectProperties.Count == 0))
+            throw new ArgumentException("start, duration, or effectProperties is required.");
+        return new(Object(value.Target), value.EffectIndex ?? throw new ArgumentException("effectIndex is required."),
+            value.Start is decimal start ? new ProjectTime(start) : null,
+            value.Duration is decimal duration ? new ProjectTime(duration) : null, value.EffectProperties);
     }
 
     private AddFigureOperation Figure(ProjectOperationDto value)
