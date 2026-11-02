@@ -44,29 +44,70 @@ public sealed class EffectToolTests : IDisposable
         Assert.True(created.Success, created.Message);
         int key = RecotteProject.Load(input).Layers[2].Objects.Single().ObjectKey!.Value;
         var target = new TimelineObjectTargetDto(LayerIndex: 2, ObjectKey: key);
-        var add = new ProjectOperationDto("addFadeEffect", Target: target, EffectKey: "Alpha Fade", Duration: 0.5m);
+        var add = new ProjectOperationDto("addClipEffect", Target: target, EffectKey: "Alpha Fade", Duration: 0.5m);
         Assert.True(service.PreviewOperations(input, new[] { add }).Success);
-        Assert.Empty(RecotteProject.Load(input).GetFadeEffects(new(2, key)));
+        Assert.Empty(RecotteProject.Load(input).GetClipEffects(new(2, key)));
         string faded = Path.Combine(root, "faded.ccproj");
         Assert.True((await service.ApplyOperationsAndSaveCopyAsync(input, faded, false, new[] { add }, default)).Success);
-        var listed = service.ListObjectEffects(faded, target);
+        var listed = service.ListClipEffects(faded, target);
         Assert.True(listed.Success, listed.Message);
         int index = Assert.Single(JsonSerializer.SerializeToElement(listed.Data).GetProperty("effects").EnumerateArray()).GetProperty("EffectIndex").GetInt32();
-        var update = new ProjectOperationDto("updateFadeEffect", Target: target, EffectIndex: index, EffectKey: "Alpha Fade Out", Duration: 1);
+        var update = new ProjectOperationDto("updateClipEffect", Target: target, EffectIndex: index, Start: 1, Duration: 1);
         Assert.True((await service.ApplyOperationsAndOverwriteAsync(faded, new[] { update }, default)).Success);
-        Assert.Equal(1m, Assert.Single(RecotteProject.Load(faded).GetFadeEffects(new(2, key))).Start);
-        var remove = new ProjectOperationDto("removeFadeEffect", Target: target, EffectIndex: index);
+        Assert.Equal(1m, Assert.Single(RecotteProject.Load(faded).GetClipEffects(new(2, key))).Start);
+        var remove = new ProjectOperationDto("removeClipEffect", Target: target, EffectIndex: index);
         string removed = Path.Combine(root, "removed.ccproj");
         Assert.True((await service.ApplyOperationsAndSaveCopyAsync(faded, removed, false, new[] { remove }, default)).Success);
-        Assert.Empty(RecotteProject.Load(removed).GetFadeEffects(new(2, key)));
-        Assert.False(service.ListObjectEffects(input, new(ObjectKey: -1)).Success);
+        Assert.Empty(RecotteProject.Load(removed).GetClipEffects(new(2, key)));
+        Assert.False(service.ListClipEffects(input, new(ObjectKey: -1)).Success);
+    }
+
+    [Theory]
+    [InlineData("OneCharacter", "Speaker Character")]
+    [InlineData("OneVideo", "Video")]
+    public async Task VibrationCanBeEditedThroughMcpOnCharactersAndVideos(string fixture, string type)
+    {
+        string input = Path.Combine(root, "input.ccproj");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", fixture + ".ccproj"), input);
+        var entry = RecotteProject.Load(input).GetTimelineEntries().Single(item => item.ObjectType == type);
+        TimelineObjectId id = entry.ObjectId!.Value;
+        var target = new TimelineObjectTargetDto(LayerIndex: id.LayerIndex, ObjectKey: id.ObjectKey);
+        var add = new ProjectOperationDto("addClipEffect", Target: target, EffectKey: "Vibration", Start: 0.1m, Duration: 0.2m,
+            EffectProperties: new Dictionary<string, decimal> { ["SwingWidth"] = 16, ["cycle"] = 0.08m });
+        Assert.True(service.PreviewOperations(input, new[] { add }).Success);
+        Assert.Empty(RecotteProject.Load(input).GetClipEffects(id));
+        string output = Path.Combine(root, "output.ccproj");
+        var saved = await service.ApplyOperationsAndSaveCopyAsync(input, output, false, new[] { add }, default);
+        Assert.True(saved.Success, saved.Message);
+        var listed = service.ListClipEffects(output, target);
+        Assert.True(listed.Success, listed.Message);
+        var effect = Assert.Single(JsonSerializer.SerializeToElement(listed.Data).GetProperty("effects").EnumerateArray());
+        Assert.Equal("Vibration", effect.GetProperty("EffectKey").GetString());
+        Assert.Equal(16m, effect.GetProperty("Properties").GetProperty("SwingWidth").GetDecimal());
+        int index = effect.GetProperty("EffectIndex").GetInt32();
+        var update = new ProjectOperationDto("updateClipEffect", Target: target, EffectIndex: index, Start: 0.2m,
+            EffectProperties: new Dictionary<string, decimal> { ["SwingWidth"] = 4 });
+        Assert.True((await service.ApplyOperationsAndOverwriteAsync(output, new[] { update }, default)).Success);
+        var changed = Assert.Single(RecotteProject.Load(output).GetClipEffects(id));
+        Assert.Equal(0.2m, changed.Start);
+        Assert.Equal(0.2m, changed.Duration);
+        Assert.Equal(4m, changed.Properties["SwingWidth"]!.GetValue<decimal>());
+        Assert.Equal(0.08m, changed.Properties["cycle"]!.GetValue<decimal>());
+        var remove = new ProjectOperationDto("removeClipEffect", Target: target, EffectIndex: index);
+        Assert.True((await service.ApplyOperationsAndOverwriteAsync(output, new[] { remove }, default)).Success);
+        Assert.Empty(RecotteProject.Load(output).GetClipEffects(id));
     }
 
     [Fact]
-    public void MissingFadeArgumentsAreRejected()
+    public void MissingEffectArgumentsAndRemovedApiNamesAreRejected()
     {
         var mapper = new ProjectOperationMapper();
-        Assert.False(mapper.Map(new[] { new ProjectOperationDto("addFadeEffect", Target: new(ObjectKey: 1), EffectKey: "Alpha Fade") }).Success);
-        Assert.False(mapper.Map(new[] { new ProjectOperationDto("removeFadeEffect", Target: new(ObjectKey: 1)) }).Success);
+        Assert.False(mapper.Map(new[] { new ProjectOperationDto("addClipEffect", Target: new(ObjectKey: 1), EffectKey: "Alpha Fade") }).Success);
+        Assert.False(mapper.Map(new[] { new ProjectOperationDto("removeClipEffect", Target: new(ObjectKey: 1)) }).Success);
+        Assert.False(mapper.Map(new[] { new ProjectOperationDto("updateClipEffect", Target: new(ObjectKey: 1), EffectIndex: 0) }).Success);
+        Assert.False(mapper.Map(new[] { new ProjectOperationDto("updateClipEffect", Target: new(ObjectKey: 1), EffectIndex: 0, EffectKey: "Alpha Fade", Duration: 1) }).Success);
+        Assert.False(mapper.Map(new[] { new ProjectOperationDto("addClipEffect", Target: new(ObjectKey: 1), EffectKey: "Vibration", Start: -1, Duration: 1) }).Success);
+        foreach (string old in new[] { "addFadeEffect", "updateFadeEffect", "removeFadeEffect" })
+            Assert.False(mapper.Map(new[] { new ProjectOperationDto(old, Target: new(ObjectKey: 1), EffectKey: "Alpha Fade", Duration: 1, EffectIndex: 0) }).Success);
     }
 }

@@ -104,8 +104,27 @@ public sealed class ClipTimeEditingTests : IDisposable
         });
 
         Assert.True(result.Success, Messages(result));
-        Assert.Equal(new FadeEffectView(0, "Alpha Fade", 0m, 0.5m), Assert.Single(document.GetFadeEffects(fadeIn)));
-        Assert.Equal(new FadeEffectView(0, "Alpha Fade Out", 1.5m, 0.5m), Assert.Single(document.GetFadeEffects(fadeOut)));
+        Assert.Collection(document.GetClipEffects(fadeIn), effect =>
+        { Assert.Equal("Alpha Fade", effect.EffectKey); Assert.Equal(0m, effect.Start); Assert.Equal(0.5m, effect.Duration); });
+        Assert.Collection(document.GetClipEffects(fadeOut), effect =>
+        { Assert.Equal("Alpha Fade Out", effect.EffectKey); Assert.Equal(1.5m, effect.Start); Assert.Equal(0.5m, effect.Duration); });
+    }
+
+    [Fact]
+    public void Resize_PreservesPositionedEffectsAndRejectsCuttingThemOff()
+    {
+        JsonObject root = Sample("004OneImage");
+        (TimelineObjectId id, _, _) = First(root, "Image");
+        RecotteProjectDocument document = Load(root);
+        var target = new TimelineObjectIdReference(id);
+        Assert.True(document.ApplyOperations(new ProjectOperation[] {
+            new AddClipEffectOperation(target, "Vibration", new(0.1m), Start: new(0.1m)),
+            new AddClipEffectOperation(target, "Alpha Fade Out", new(0.1m), Start: new(0.2m)) }).Success);
+        Assert.True(document.ApplyOperations(new ProjectOperation[] { new MoveTimelineObjectOperation(target, new(2m), new(4m)) }).Success);
+        Assert.Equal(new[] { 0.1m, 0.2m }, document.GetClipEffects(id).Select(effect => effect.Start));
+        var result = document.ApplyOperations(new ProjectOperation[] { new MoveTimelineObjectOperation(target, new(2m), new(2.25m)) });
+        Assert.Contains(result.Diagnostics, item => item.Code == "RC4302");
+        Assert.Equal(new[] { 0.1m, 0.2m }, document.GetClipEffects(id).Select(effect => effect.Start));
     }
 
     [Fact]

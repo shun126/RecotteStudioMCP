@@ -33,7 +33,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
                 relativePath = effect.RelativePath }), catalog.Diagnostics });
     }
 
-    public McpToolResult<object> ListObjectEffects(string projectPath, TimelineObjectTargetDto target) =>
+    public McpToolResult<object> ListClipEffects(string projectPath, TimelineObjectTargetDto target) =>
         WithDocument(projectPath, (_, document) =>
         {
             TimelineObjectReference reference;
@@ -41,7 +41,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
             catch (ArgumentException exception) { return Fail("invalid", "MCP_EFFECT_TARGET_INVALID", exception.Message); }
             var found = document.FindTimelineObject(reference);
             if (found.Value?.ObjectKey is not int key) return Fail("invalid", "MCP_EFFECT_TARGET_INVALID", "The target was not found uniquely.");
-            return Ok(new { effects = document.GetFadeEffects(new(found.Value.LayerIndex, key)) });
+            return Ok(new { effects = document.GetClipEffects(new(found.Value.LayerIndex, key)) });
         });
 
     public McpToolResult<object> ListFigures(string? tag = null, string? nameContains = null, int limit = 50)

@@ -129,8 +129,12 @@ ProjectBatchResult expressive = document.ApplyOperations(
 
 ## Atomic batch editing
 
-Installed effect discovery and Image/Video fade add, update, and removal are available through `EffectCatalog`,
-`AddFadeEffectOperation`, `UpdateFadeEffectOperation`, and `RemoveFadeEffectOperation`.
+Installed effect discovery and clip effect add, update (including time moves), and removal are available through `EffectCatalog`,
+`AddClipEffectOperation`, `UpdateClipEffectOperation`, and `RemoveClipEffectOperation`.
+Targets are Video, Image, Figure, and Speaker Character clips; supported kinds are Alpha Fade, Alpha Fade Out, and Vibration.
+Start is clip-relative seconds; updates preserve omitted values, curves, and unknown fields. Vibration settings are SwingWidth and cycle.
+Use `GetClipEffects` to read applied effects and `Capabilities.CanEditClipEffects` to check version support.
+The former fade-specific APIs were removed without compatibility aliases. Native application acceptance remains unverified, especially the inferred Vibration serialization.
 See [Effects](../../Documents/RecotteStudioCore/Effects.md) for MCP examples, limits, and application verification status.
 
 The batch API is a general-purpose Core API for CLI, GUI, MCP, and other adapters; it contains no MCP SDK types or dependencies. Operations execute in their supplied order on one private edit-session clone. The first failure stops execution, restores the clone, marks the session rollback-only, and leaves the source document and its `Revision` unchanged. A non-empty document-level batch commits exactly once only after every operation and whole-project validation succeed; an empty batch validates successfully without incrementing `Revision`.

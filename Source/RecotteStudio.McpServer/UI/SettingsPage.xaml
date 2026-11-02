@@ -6,87 +6,113 @@
         <StackPanel Padding="32,24" Spacing="24" MaxWidth="720" HorizontalAlignment="Center">
             <TextBlock Text="設定" Style="{StaticResource TitleTextBlockStyle}" />
 
+            <StackPanel Spacing="12">
+                <TextBlock Text="制作の設定" Style="{StaticResource SubtitleTextBlockStyle}"
+                           AutomationProperties.HeadingLevel="Level2" />
+                <Border Padding="20" CornerRadius="8" BorderThickness="1"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                    <StackPanel Spacing="20">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="作業フォルダ" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="空欄の場合は制限なし。変更するとMCPサーバーを再起動します。" TextWrapping="Wrap" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBox x:Name="WorkspaceBox" PlaceholderText="フォルダを選択するか、空欄にしてください" />
+                                <Button Grid.Column="1" Content="参照" Click="BrowseWorkspace_Click" />
+                            </Grid>
+                            <Button x:Name="ApplyButton" Content="作業フォルダを適用" Click="ApplyWorkspace_Click" HorizontalAlignment="Left" />
+                        </StackPanel>
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="ユーザールール" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="独自の生成ルールは、次の UserRules.md に Markdown で書きます。配布の GenerationRules.md と違い、更新しても上書きされません。ルールが食い違う場合は UserRules.md が優先されます。ファイルが無くても動作します。" TextWrapping="Wrap" />
+                            <TextBlock x:Name="UserRulesPathText" IsTextSelectionEnabled="True" TextWrapping="Wrap"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <Button Content="フォルダを開く" Click="OpenUserRulesFolder_Click" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Spacing="12">
+                <TextBlock Text="動画生成" Style="{StaticResource SubtitleTextBlockStyle}"
+                           AutomationProperties.HeadingLevel="Level2" />
+                <Border Padding="20" CornerRadius="8" BorderThickness="1"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                    <StackPanel Spacing="20">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="ffmpeg" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="画像から動画素材を作る機能などで使います。ffmpeg は同梱していないため、別途インストールしてください。空欄の場合は PATH から探します。" TextWrapping="Wrap" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBox x:Name="FfmpegBox" PlaceholderText="ffmpeg.exe を選択するか、空欄にしてください" />
+                                <Button Grid.Column="1" Content="参照" Click="BrowseFfmpeg_Click" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button x:Name="ApplyFfmpegButton" Content="ffmpeg を適用" Click="ApplyFfmpeg_Click" />
+                                <Button x:Name="CheckFfmpegButton" Content="確認" Click="CheckFfmpeg_Click" />
+                            </StackPanel>
+                            <TextBlock x:Name="FfmpegStatusText" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="ハードウェアエンコード" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="画像から動画素材やパラパラ漫画を作るとき、GPU でエンコードします。自動では NVIDIA、Intel、AMD の順に実際に試し、使えるものが無ければ CPU（libx264）を使います。GPU でのエンコードに失敗した場合も CPU で作り直します。" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox x:Name="HardwareEncodingBox" MinWidth="260" SelectionChanged="HardwareEncoding_SelectionChanged" />
+                                <Button x:Name="CheckEncoderButton" Content="再確認" Click="CheckEncoder_Click" />
+                            </StackPanel>
+                            <TextBlock x:Name="EncoderStatusText" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <Expander Header="初期設定" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="MCPクライアントの接続設定と、接続トークンを管理します。"
+                               TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Codex に接続" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="%USERPROFILE%\.codex\config.toml の旧 stdio 設定を削除し、次を追加してください。設定後にCodexを再起動します。" TextWrapping="Wrap" />
+                        <TextBox x:Name="CodexBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Codex 設定をコピー" Click="CopyCodex_Click" />
+                            <Button Content="エージェントへの設定依頼文をコピー" Click="CopyCodexAgentRequest_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Claude Code に接続" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="%USERPROFILE%\.claude.json の旧 mcpServers.recotte を削除し、mcpServers.recotte_studio に次の設定を追加・置換してください。他の設定は残し、新しいセッションを開始します。" TextWrapping="Wrap" />
+                        <TextBox x:Name="ClaudeBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="190" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Claude Code 設定をコピー" Click="CopyClaude_Click" />
+                            <Button Content="エージェントへの設定依頼文をコピー" Click="CopyClaudeAgentRequest_Click" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="接続トークン" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="接続設定例とエージェントへの依頼文には、このPC専用のトークンが含まれます。依頼文を会話に貼ると、トークンもその会話に含まれます。" TextWrapping="Wrap" />
+                        <Button Content="トークンを再発行" Click="RegenerateToken_Click" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
             <StackPanel Spacing="8">
-                <TextBlock Text="バージョン情報" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="バージョン情報" Style="{StaticResource BodyStrongTextBlockStyle}" />
                 <TextBlock x:Name="VersionText" IsTextSelectionEnabled="True" />
                 <TextBlock x:Name="BuildText" IsTextSelectionEnabled="True"
                            Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="作業フォルダ" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="空欄の場合は制限なし。変更するとMCPサーバーを再起動します。" TextWrapping="Wrap" />
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBox x:Name="WorkspaceBox" PlaceholderText="フォルダを選択するか、空欄にしてください" />
-                    <Button Grid.Column="1" Content="参照" Click="BrowseWorkspace_Click" />
-                </Grid>
-                <Button x:Name="ApplyButton" Content="作業フォルダを適用" Click="ApplyWorkspace_Click" HorizontalAlignment="Left" />
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="ffmpeg" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="画像から動画素材を作る機能などで使います。ffmpeg は同梱していないため、別途インストールしてください。空欄の場合は PATH から探します。" TextWrapping="Wrap" />
-                <Grid ColumnSpacing="8">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBox x:Name="FfmpegBox" PlaceholderText="ffmpeg.exe を選択するか、空欄にしてください" />
-                    <Button Grid.Column="1" Content="参照" Click="BrowseFfmpeg_Click" />
-                </Grid>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="ApplyFfmpegButton" Content="ffmpeg を適用" Click="ApplyFfmpeg_Click" />
-                    <Button x:Name="CheckFfmpegButton" Content="確認" Click="CheckFfmpeg_Click" />
-                </StackPanel>
-                <TextBlock x:Name="FfmpegStatusText" TextWrapping="Wrap" IsTextSelectionEnabled="True"
-                           Style="{StaticResource CaptionTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="ハードウェアエンコード" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="画像から動画素材やパラパラ漫画を作るとき、GPU でエンコードします。自動では NVIDIA、Intel、AMD の順に実際に試し、使えるものが無ければ CPU（libx264）を使います。GPU でのエンコードに失敗した場合も CPU で作り直します。" TextWrapping="Wrap" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <ComboBox x:Name="HardwareEncodingBox" MinWidth="260" SelectionChanged="HardwareEncoding_SelectionChanged" />
-                    <Button x:Name="CheckEncoderButton" Content="再確認" Click="CheckEncoder_Click" />
-                </StackPanel>
-                <TextBlock x:Name="EncoderStatusText" TextWrapping="Wrap" IsTextSelectionEnabled="True"
-                           Style="{StaticResource CaptionTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="ユーザールール" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="独自の生成ルールは、次の UserRules.md に Markdown で書きます。配布の GenerationRules.md と違い、更新しても上書きされません。ルールが食い違う場合は UserRules.md が優先されます。ファイルが無くても動作します。" TextWrapping="Wrap" />
-                <TextBlock x:Name="UserRulesPathText" IsTextSelectionEnabled="True" TextWrapping="Wrap"
-                           Style="{StaticResource CaptionTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <Button Content="フォルダを開く" Click="OpenUserRulesFolder_Click" HorizontalAlignment="Left" />
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="Codex に接続" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="%USERPROFILE%\.codex\config.toml の旧 stdio 設定を削除し、次を追加してください。設定後にCodexを再起動します。" TextWrapping="Wrap" />
-                <TextBox x:Name="CodexBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Codex 設定をコピー" Click="CopyCodex_Click" />
-                    <Button Content="エージェントへの設定依頼文をコピー" Click="CopyCodexAgentRequest_Click" />
-                </StackPanel>
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="Claude Code に接続" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="%USERPROFILE%\.claude.json の旧 mcpServers.recotte を削除し、mcpServers.recotte_studio に次の設定を追加・置換してください。他の設定は残し、新しいセッションを開始します。" TextWrapping="Wrap" />
-                <TextBox x:Name="ClaudeBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="190" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Claude Code 設定をコピー" Click="CopyClaude_Click" />
-                    <Button Content="エージェントへの設定依頼文をコピー" Click="CopyClaudeAgentRequest_Click" />
-                </StackPanel>
-            </StackPanel>
-
-            <StackPanel Spacing="8">
-                <TextBlock Text="接続トークン" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="接続設定例とエージェントへの依頼文には、このPC専用のトークンが含まれます。依頼文を会話に貼ると、トークンもその会話に含まれます。" TextWrapping="Wrap" />
-                <Button Content="トークンを再発行" Click="RegenerateToken_Click" HorizontalAlignment="Left" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

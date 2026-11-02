@@ -13,7 +13,8 @@ public sealed record ProjectOperationDto(string Type, TimelineObjectTargetDto? T
     string? EffectKey = null, int? EffectIndex = null, decimal? Duration = null, string? LayerName = null,
     string? DonorProjectPath = null, string? SpeakerKey = null, int? InsertIndex = null, string? Action = null, bool? Loop = null, string? Fit = null,
     bool? MoveActions = null, decimal? Opacity = null, decimal? Angle = null, string? Flip = null, decimal? Brightness = null,
-    decimal? Contrast = null, decimal? Gamma = null, string? DefaultAction = null);
+    decimal? Contrast = null, decimal? Gamma = null, string? DefaultAction = null,
+    IReadOnlyDictionary<string, decimal>? EffectProperties = null);
 public sealed record TextSequenceItemDto(string Text, decimal? Duration = null);
 public sealed record SubtitleTextDto(int LayerIndex, int ObjectKey, string Text);
 public sealed record FlipbookFrameDto(string ImagePath, decimal? Duration = null);
