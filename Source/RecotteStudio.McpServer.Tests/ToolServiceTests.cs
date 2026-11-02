@@ -429,7 +429,7 @@ public sealed class ToolServiceTests : IDisposable
 
         McpToolResult<object> moved = await service.ApplyOperationsAndOverwriteAsync(output, new[]
         {
-            new ProjectOperationDto("addFadeEffect", Target: new(LayerIndex: id.LayerIndex, ObjectKey: id.ObjectKey), EffectKey: "Alpha Fade Out", Duration: 1m),
+            new ProjectOperationDto("addClipEffect", Target: new(LayerIndex: id.LayerIndex, ObjectKey: id.ObjectKey), EffectKey: "Alpha Fade Out", Duration: 1m),
             new ProjectOperationDto("moveTimelineObject", Target: new(LayerIndex: id.LayerIndex, ObjectKey: id.ObjectKey), Start: 3m, End: 8m),
         }, default);
 
@@ -438,7 +438,7 @@ public sealed class ToolServiceTests : IDisposable
         TimelineEntryView clip = Assert.Single(document.GetTimelineEntries(), item => item.ObjectId == id);
         Assert.Equal(3m, clip.StartTime!.Value.TotalSeconds);
         Assert.Equal(8m, clip.EndTime!.Value.TotalSeconds);
-        Assert.Equal(4m, Assert.Single(document.GetFadeEffects(id)).Start);
+        Assert.Equal(4m, Assert.Single(document.GetClipEffects(id)).Start);
         Assert.True(JsonSerializer.SerializeToElement(service.GetCapabilities(output).Data)
             .GetProperty("capabilities").GetProperty("CanMoveClips").GetBoolean());
     }

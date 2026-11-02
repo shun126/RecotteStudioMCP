@@ -7,7 +7,7 @@ namespace RecotteStudio.Core;
 public sealed record EffectDefinition(string Key, string Kind, string Tag, string? NameJa, string? NameEn,
     decimal? DefaultDuration, string RelativePath, IReadOnlyList<string> PropertyKeys)
 {
-    public bool CanEdit => Kind == "effects" && Key is "Alpha Fade" or "Alpha Fade Out";
+    public bool CanEdit => Kind == "effects" && Key is "Alpha Fade" or "Alpha Fade Out" or "Vibration";
 }
 
 /// <summary>Reads literal metadata from installed Lua definitions without executing scripts.</summary>

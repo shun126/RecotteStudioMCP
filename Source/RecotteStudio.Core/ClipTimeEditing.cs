@@ -30,16 +30,19 @@ public sealed partial class ProjectEditor
             {
                 foreach (JsonNode? node in effects)
                 {
-                    // Effects are timed from the clip's start: an in-effect stays at the start and an out-effect ends with the clip.
+                    // End-aligned out-effects follow the end; explicitly positioned effects keep their clip-relative start.
                     if (node is not JsonObject effect || !JsonAccess.TryGetString(effect, "category", out string category) ||
-                        category is not ("InEffect" or "OutEffect") || !JsonAccess.TryGetDecimal(effect, "duration", out decimal duration))
+                        category is not ("InEffect" or "OutEffect") && !IsSupportedClipEffect(effect) ||
+                        !JsonAccess.TryGetDecimal(effect, "start-time", out decimal offset) || offset < 0 ||
+                        !JsonAccess.TryGetDecimal(effect, "duration", out decimal duration) || duration <= 0)
                         return EditResult.Failed("RC4302", "The target has an effect whose timing cannot follow a new length; keep its length or edit it in Recotte Studio.", $"{path}.sub-objects");
-                    if (duration > length)
+                    bool followsEnd = category == "OutEffect" && Math.Abs(offset - (oldLength - duration)) <= 0.000001m;
+                    if (duration > length || !followsEnd && (offset > length || duration > length - offset))
                     {
                         string name = JsonAccess.TryGetString(effect, "type-name", out string key) && key.Length > 0 ? key : category;
                         return EditResult.Failed("RC4302", $"The effect '{name}' lasts {duration} seconds, longer than the new length of {length} seconds. Shorten or remove it first.", $"{path}.sub-objects");
                     }
-                    if (category == "OutEffect") outEffects = outEffects.Append(effect).ToArray();
+                    if (followsEnd) outEffects = outEffects.Append(effect).ToArray();
                 }
             }
             if (JsonAccess.TryGetString(obj, "type", out string type) && type == "Video")
@@ -83,8 +86,9 @@ public sealed partial class ProjectEditor
         return EditResult.Succeeded(made);
     }
 
-    /// <summary>Returns whether MoveTimelineObject can move and resize the Image, Figure, or Video in time.</summary>
-    internal static bool CanMoveClip(JsonObject layer, JsonObject obj) => IsVisualClip(layer, obj) && !IsTimelineLocked(layer, obj) &&
+    /// <summary>Returns whether MoveTimelineObject can move and resize the Image, Figure, Video, or Speaker Action in time.</summary>
+    internal static bool CanMoveClip(JsonObject layer, JsonObject obj) => (IsVisualClip(layer, obj) || IsSpeakerAction(layer, obj)) &&
+        !IsTimelineLocked(layer, obj) &&
         TryGetTimeRange(obj, out decimal start, out decimal end) && JoiningObject(layer, obj, start, end) is null;
 
     private static bool TryGetTimeRange(JsonObject obj, out decimal start, out decimal end)

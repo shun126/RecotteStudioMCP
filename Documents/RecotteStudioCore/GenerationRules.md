@@ -44,6 +44,7 @@ Recotte Studio は対応する入力文字読み上げソフト（例: VOICEPEAK
 - 感情の薄い説明の台詞は既定の表情のままでよい。同じ表情を続けて使わず、喜び・驚き・困惑・怒りなどの変化を付ける。
 - お辞儀や手振りなどの動作は、挨拶・紹介・指し示しなど、台詞の内容に合う場面で使う。
 - ポーズと表情を組み合わせた名前（例: `直立(笑顔1)`、`腰に手(怒り2)`）を持つ 2D キャラクターでは、続く台詞でポーズをなるべく揃え、表情だけを変える。
+- 付けた表情・動作を直すときは、削除して付け直さない。位置や長さは `moveTimelineObject` で `start` と `end` を指定し、表情・動作の種類やループは `updateSpeakerAction` で変える。台詞を `moveTimelineObject` で動かすと、台詞の中に収まる表情・動作も一緒に動くので、別に動かさない。
 - 3D キャラクターの標準モーションのうち、名前から意味を推測しにくいものは次のとおり。
 
 | 名前 | 意味 |
@@ -111,6 +112,14 @@ YouTube ショート、TikTok、Instagram リールなど縦長の動画は、�
 - 置いた画像・スタンプ・注釈テキスト・動画の表示時間を変えるときは、削除して置き直さず、`moveTimelineObject` で `start` と `end` を指定する。
 - 画像や動画に字幕の台詞を焼き込まない。解説に不可欠な文字は、字幕とは独立した説明要素として扱う。
 
+## 演出
+
+- 掛け合いでは、キャラクターを画面の左右に分けて置き、相手の方を向かせる。位置と大きさは `recotte_list_timeline` で `Speaker Character` の `objectKey` と `bounds` を確かめ、`setObjectBounds` で変える。向きは `setObjectAppearance` の `flip: "horizontal"` で左右反転する。キャラクターも字幕枠と重ねない。
+- 表情を付けない間の顔は、`setObjectAppearance` の `defaultAction` でキャラクターごとに決められる。落ち着いた解説役には穏やかな表情、元気な役には笑顔など、役柄に合わせる。
+- 回想・想像・過去の場面は、画像や動画の `opacity` を下げる（例: 0.6）か、`brightness` を下げて、今の場面と区別する。
+- スタンプや挿絵を少し傾ける（`angle` に -10〜10 程度）と、手作り感や勢いが出る。傾けすぎない。
+- 見た目の変更は場面の意味を補うときだけ使い、すべての素材に付けない。
+
 ## MCP による静止画の動画化
 
 ### 1 枚の画像をズーム・パンする
@@ -147,8 +156,9 @@ YouTube ショート、TikTok、Instagram リールなど縦長の動画は、�
 ## 図形・エフェクトの利用
 
 - 矢印、記号、漫符などの図形は `recotte_list_figures` で確認し、`placeable` なものに限り `addFigureObject` で配置する。
-- MCP で編集できる画像・動画のフェードは `Alpha Fade` / `Alpha Fade Out`。`recotte_list_effects` の `editable` と、`recotte_list_object_effects` の結果を確認する。
+- クリップのエフェクトは `addClipEffect`・`updateClipEffect`・`removeClipEffect` で操作する。動画・挿絵・図形・話者のキャラクター（`Speaker Character`）が対象で、台詞・話者アクション・トラック全体は対象外。種類は `Alpha Fade` / `Alpha Fade Out` / `Vibration`。`recotte_list_effects` の `editable` と `recotte_list_clip_effects` の `CanEdit` を確認する。
 - Recotte Studio 本体は多様なエフェクト、トランジション、キーフレーム編集に対応するが、**MCP での操作対応とは別**である。列挙できるだけのエフェクトを編集可能と解釈しない。
+- エフェクトの `start` はクリップ先頭からの相対秒、`duration` は正の秒数で、全体をクリップ内に収める。移動は `updateClipEffect` の `start` で行い、省略した設定は保持する。振動の `effectProperties` は `SwingWidth`（揺れ幅、0以上）と `cycle`（周期秒、0より大きい値）。削除後は番号が変わるため一覧を取得し直す。振動の本体保存形式・描画は未確認のため、本体での互換性を断定しない。
 - 演出は要点、場面転換、説明上の区切りなど意味がある場合に付ける。情報を読む邪魔になる演出を避ける。
 
 ## 検証と完了報告

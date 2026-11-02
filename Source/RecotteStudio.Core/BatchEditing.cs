@@ -15,9 +15,9 @@ public enum ProjectOperationKind
     AddVideoAsset,
     AddAnnotationText,
     AddFigure,
-    AddFadeEffect,
-    UpdateFadeEffect,
-    RemoveFadeEffect,
+    AddClipEffect,
+    UpdateClipEffect,
+    RemoveClipEffect,
     AddVideoLayer,
     ImportCharacter,
     AddAnnotationLayer,
@@ -27,6 +27,8 @@ public enum ProjectOperationKind
     SetObjectBounds,
     AddSpeakerAction,
     SetProjectSize,
+    UpdateSpeakerAction,
+    SetObjectAppearance,
 }
 
 /// <summary>Base type for operations that can participate in an atomic batch.</summary>
@@ -57,7 +59,8 @@ public sealed record UpdateSpeakerTextOperation(TimelineObjectReference Target, 
     public override ProjectOperationKind Kind => ProjectOperationKind.UpdateSpeakerText;
 }
 
-public sealed record MoveTimelineObjectOperation(TimelineObjectReference Target, ProjectTime StartTime, ProjectTime EndTime) : ProjectOperation
+public sealed record MoveTimelineObjectOperation(TimelineObjectReference Target, ProjectTime StartTime, ProjectTime EndTime,
+    bool MoveActions = true) : ProjectOperation
 {
     public override ProjectOperationKind Kind => ProjectOperationKind.MoveTimelineObject;
 }
@@ -383,16 +386,16 @@ public sealed partial class ProjectEditor
     {
         return operation switch
         {
-            AddFadeEffectOperation value => WithObject(value.Target,
-                id => new(AddFadeEffect(id, value.EffectKey, value.Duration), id.ToString())),
-            UpdateFadeEffectOperation value => WithObject(value.Target,
-                id => new(UpdateFadeEffect(id, value.EffectIndex, value.EffectKey, value.Duration), id.ToString())),
-            RemoveFadeEffectOperation value => WithObject(value.Target,
-                id => new(RemoveFadeEffect(id, value.EffectIndex), id.ToString())),
+            AddClipEffectOperation value => WithObject(value.Target,
+                id => new(AddClipEffect(id, value.EffectKey, value.Duration, value.Start, value.EffectProperties), id.ToString())),
+            UpdateClipEffectOperation value => WithObject(value.Target,
+                id => new(UpdateClipEffect(id, value.EffectIndex, value.Start, value.Duration, value.EffectProperties), id.ToString())),
+            RemoveClipEffectOperation value => WithObject(value.Target,
+                id => new(RemoveClipEffect(id, value.EffectIndex), id.ToString())),
             UpdateSpeakerTextOperation value => WithObject(value.Target,
                 id => new(UpdateSpeakerText(new(id, value.Text)), id.ToString())),
             MoveTimelineObjectOperation value => WithObject(value.Target,
-                id => new(MoveTimelineObject(new(id, value.StartTime, value.EndTime)), id.ToString())),
+                id => new(MoveTimelineObject(new(id, value.StartTime, value.EndTime, value.MoveActions)), id.ToString())),
             RemoveTimelineObjectOperation value => WithObject(value.Target,
                 id => new(RemoveTimelineObject(id), id.ToString())),
             SetObjectBoundsOperation value => WithObject(value.Target,
@@ -443,6 +446,11 @@ public sealed partial class ProjectEditor
                     value.EndTime, value.Loop));
                 return new(action.EditResult, $"layer:{layerIndex}", action.ObjectId);
             }),
+            UpdateSpeakerActionOperation value => WithObject(value.Target,
+                id => new(UpdateSpeakerAction(new(id, value.Action, value.Loop)), id.ToString())),
+            SetObjectAppearanceOperation value => WithObject(value.Target,
+                id => new(SetObjectAppearance(new(id, value.Opacity, value.Angle, value.Flip, value.Brightness, value.Contrast,
+                    value.Gamma, value.DefaultAction)), id.ToString())),
             AddAnnotationLayerOperation value => LayerAdded(AddAnnotationLayer(new(value.Name, value.Index))),
             ImportCharacterOperation value => CharacterImported(ImportCharacter(new(value.Donor, value.SpeakerKey,
                 value.StartTime, value.EndTime, value.LayerName))),
