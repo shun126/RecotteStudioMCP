@@ -14,7 +14,7 @@ public sealed record FlipbookSettings(decimal FrameDuration, int Loops, VideoFit
 public static class FlipbookVideo
 {
     public const int MaxFrames = 600, MaxImages = 200, MaxLoops = 100;
-    public const decimal MinFrameDuration = 0.01m, MaxFrameDuration = 10m, DefaultFrameDuration = 0.125m;
+    public const decimal MinFrameDuration = 0.01m, MaxFrameDuration = 600m, DefaultFrameDuration = 0.125m;
     public const string DefaultBackground = "#FFFFFF";
 
     /// <summary>Parses and range-checks the options shared by every frame; returns null and a message when any is invalid.</summary>
@@ -32,7 +32,7 @@ public static class FlipbookVideo
     public static bool IsFrameDuration(decimal seconds) => seconds is >= MinFrameDuration and <= MaxFrameDuration;
 
     /// <summary>Converts a frame's duration into whole project frames; every frame is shown for at least one.</summary>
-    public static int Hold(decimal seconds, decimal fps) => Math.Max(1, (int)Math.Round(seconds * fps, MidpointRounding.AwayFromZero));
+    public static long Hold(decimal seconds, decimal fps) => Math.Max(1, (long)Math.Round(seconds * fps, MidpointRounding.AwayFromZero));
 
     /// <summary>The name of the prepared frame for the distinct image at <paramref name="index"/>.</summary>
     public static string FrameFileName(int index) => (index + 1).ToString("0000", CultureInfo.InvariantCulture) + ".png";
@@ -59,7 +59,7 @@ public static class FlipbookVideo
     /// duration of whole project frames lands exactly on a frame boundary. The last entry is repeated without a
     /// duration because the concat demuxer otherwise ignores the final one.
     /// </summary>
-    public static string ConcatList(IReadOnlyList<int> images, IReadOnlyList<int> holds, int loops, decimal fps)
+    public static string ConcatList(IReadOnlyList<int> images, IReadOnlyList<long> holds, int loops, decimal fps)
     {
         string rate = VideoClip.Number(fps);
         StringBuilder list = new("ffconcat version 1.0\n");

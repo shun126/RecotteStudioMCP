@@ -264,8 +264,8 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
             async (executable, format, temporary, encoding, token) =>
             {
                 decimal fps = format.FramesPerSecond;
-                int[] holds = frames.Select(frame => FlipbookVideo.Hold(frame.Duration ?? settings.FrameDuration, fps)).ToArray();
-                long total = (long)holds.Sum() * settings.Loops;
+                long[] holds = frames.Select(frame => FlipbookVideo.Hold(frame.Duration ?? settings.FrameDuration, fps)).ToArray();
+                long perLoop = holds.Sum(), total = perLoop * settings.Loops;
                 if (total < format.FrameCount(VideoClip.MinDuration))
                     return new(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID",
                         $"The flipbook lasts {Math.Round(total / fps, 3)} seconds including loops; it must be at least {VideoClip.MinDuration} seconds."));
@@ -291,10 +291,10 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
                     try { Directory.Delete(work, true); }
                     catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { }
                 }
-                int start = 0;
+                long start = 0;
                 return new(null, total, new()
                 {
-                    ["loops"] = settings.Loops, ["frameCountPerLoop"] = holds.Sum(), ["imageCount"] = frames.Count,
+                    ["loops"] = settings.Loops, ["frameCountPerLoop"] = perLoop, ["imageCount"] = frames.Count,
                     ["distinctImageCount"] = distinct.Length,
                     // Where each image appears in the first loop, so the flipbook can be timed against dialogue.
                     ["frames"] = holds.Select((hold, index) =>

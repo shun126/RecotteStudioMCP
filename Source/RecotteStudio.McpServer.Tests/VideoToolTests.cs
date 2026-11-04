@@ -408,9 +408,12 @@ public sealed class VideoToolTests : IDisposable
 
         Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", (await Flipbook(service, Array.Empty<FlipbookFrameDto>())).ErrorCode);
         Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", (await Flipbook(service, Enumerable.Repeat(new FlipbookFrameDto(image), 601).ToArray())).ErrorCode);
-        McpToolResult<object> badDuration = await Flipbook(service, new FlipbookFrameDto[] { new(image), new(image, 11m) });
-        Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", badDuration.ErrorCode);
-        Assert.Contains("frames[1]", badDuration.Message);
+        foreach (decimal outOfRange in new[] { 0.009m, 600.01m })
+        {
+            McpToolResult<object> badDuration = await Flipbook(service, new FlipbookFrameDto[] { new(image), new(image, outOfRange) });
+            Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", badDuration.ErrorCode);
+            Assert.Contains("frames[1]", badDuration.Message);
+        }
         McpToolResult<object> unsupported = await Flipbook(service, new FlipbookFrameDto[] { new(image), new(webp) });
         Assert.Equal("MCP_VIDEO_IMAGE_UNSUPPORTED", unsupported.ErrorCode);
         Assert.Contains("frames[1]", unsupported.Message);
@@ -457,14 +460,29 @@ public sealed class VideoToolTests : IDisposable
         Assert.Equal(TimeSpan.FromSeconds(60 + seconds * 10), runner.Timeouts[^1]);
     }
 
-    [Fact]
-    public async Task FlipbookLongerThanSixtySecondsUsesALongerEncodingTimeout()
+    [Theory]
+    [InlineData(10.1, false)]
+    [InlineData(10.1, true)]
+    [InlineData(120, false)]
+    [InlineData(120, true)]
+    [InlineData(600, false)]
+    [InlineData(600, true)]
+    public async Task FlipbookFrameMayBeShownForUpToTenMinutes(double seconds, bool perFrame)
     {
-        McpToolResult<object> result = await Flipbook(Service(), new FlipbookFrameDto[] { new(image, 10m), new(image, 10m) }, loops: 4);
+        decimal duration = (decimal)seconds;
+        McpToolResult<object> result = await Service().CreateFlipbookVideoAsync(project,
+            new FlipbookFrameDto[] { new(image, perFrame ? duration : null), new(image) }, output, false,
+            perFrame ? 1m : duration, 2, null, null, default);
 
         Assert.True(result.Success, result.Message);
-        Assert.Equal(80m, (decimal?)Data(result)["duration"]);
-        Assert.Equal(TimeSpan.FromSeconds(860), runner.Timeouts[^1]);
+        decimal perLoop = duration + (perFrame ? 1m : duration);
+        JsonObject data = Data(result);
+        Assert.Equal(perLoop * 2, (decimal?)data["duration"]);
+        Assert.Equal(perLoop * 60, (decimal?)data["frameCountPerLoop"]);
+        Assert.Equal(duration, (decimal?)data["frames"]![0]!["duration"]);
+        Assert.Equal(duration, (decimal?)data["frames"]![1]!["start"]);
+        Assert.Equal(TimeSpan.FromSeconds((double)(60m + perLoop * 2 * 10m)), runner.Timeouts[^1]);
+        Assert.Contains($"duration {duration.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture)}\n", runner.ConcatList);
     }
 
     [Fact]

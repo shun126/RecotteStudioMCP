@@ -14,7 +14,7 @@ public sealed class FlipbookVideoTests
 
     [Theory]
     [InlineData(0.009, 1, null, null, "frameDuration")]
-    [InlineData(10.1, 1, null, null, "frameDuration")]
+    [InlineData(600.01, 1, null, null, "frameDuration")]
     [InlineData(0.125, 0, null, null, "loops")]
     [InlineData(0.125, 101, null, null, "loops")]
     [InlineData(0.125, 1, "stretch", null, "fit")]
@@ -37,7 +37,7 @@ public sealed class FlipbookVideoTests
     [Fact]
     public void ConcatListShowsEachFrameForItsHoldAndRepeatsTheLastEntry()
     {
-        string list = FlipbookVideo.ConcatList(new[] { 0, 1, 0 }, new[] { 7, 8, 1 }, 2, 60m);
+        string list = FlipbookVideo.ConcatList(new[] { 0, 1, 0 }, new long[] { 7, 8, 1 }, 2, 60m);
 
         Assert.Equal(
             "ffconcat version 1.0\n" +
