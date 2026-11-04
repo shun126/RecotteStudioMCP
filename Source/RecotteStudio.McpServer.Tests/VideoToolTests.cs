@@ -408,9 +408,12 @@ public sealed class VideoToolTests : IDisposable
 
         Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", (await Flipbook(service, Array.Empty<FlipbookFrameDto>())).ErrorCode);
         Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", (await Flipbook(service, Enumerable.Repeat(new FlipbookFrameDto(image), 601).ToArray())).ErrorCode);
-        McpToolResult<object> badDuration = await Flipbook(service, new FlipbookFrameDto[] { new(image), new(image, 0.009m) });
-        Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", badDuration.ErrorCode);
-        Assert.Contains("frames[1]", badDuration.Message);
+        foreach (decimal outOfRange in new[] { 0.009m, 600.01m })
+        {
+            McpToolResult<object> badDuration = await Flipbook(service, new FlipbookFrameDto[] { new(image), new(image, outOfRange) });
+            Assert.Equal("MCP_VIDEO_ARGUMENT_INVALID", badDuration.ErrorCode);
+            Assert.Contains("frames[1]", badDuration.Message);
+        }
         McpToolResult<object> unsupported = await Flipbook(service, new FlipbookFrameDto[] { new(image), new(webp) });
         Assert.Equal("MCP_VIDEO_IMAGE_UNSUPPORTED", unsupported.ErrorCode);
         Assert.Contains("frames[1]", unsupported.Message);
@@ -462,9 +465,9 @@ public sealed class VideoToolTests : IDisposable
     [InlineData(10.1, true)]
     [InlineData(120, false)]
     [InlineData(120, true)]
-    [InlineData(500000, false)]
-    [InlineData(500000, true)]
-    public async Task FlipbookFrameDurationHasNoUpperPolicyLimit(double seconds, bool perFrame)
+    [InlineData(600, false)]
+    [InlineData(600, true)]
+    public async Task FlipbookFrameMayBeShownForUpToTenMinutes(double seconds, bool perFrame)
     {
         decimal duration = (decimal)seconds;
         McpToolResult<object> result = await Service().CreateFlipbookVideoAsync(project,
