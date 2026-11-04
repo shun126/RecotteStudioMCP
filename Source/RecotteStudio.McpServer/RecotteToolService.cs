@@ -249,7 +249,7 @@ public sealed partial class RecotteToolService(WorkspacePathPolicy paths, Projec
         {
             if (frames[index].Duration is decimal seconds && !FlipbookVideo.IsFrameDuration(seconds))
                 return Task.FromResult(Fail("argument", "MCP_VIDEO_ARGUMENT_INVALID",
-                    $"frames[{index}].duration must be between {FlipbookVideo.MinFrameDuration} and {FlipbookVideo.MaxFrameDuration} seconds."));
+                    $"frames[{index}].duration must be at least {FlipbookVideo.MinFrameDuration} seconds."));
             PathPolicyResult image = paths.ValidateInput(frames[index].ImagePath, VideoClip.ImageExtensions);
             if (ImageFailure(image, index) is McpToolResult<object> rejected) return Task.FromResult(rejected);
             imagePaths[index] = image.FullPath!;

@@ -14,7 +14,6 @@ public sealed class FlipbookVideoTests
 
     [Theory]
     [InlineData(0.009, 1, null, null, "frameDuration")]
-    [InlineData(10.1, 1, null, null, "frameDuration")]
     [InlineData(0.125, 0, null, null, "loops")]
     [InlineData(0.125, 101, null, null, "loops")]
     [InlineData(0.125, 1, "stretch", null, "fit")]
