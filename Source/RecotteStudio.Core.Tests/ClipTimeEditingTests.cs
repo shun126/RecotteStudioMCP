@@ -13,6 +13,7 @@ public sealed class ClipTimeEditingTests : IDisposable
     [InlineData("010OneAnnotationText", "Figure")]
     [InlineData("009FullProject", "Figure")]
     [InlineData("005OneVideo", "Video")]
+    [InlineData("006OneCharacter", "Speaker Character")]
     public void Move_ShiftsTheClipAndKeepsEverythingElse(string sample, string type)
     {
         JsonObject root = Sample(sample);
@@ -216,8 +217,53 @@ public sealed class ClipTimeEditingTests : IDisposable
 
         JsonObject character = Sample("006OneCharacter");
         (TimelineObjectId characterId, _, _) = First(character, "Speaker Character");
+        AssertRejected(character, new MoveTimelineObjectOperation(new TimelineObjectIdReference(characterId), new(1m), new(1m)), "RC4301");
+        Object(character, characterId)["type"] = "Unsupported";
         Assert.False(Entry(Load(character), characterId).Capabilities.CanMove);
         AssertRejected(character, new MoveTimelineObjectOperation(new TimelineObjectIdReference(characterId), new(0m), new(1m)), "RC4202");
+    }
+
+    [Fact]
+    public void Resize_CharacterKeepsBoundsAndMovesItsFadeOut()
+    {
+        JsonObject root = Sample("006OneCharacter");
+        (TimelineObjectId id, _, JsonObject original) = First(root, "Speaker Character");
+        RecotteProjectDocument document = Load(root);
+        var target = new TimelineObjectIdReference(id);
+        Assert.True(document.ApplyOperations(new ProjectOperation[] {
+            new AddClipEffectOperation(target, "Alpha Fade Out", new(0.2m)) }).Success);
+
+        ProjectBatchResult result = document.ApplyOperations(new ProjectOperation[] {
+            new MoveTimelineObjectOperation(target, new(2m), new(8m)) });
+
+        Assert.True(result.Success, Messages(result));
+        JsonObject saved = Saved(document, id);
+        Assert.Equal(2m, saved["start-time"]!.GetValue<decimal>());
+        Assert.Equal(8m, saved["end-time"]!.GetValue<decimal>());
+        Assert.True(JsonNode.DeepEquals(original["properties"], saved["properties"]));
+        Assert.Equal(5.8m, Assert.Single(document.GetClipEffects(id)).Start);
+        Assert.True(document.Settings!.Duration >= 8m);
+        long revision = document.Revision;
+        ProjectBatchResult shortened = document.ApplyOperations(new ProjectOperation[] {
+            new MoveTimelineObjectOperation(target, new(2m), new(2.1m)) });
+        Assert.False(shortened.Success);
+        Assert.Contains(shortened.Diagnostics, diagnostic => diagnostic.Code == "RC4302");
+        Assert.Equal(revision, document.Revision);
+        Assert.True(JsonNode.DeepEquals(saved, Saved(document, id)));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("locked")]
+    [InlineData("tl-locked")]
+    public void Move_CharacterRespectsTimelineAndLayerLocks(string? objectLock)
+    {
+        JsonObject root = Sample("006OneCharacter");
+        (TimelineObjectId id, _, _) = First(root, "Speaker Character");
+        if (objectLock is null) root["layers"]![id.LayerIndex]!["locked"] = true;
+        else Object(root, id)[objectLock] = true;
+        Assert.False(Entry(Load(root), id).Capabilities.CanMove);
+        AssertRejected(root, new MoveTimelineObjectOperation(new TimelineObjectIdReference(id), new(1m), new(2m)), "RC4207");
     }
 
     [Fact]

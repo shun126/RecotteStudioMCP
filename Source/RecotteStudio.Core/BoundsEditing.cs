@@ -71,7 +71,7 @@ public sealed partial class ProjectEditor
         return true;
     }
 
-    // The images, stamps, annotation texts, and videos that SetObjectBounds and MoveTimelineObject edit.
+    // The images, stamps, annotation texts, and videos on Annot and Video layers.
     private static bool IsVisualClip(JsonObject layer, JsonObject obj) =>
         JsonAccess.TryGetString(layer, "type", out string layerType) && JsonAccess.TryGetString(obj, "type", out string objectType) &&
         (layerType, objectType) is ("Annot", "Image" or "Figure") or ("Video", "Video");
