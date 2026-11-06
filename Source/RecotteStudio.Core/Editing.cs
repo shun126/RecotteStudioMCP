@@ -223,7 +223,7 @@ public sealed partial class ProjectEditor
     }
 
     /// <summary>
-    /// Sets the time range of a Speaker Voice or Speaker Action, or of an Image or Figure on an Annot layer or a Video on a Video layer,
+    /// Sets the time range of a Speaker Voice, Speaker Character, or Speaker Action, or of an Image or Figure on an Annot layer or a Video on a Video layer,
     /// after validating locks, range, and duration policy.
     /// </summary>
     public EditResult MoveTimelineObject(MoveTimelineObjectRequest request)
@@ -231,11 +231,11 @@ public sealed partial class ProjectEditor
         ArgumentNullException.ThrowIfNull(request);
         if (request.StartTime.TotalSeconds > request.EndTime.TotalSeconds) return EditResult.Failed("RC4301", "Start time must not be after end time.");
         var found = Find(request.ObjectId);
-        if (found is { } clip && IsVisualClip(clip.layer, clip.obj)) return MoveClip(request, clip.layer, clip.obj, clip.path);
+        if (found is { } clip && HasScreenBounds(clip.layer, clip.obj)) return MoveClip(request, clip.layer, clip.obj, clip.path);
         if (found is { } speakerAction && IsSpeakerAction(speakerAction.layer, speakerAction.obj))
             return MoveSpeakerAction(request, speakerAction.layer, speakerAction.obj, speakerAction.path);
         if (found is { } other && (!JsonAccess.TryGetString(other.obj, "type", out string type) || type != "Speaker Voice"))
-            return EditResult.Failed("RC4202", "Only a Speaker Voice, a Speaker Action, an Image or Figure on an Annot layer, or a Video on a Video layer can be moved in time.", other.path);
+            return EditResult.Failed("RC4202", "Only a Speaker Voice, a Speaker Character, a Speaker Action, an Image or Figure on an Annot layer, or a Video on a Video layer can be moved in time.", other.path);
         EditResult? rejected = CheckSpeakerVoice(found); if (rejected is not null) return rejected;
         var (voiceLayer, voice, _, voicePath) = found!.Value;
         List<(MoveTimelineObjectRequest move, JsonObject action, string path)> followers = new();

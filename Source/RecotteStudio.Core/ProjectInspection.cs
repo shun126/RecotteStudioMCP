@@ -97,7 +97,7 @@ public sealed record ProjectCapabilities(
     public bool CanMoveSpeakerVoiceToLayer { get; init; }
     /// <summary>Gets whether Images, Figures, and Videos on Annot and Video layers can be moved and resized.</summary>
     public bool CanSetObjectBounds { get; init; }
-    /// <summary>Gets whether MoveTimelineObject can change the time range of Images, Figures, and Videos on Annot and Video layers, and of Speaker Actions.</summary>
+    /// <summary>Gets whether MoveTimelineObject can change the time range of Images, Figures, and Videos on Annot and Video layers, and of Speaker Characters and Speaker Actions.</summary>
     public bool CanMoveClips { get; init; }
     /// <summary>Gets whether a Speaker Action, an expression or gesture of a layer's character, can be added.</summary>
     public bool CanAddSpeakerAction { get; init; }

@@ -5,14 +5,14 @@ namespace RecotteStudio.Core;
 public sealed partial class ProjectEditor
 {
     /// <summary>
-    /// Sets the time range of an Image or Figure on an Annot layer or a Video on a Video layer. Parts stored relative to
+    /// Sets the time range of an Image or Figure on an Annot layer, a Video on a Video layer, or a Speaker Character. Parts stored relative to
     /// the clip follow a new length: an out-effect such as Alpha Fade Out stays at the end, and a Video keeps its playback
     /// speed, so the part of its source file that plays grows or shrinks with the clip.
     /// </summary>
     private EditResult MoveClip(MoveTimelineObjectRequest request, JsonObject layer, JsonObject obj, string path)
     {
         decimal start = request.StartTime.TotalSeconds, end = request.EndTime.TotalSeconds;
-        if (start >= end) return EditResult.Failed("RC4301", "The start time of an image, figure, or video must be before its end time.");
+        if (start >= end) return EditResult.Failed("RC4301", "The clip start time must be before its end time.");
         if (IsTimelineLocked(layer, obj)) return EditResult.Failed("RC4207", "The target object or layer is locked.", path);
         if (!TryGetTimeRange(obj, out decimal oldStart, out decimal oldEnd))
             return EditResult.Failed("RC4203", "The target has no valid time range.", path);
@@ -86,8 +86,8 @@ public sealed partial class ProjectEditor
         return EditResult.Succeeded(made);
     }
 
-    /// <summary>Returns whether MoveTimelineObject can move and resize the Image, Figure, Video, or Speaker Action in time.</summary>
-    internal static bool CanMoveClip(JsonObject layer, JsonObject obj) => (IsVisualClip(layer, obj) || IsSpeakerAction(layer, obj)) &&
+    /// <summary>Returns whether MoveTimelineObject can move and resize the Image, Figure, Video, Speaker Character, or Speaker Action in time.</summary>
+    internal static bool CanMoveClip(JsonObject layer, JsonObject obj) => (HasScreenBounds(layer, obj) || IsSpeakerAction(layer, obj)) &&
         !IsTimelineLocked(layer, obj) &&
         TryGetTimeRange(obj, out decimal start, out decimal end) && JoiningObject(layer, obj, start, end) is null;
 

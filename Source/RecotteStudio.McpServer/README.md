@@ -1,5 +1,7 @@
 # RecotteStudio.McpServer
 
+立ち絵は `recotte_list_timeline` の `Speaker Character` を対象に、`moveTimelineObject` の `start`・`end`（秒）で表示開始・終了時刻を、`setObjectBounds` の `x`・`y`・`width`・`height`（画面ピクセル）で位置・サイズを変更できます。対象は `layerIndex` と `objectKey` で指定します。立ち絵の表示時間を変えても台詞・表情・動作の時刻は変わりません。操作例は[立ち絵の編集](../../Documents/RecotteStudioCore/CharacterEditing.md)を参照してください。
+
 音声未生成の台詞は `updateSpeakerText` 操作で差し替えられます。`recotte_list_timeline` の対象IDを指定し、既存の時刻やレイヤーを維持して保存できます。[台詞の差し替え例](../../Documents/RecotteStudioCore/DialogueReplacement.md)を参照してください。
 
 `recotte_extract_video_frames` で動画から解析用の画像と素材内の時刻を抽出できます。一定間隔、場面変化、両方の組み合わせに対応し、JPEG と JSON を保存します。[使用例と制限](../../Documents/RecotteStudioCore/VideoFrameExtraction.md)を参照してください。
